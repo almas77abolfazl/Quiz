@@ -1,0 +1,12 @@
+<p>{{ data.question }}</p>
+
+<!-- <form formGroup="form"> -->
+  <ng-container *ngFor="let option of data.options">
+    <input type="radio" formControlName="selectedOption"  />{{
+      option
+    }}<br /><br />
+  </ng-container>
+<!-- </form> -->
+
+<button (click)="onSubmitClick()">ثبت</button><br /><br />
+{{ timeNum }}
