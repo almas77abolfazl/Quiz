@@ -1,8 +1,11 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
-import { interval, Observable, Subscription, timer } from 'rxjs';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { interval, Subscription, timer } from 'rxjs';
+import { take } from 'rxjs/operators';
+
 import { Quiz } from '../quiz-page.component';
 
+const timeNum = 3;
 @Component({
   selector: 'app-quiz',
   templateUrl: './quiz.component.html',
@@ -11,43 +14,68 @@ import { Quiz } from '../quiz-page.component';
 export class QuizComponent implements OnInit {
   @Output() requestForNextQuestion = new EventEmitter<boolean>();
 
-  _data: Quiz = { question: '', options: ['', '', '', ''] };
-  @Input() set data(data: Quiz) {
-    if (data) {
-      this._data = { question: data.question, options: data.options };
+  _data: Quiz = {
+    id: 1,
+    question: '',
+    options: [
+      { id: 1, description: '' },
+      { id: 2, description: '' },
+      { id: 3, description: '' },
+      { id: 4, description: '' },
+    ],
+  };
 
-      this.subscription = this.quizTime.subscribe((x) => {
-        this.timeNum = 10 - x;
-        if (x === 10) {
-          this.requestForNextQuestion.emit(true);
-          this.subscription.unsubscribe();
+  sub!: Subscription;
+  @Input() set data(data: Quiz) {
+    if (data && data.id) {
+      this.questionNumber += 1;
+      this._data = {
+        id: data.id,
+        question: data.question,
+        options: data.options,
+      };
+
+      const countDown$ = interval(1000).pipe(take(timeNum));
+
+
+      this.sub = countDown$.subscribe((val: any) => {
+        this.timeNum = timeNum - (val + 1);
+        if (this.timeNum === 0) {
+          this.goNextQuestion();
         }
       });
+
     }
+  }
+
+  private goNextQuestion() {
+    this.timeNum = timeNum;
+    this.requestForNextQuestion.emit(true);
+    this.sub.unsubscribe();
   }
 
   get data(): Quiz {
     return this._data;
   }
 
-  form = new FormGroup({
-    selectedOption: new FormControl(),
+  formGroup: FormGroup = new FormGroup({
+    questionId: new FormControl(),
+    answer: new FormControl(),
   });
 
-  timeNum: number | undefined;
-  quizTime = interval(1000);
+  timeNum = timeNum;
 
-  subscription: Subscription = new Subscription();
+  questionNumber = 0;
 
-  constructor() {}
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit() {}
 
   onSubmitClick() {
-    const selectedOption = this.form.get('selectedOption');
-    if (selectedOption?.value) {
-      this.requestForNextQuestion.emit(true);
-      this.subscription.unsubscribe();
+    const answerControl = this.formGroup.get('answer');
+    if (answerControl?.value) {
+      answerControl.reset();
+      this.goNextQuestion();
     }
   }
 }

@@ -1,12 +1,16 @@
+{{ questionNumber }} <br />
+
 <p>{{ data.question }}</p>
 
-<!-- <form formGroup="form"> -->
-  <ng-container *ngFor="let option of data.options">
-    <input type="radio" formControlName="selectedOption"  />{{
-      option
-    }}<br /><br />
-  </ng-container>
-<!-- </form> -->
+<form [formGroup]="formGroup">
+  <input type="hidden" [formControlName]="'questionId'" />
+  <div *ngFor="let a of data.options; let i = index">
+    <div style="margin-bottom: 10px">
+      <input type="radio" formControlName="answer" [value]="a.id" />
+      {{ a.description }}<br /><br />
+    </div>
+  </div>
+</form>
 
 <button (click)="onSubmitClick()">ثبت</button><br /><br />
 {{ timeNum }}

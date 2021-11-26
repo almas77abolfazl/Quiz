@@ -1,3 +1,4 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 
@@ -7,28 +8,43 @@ import { FormGroup } from '@angular/forms';
   styleUrls: ['./quiz-page.component.scss'],
 })
 export class QuizPageComponent implements OnInit {
-
-
   data = {} as Quiz;
+  questions: Quiz[] = [];
+  randomId!: number;
 
-  constructor() {}
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.data = {
-      question: 'بزرگترین دریاچه جهان چه نام دارد ؟',
-      options: ['خزر', 'خزر', 'خزر', 'خزر'],
-    };
+    const subscription = this.http
+      .get('/api/questions')
+      .subscribe((res: any) => {
+        this.questions = res;
+        this.requestForNextQuestion();
+        subscription.unsubscribe();
+      });
   }
 
-  requestForNextQuestion(){
-    this.data = {
-      question: 'آب دریا چه رنگی میباشد؟',
-      options: ['قرمز', 'آبی', 'سبز', 'سیاه'],
+  requestForNextQuestion() {
+    const randomId = createRandomId(this.questions.length);
+    this.randomId =
+      randomId !== this.randomId
+        ? randomId
+        : createRandomId(this.questions.length);
+    this.data = this.questions.find((x) => x.id === this.randomId) as Quiz;
+
+    function createRandomId(questionsLength: number) {
+      return Math.floor(Math.random() * questionsLength);
     }
   }
 }
 
 export interface Quiz {
+  id: number;
   question: string;
-  options: string[];
+  options: QuizOptions[];
+}
+
+interface QuizOptions {
+  id: number;
+  description: string;
 }

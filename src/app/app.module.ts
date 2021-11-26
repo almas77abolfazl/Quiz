@@ -6,7 +6,8 @@ import { AppComponent } from './app.component';
 import { StartQuizComponent } from './start-quiz/start-quiz.component';
 import { QuizPageComponent } from './quiz-page/quiz-page.component';
 import { QuizComponent } from './quiz-page/quiz/quiz.component';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -14,9 +15,14 @@ import { FormsModule } from '@angular/forms';
     StartQuizComponent,
     QuizPageComponent,
     QuizComponent,
-
   ],
-  imports: [BrowserModule, AppRoutingModule,FormsModule],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    FormsModule,
+    ReactiveFormsModule,
+    HttpClientModule,
+  ],
   providers: [],
   bootstrap: [AppComponent],
 })
