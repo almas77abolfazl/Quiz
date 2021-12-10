@@ -1,4 +1,12 @@
-/* You can add global styles to this file, and also import other style files */
+@font-face {
+  font-family: "baseFont";
+  src: url(assets/Lalezar-Regular.ttf);
+}
+
+* {
+  font-family: "baseFont";
+}
+
 body {
   background-image: url(assets/background.jpg);
   background-size: auto;

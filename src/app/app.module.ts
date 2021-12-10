@@ -8,6 +8,8 @@ import { QuizPageComponent } from './quiz-page/quiz-page.component';
 import { QuizComponent } from './quiz-page/quiz/quiz.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
+import { AddQuizComponent } from './add-quiz/add-quiz.component';
+import { QuizResultComponent } from './quiz-result/quiz-result.component';
 
 @NgModule({
   declarations: [
@@ -15,6 +17,8 @@ import { HttpClientModule } from '@angular/common/http';
     StartQuizComponent,
     QuizPageComponent,
     QuizComponent,
+    AddQuizComponent,
+    QuizResultComponent,
   ],
   imports: [
     BrowserModule,

@@ -1,3 +1,14 @@
 .start-button {
   border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  background: aquamarine;
+  -moz-transition: background .5s;
+  -webkit-transition: background .5s;
+  transition: background .5s;
+  cursor: pointer;
+
+  &:hover {
+    background: #83b7cd
+  }
 }

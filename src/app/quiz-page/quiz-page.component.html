@@ -1,6 +1,5 @@
-<div class="center">
-  <app-quiz
-    [data]="data"
-    (requestForNextQuestion)="requestForNextQuestion()"
-  ></app-quiz>
-</div>
+<app-quiz
+  class="center"
+  [question]="question"
+  (requestForNextQuestion)="findNextQuestion()"
+></app-quiz>

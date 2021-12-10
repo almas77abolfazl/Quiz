@@ -1,10 +1,10 @@
 {{ questionNumber }} <br />
 
-<p>{{ data.question }}</p>
+<p>{{ question.questionText }}</p>
 
 <form [formGroup]="formGroup">
   <input type="hidden" [formControlName]="'questionId'" />
-  <div *ngFor="let a of data.options; let i = index">
+  <div *ngFor="let a of question.options; let i = index">
     <div style="margin-bottom: 10px">
       <input type="radio" formControlName="answer" [value]="a.id" />
       {{ a.description }}<br /><br />

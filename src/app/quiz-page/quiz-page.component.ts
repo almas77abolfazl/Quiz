@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { Question } from '../models/models';
 
 @Component({
   selector: 'app-quiz-page',
@@ -8,9 +8,9 @@ import { FormGroup } from '@angular/forms';
   styleUrls: ['./quiz-page.component.scss'],
 })
 export class QuizPageComponent implements OnInit {
-  data = {} as Quiz;
-  questions: Quiz[] = [];
-  randomId!: number;
+  question = {} as Question;
+  questions: Question[] = [];
+  randomId: number[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -19,32 +19,19 @@ export class QuizPageComponent implements OnInit {
       .get('/api/questions')
       .subscribe((res: any) => {
         this.questions = res;
-        this.requestForNextQuestion();
+        this.findNextQuestion();
         subscription.unsubscribe();
       });
   }
 
-  requestForNextQuestion() {
-    const randomId = createRandomId(this.questions.length);
-    this.randomId =
-      randomId !== this.randomId
-        ? randomId
-        : createRandomId(this.questions.length);
-    this.data = this.questions.find((x) => x.id === this.randomId) as Quiz;
-
-    function createRandomId(questionsLength: number) {
-      return Math.floor(Math.random() * questionsLength);
-    }
+  public findNextQuestion(): void {
+    const randomId = Math.floor(Math.random() * this.questions.length);
+    if (randomId !== 0 && !this.randomId.includes(randomId)) {
+      this.question = this.questions.find((x) => x.id === randomId) as Question;
+      this.randomId.push(randomId);
+    } else
+      setTimeout(() => {
+        this.findNextQuestion();
+      }, 500);
   }
-}
-
-export interface Quiz {
-  id: number;
-  question: string;
-  options: QuizOptions[];
-}
-
-interface QuizOptions {
-  id: number;
-  description: string;
 }

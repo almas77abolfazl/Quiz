@@ -1,0 +1,63 @@
+<div class="center">
+  <ul class="toolbar cf">
+    <li>
+      <a><i class="far fa-save" (click)="saveQuestion()"></i></a>
+    </li>
+    <li>
+      <a><i class="icon-heart-empty"></i></a>
+    </li>
+    <li>
+      <a><i class="icon-comments-alt"></i></a>
+    </li>
+    <li>
+      <a><i class="icon-cloud"></i></a>
+    </li>
+  </ul>
+
+  <form [formGroup]="formGroup">
+    <div class="form-item">
+      <textarea
+        autocomplete="off"
+        rows="5"
+        [placeholder]="'سوال'"
+        formControlName="questionText"
+      ></textarea>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="firstOption"
+        autocomplete="off"
+        formControlName="firstOption"
+      />
+      <label for="firstOption">جواب اول</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="secondOption"
+        autocomplete="off"
+        formControlName="secondOption"
+      />
+      <label for="secondOption">جواب دوم</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="thirdOption"
+        autocomplete="off"
+        formControlName="thirdOption"
+      />
+      <label for="thirdOption">جواب سوم</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="fourthOption"
+        autocomplete="off"
+        formControlName="fourthOption"
+      />
+      <label for="fourthOption">جواب چهارم</label>
+    </div>
+  </form>
+</div>
