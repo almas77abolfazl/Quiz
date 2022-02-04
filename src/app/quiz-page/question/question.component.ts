@@ -7,11 +7,11 @@ import { Question, UserAnswers } from 'src/app/models/models';
 
 const timeNum = 10;
 @Component({
-  selector: 'app-quiz',
-  templateUrl: './quiz.component.html',
-  styleUrls: ['./quiz.component.scss'],
+  selector: 'app-question',
+  templateUrl: './question.component.html',
+  styleUrls: ['./question.component.scss'],
 })
-export class QuizComponent {
+export class QuestionComponent {
   @Output() requestForNextQuestion = new EventEmitter<boolean>();
 
   _question!: Question;
