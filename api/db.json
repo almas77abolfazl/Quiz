@@ -116,7 +116,7 @@
       "answerId": 2
     },
     {
-      "id":6,
+      "id": 6,
       "questionText": "کدام درخت نماد صلح است؟",
       "options": [
         {
@@ -574,6 +574,12 @@
         }
       ],
       "answerId": 1
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "passWord": "123"
     }
   ]
 }

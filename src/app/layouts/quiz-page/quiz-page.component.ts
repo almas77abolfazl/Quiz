@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { Question } from '../models/models';
+import { Question } from 'src/app/models/models';
 
 @Component({
   selector: 'app-quiz-page',
