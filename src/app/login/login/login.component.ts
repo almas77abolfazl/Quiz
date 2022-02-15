@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { first } from 'rxjs/operators';
-import { AuthenticationService } from 'src/app/services/authentication.service';
+import { AuthenticationService } from 'src/services/authentication.service';
 
 @Component({
   selector: 'app-login',
@@ -23,7 +23,7 @@ export class LoginComponent implements OnInit {
     private authenticationService: AuthenticationService
   ) {
     // redirect to home if already logged in
-    if (this.authenticationService.currentUserValue) {
+    if (typeof this.authenticationService.currentUserValue !== 'object') {
       this.router.navigate(['/']);
     }
   }
@@ -56,12 +56,12 @@ export class LoginComponent implements OnInit {
       .login(this.f.username.value, this.f.password.value)
       .pipe(first())
       .subscribe(
-        (data) => {
+        (data: any) => {
           this.router.navigate([this.returnUrl]);
         },
-        (error) => {
+        (error: string) => {
           this.error = error;
-          alert(error)
+          alert(error);
           this.loading = false;
         }
       );

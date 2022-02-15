@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
-import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 
 @Component({
   selector: 'app-add-quiz',
@@ -8,7 +8,6 @@ import { FormArray, FormControl, FormGroup, Validators } from '@angular/forms';
   styleUrls: ['./add-quiz.component.scss'],
 })
 export class AddQuizComponent implements OnInit {
-
   formGroup: FormGroup = new FormGroup({
     questionText: new FormControl(null, [Validators.required]),
     firstOption: new FormControl(null, [Validators.required]),

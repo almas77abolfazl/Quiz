@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UserAnswers } from 'src/app/models/models';
+import { UserAnswers } from 'src/models/models';
 
 @Component({
   selector: 'app-quiz-result',

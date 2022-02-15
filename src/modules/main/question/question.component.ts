@@ -3,7 +3,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { Question, UserAnswers } from 'src/app/models/models';
+import { Question, UserAnswers } from 'src/models/models';
 
 const timeNum = 10;
 @Component({
