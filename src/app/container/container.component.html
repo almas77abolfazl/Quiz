@@ -1,0 +1,26 @@
+<div class="center">
+  <div class="wrapper fadeInDown">
+    <div id="formContent">
+      <!-- Tabs Titles -->
+      <h2 class="active" #firstTab (click)="changeTab(firstTab, secondTab, 1)">
+        Sign In
+      </h2>
+      <h2
+        class="inactive underlineHover"
+        #secondTab
+        (click)="changeTab(secondTab, firstTab, 2)"
+      >
+        Sign Up
+      </h2>
+
+      <ng-container [ngSwitch]="activeTabNumber">
+        <ng-container *ngSwitchCase="1">
+          <app-login (loginSubmit)="onLoginSubmit($event)"></app-login>
+        </ng-container>
+        <ng-container *ngSwitchCase="2">
+          <app-register></app-register>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</div>

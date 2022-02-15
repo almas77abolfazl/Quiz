@@ -4,14 +4,21 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
-import { LoginComponent } from './login/login/login.component';
-import { RegisterComponent } from './login/register/register.component';
+
+import { RegisterComponent } from './register/register.component';
 import { BasicAuthInterceptor } from '../helpers/basic-auth.interceptor';
 import { ErrorInterceptor } from '../helpers/error.interceptor';
 import { fakeBackendProvider } from '../helpers/fake-backend';
+import { ContainerComponent } from './container/container.component';
+import { LoginComponent } from './login/login.component';
 
 @NgModule({
-  declarations: [AppComponent, LoginComponent, RegisterComponent],
+  declarations: [
+    AppComponent,
+    ContainerComponent,
+    RegisterComponent,
+    LoginComponent,
+  ],
   imports: [
     BrowserModule,
     AppRoutingModule,

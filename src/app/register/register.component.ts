@@ -5,31 +5,24 @@ import { first } from 'rxjs/operators';
 import { AuthenticationService } from 'src/services/authentication.service';
 
 @Component({
-  selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
+  selector: 'app-register',
+  templateUrl: './register.component.html',
+  styleUrls: ['./register.component.scss'],
 })
-export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
+export class RegisterComponent implements OnInit {
+  registerForm!: FormGroup;
   loading = false;
-  submitted = false;
   returnUrl!: string;
   error = '';
-
   constructor(
     private formBuilder: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private authenticationService: AuthenticationService
-  ) {
-    // redirect to home if already logged in
-    if (typeof this.authenticationService.currentUserValue !== 'object') {
-      this.router.navigate(['/']);
-    }
-  }
+  ) {}
 
-  ngOnInit() {
-    this.loginForm = this.formBuilder.group({
+  ngOnInit(): void {
+    this.registerForm = this.formBuilder.group({
       username: ['', Validators.required],
       password: ['', Validators.required],
     });
@@ -40,14 +33,12 @@ export class LoginComponent implements OnInit {
 
   // convenience getter for easy access to form fields
   get f() {
-    return this.loginForm.controls;
+    return this.registerForm.controls;
   }
 
   onSubmit() {
-    this.submitted = true;
-
     // stop here if form is invalid
-    if (this.loginForm.invalid) {
+    if (this.registerForm.invalid) {
       return;
     }
 

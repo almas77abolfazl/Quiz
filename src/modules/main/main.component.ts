@@ -13,9 +13,7 @@ export class MainComponent implements OnInit {
     private router: Router
   ) {}
 
-  ngOnInit(): void {
-    this.router.navigateByUrl('start-quiz');
-  }
+  ngOnInit(): void {}
 
   logout() {
     this.authenticationService.logout();
