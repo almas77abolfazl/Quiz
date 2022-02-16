@@ -18,7 +18,7 @@
           <app-login (loginSubmit)="onLoginSubmit($event)"></app-login>
         </ng-container>
         <ng-container *ngSwitchCase="2">
-          <app-register></app-register>
+          <app-register (registerSubmit)="onRegisterSubmit($event)"></app-register>
         </ng-container>
       </ng-container>
     </div>

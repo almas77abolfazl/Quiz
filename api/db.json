@@ -578,8 +578,12 @@
   ],
   "users": [
     {
+      "userId": 1,
       "username": "admin",
-      "passWord": "123"
+      "password": "123",
+      "firstName": "admin",
+      "lastName": "123",
+      "email": ""
     }
   ]
 }

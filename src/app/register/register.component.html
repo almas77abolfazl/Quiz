@@ -4,27 +4,35 @@
 </div>
 
 <!-- Login Form -->
-<form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+<form [formGroup]="registerForm" (ngSubmit)="onSubmit()" autocomplete="off">
   <input
     type="text"
-    id="login"
+    id="username"
     class="fadeIn second"
-    name="login"
-    placeholder="login"
+    name="username"
+    placeholder="username"
     formControlName="username"
   />
   <input
-    type="text"
+    type="password"
     id="password"
     class="fadeIn third"
-    name="login"
+    name="password"
     placeholder="password"
     formControlName="password"
   />
-  <input type="submit" class="fadeIn fourth" value="Log In" />
+  <input
+    type="email"
+    id="email"
+    class="fadeIn fourth"
+    name="email"
+    placeholder="email"
+    formControlName="email"
+  />
+  <input type="submit" class="fadeIn fifth" value="Sign Up" />
 </form>
 
 <!-- Remind Passowrd -->
-<div id="formFooter">
+<!-- <div id="formFooter">
   <a class="underlineHover" href="#">Forgot Password?</a>
-</div>
+</div> -->

@@ -64,4 +64,21 @@ export class ContainerComponent implements OnInit {
         }
       );
   }
+
+  onRegisterSubmit(f: { [key: string]: AbstractControl }) {
+    this.loading = true;
+    this.authenticationService
+      .register(f.username.value, f.password.value, f.email.value)
+      .pipe(first())
+      .subscribe(
+        (data: any) => {
+          this.router.navigate([this.returnUrl]);
+        },
+        (error: string) => {
+          this.error = error;
+          alert(error);
+          this.loading = false;
+        }
+      );
+  }
 }
