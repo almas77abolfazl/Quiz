@@ -2,7 +2,7 @@ import { Component, OnInit, Renderer2 } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { first } from 'rxjs/operators';
-import { AuthenticationService } from 'src/services/authentication.service';
+import { AuthenticationService } from 'src/services/authentication/authentication.service';
 
 @Component({
   selector: 'app-Container',

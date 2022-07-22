@@ -1,8 +1,8 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { User } from '../models/models';
+import { User } from '../../models/models';
+import { WebRequestService } from '../web-request/web-request.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +11,7 @@ export class AuthenticationService {
   public currentUser: Observable<User | null>;
   private currentUserSubject: BehaviorSubject<User | null>;
 
-  constructor(private http: HttpClient) {
+  constructor(private webRequestService: WebRequestService) {
     this.currentUserSubject = new BehaviorSubject<User | null>(
       JSON.parse(localStorage.getItem('currentUser') as string)
     );
@@ -23,22 +23,20 @@ export class AuthenticationService {
   }
 
   login(username: string, password: string) {
-    return this.http
-      .post<any>(`/users/authenticate`, { username, password })
-      .pipe(
-        map((user) => {
-          // store user details and basic auth credentials in local storage to keep user logged in between page refreshes
-          user.authData = window.btoa(username + ':' + password);
-          localStorage.setItem('currentUser', JSON.stringify(user));
-          this.currentUserSubject.next(user[0]);
-          return user;
-        })
-      );
+    return this.webRequestService.login(username, password).pipe(
+      map((user: any) => {
+        // store user details and basic auth credentials in local storage to keep user logged in between page refreshes
+        user.authData = window.btoa(username + ':' + password);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        this.currentUserSubject.next(user[0]);
+        return user;
+      })
+    );
   }
 
   register(username: string, password: string, email: string) {
-    return this.http.post<any>(`/register`, { username, password, email }).pipe(
-      map((user) => {
+    return this.webRequestService.signup(email, username, password).pipe(
+      map((user: any) => {
         // store user details and basic auth credentials in local storage to keep user logged in between page refreshes
         user.authData = window.btoa(username + ':' + password);
         localStorage.setItem('currentUser', JSON.stringify(user));

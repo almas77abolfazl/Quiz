@@ -8,7 +8,6 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { RegisterComponent } from './register/register.component';
 import { BasicAuthInterceptor } from '../helpers/basic-auth.interceptor';
 import { ErrorInterceptor } from '../helpers/error.interceptor';
-import { fakeBackendProvider } from '../helpers/fake-backend';
 import { ContainerComponent } from './container/container.component';
 import { LoginComponent } from './login/login.component';
 
@@ -29,9 +28,6 @@ import { LoginComponent } from './login/login.component';
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: BasicAuthInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
-
-    // provider used to create fake backend
-    fakeBackendProvider,
   ],
   bootstrap: [AppComponent],
 })
