@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { User } from 'src/models/models';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -8,7 +10,7 @@ export class WebRequestService {
   readonly ROOT_URL;
 
   constructor(private http: HttpClient) {
-    this.ROOT_URL = 'http://localhost:3000';
+    this.ROOT_URL = 'http://localhost:5000';
   }
 
   get(uri: string) {
@@ -40,16 +42,9 @@ export class WebRequestService {
     );
   }
 
-  signup(username: string, email: string, password: string) {
-    return this.http.post(
-      `${this.ROOT_URL}/users`,
-      {
-        email,
-        password,
-      },
-      {
-        observe: 'response',
-      }
-    );
+  signup(useData: User):Observable<any> {
+    return this.http.post(`${this.ROOT_URL}/users/create`, useData, {
+      observe: 'response',
+    });
   }
 }

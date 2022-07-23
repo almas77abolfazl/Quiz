@@ -34,11 +34,11 @@ export class AuthenticationService {
     );
   }
 
-  register(username: string, password: string, email: string) {
-    return this.webRequestService.signup(email, username, password).pipe(
+  register(userData: User) {
+    return this.webRequestService.signup(userData).pipe(
       map((user: any) => {
         // store user details and basic auth credentials in local storage to keep user logged in between page refreshes
-        user.authData = window.btoa(username + ':' + password);
+        user.authData = window.btoa(userData.username + ':' + userData.password);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user[0]);
         return user;

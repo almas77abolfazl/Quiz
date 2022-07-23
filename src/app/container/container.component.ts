@@ -67,9 +67,13 @@ export class ContainerComponent implements OnInit {
 
   onRegisterSubmit(f: { [key: string]: AbstractControl }) {
     this.loading = true;
+    const userData = {
+      email: f.email.value,
+      username: f.username.value,
+      password: f.password.value,
+    };
     this.authenticationService
-      .register(f.username.value, f.password.value, f.email.value)
-      .pipe(first())
+      .register(userData)
       .subscribe(
         (data: any) => {
           this.router.navigate([this.returnUrl]);

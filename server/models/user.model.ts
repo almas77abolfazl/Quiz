@@ -22,8 +22,9 @@ export interface IUser extends Document {
   sessions: Season[];
   email: string;
   username: string;
-  firstName: string;
-  lastName: string;
+  password: string;
+  firstName?: string;
+  lastName?: string;
   gender?: Gender;
   address?: Address;
 }
@@ -48,8 +49,8 @@ const UserSchema: Schema = new Schema({
     required: true,
     minlength: 3,
   },
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
+  firstName: { type: String, trim: true },
+  lastName: { type: String, trim: true },
   // Gets the Mongoose enum from the TypeScript enum
   gender: { type: String, enum: Object.values(Gender) },
   address: {
