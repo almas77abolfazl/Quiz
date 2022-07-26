@@ -10,6 +10,12 @@ const routes: Routes = [
       import('../modules/main/main.module').then((m) => m.MainModule),
     canActivate: [AuthGuard],
   },
+  {
+    path: 'admin',
+    loadChildren: () =>
+      import('../modules/admin/admin.module').then((m) => m.AdminModule),
+    canActivate: [AuthGuard],
+  },
   { path: 'login', component: ContainerComponent },
 ];
 

@@ -7,7 +7,7 @@
   <div *ngFor="let a of question?.options; let i = index">
     <div style="margin-bottom: 10px">
       <input type="radio" formControlName="answer" [value]="a.id" />
-      {{ a.description }}<br /><br />
+      {{ a }}<br /><br />
     </div>
   </div>
 </form>

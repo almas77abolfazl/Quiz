@@ -20,9 +20,9 @@ export class QuizResultComponent implements OnInit {
 
   ngOnInit(): void {
     this.userAnswers.forEach((x) => {
-      if (x.question.answerId === x.userAnswerId) {
-        this.userPoint += 2;
-      }
+      // if (x.question.answerId === x.userAnswerId) {
+      //   this.userPoint += 2;
+      // }
     });
   }
 }

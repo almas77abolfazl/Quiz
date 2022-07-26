@@ -1,11 +1,11 @@
 .form-item {
+  display: flex;
   position: relative;
   margin-bottom: 15px;
-  input {
+  input[type="text"] {
     display: block;
     width: 400px;
     height: 40px;
-    background: transparent;
     border: solid 1px #ccc;
     transition: all 0.3s ease;
     padding: 0 15px;
@@ -17,7 +17,6 @@
     display: block;
     width: 400px;
     height: 40px;
-    background: transparent;
     border: solid 1px #ccc;
     transition: all 0.3s ease;
     padding: 0 15px;

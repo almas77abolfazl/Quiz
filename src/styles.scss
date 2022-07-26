@@ -34,3 +34,22 @@ div.main-page {
   left: 50%;
   transform: translate(-50%, -50%);
 }
+
+.flex {
+  display: flex;
+}
+
+.row {
+  flex-direction: row;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.form-container{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-15%, -50%);
+}

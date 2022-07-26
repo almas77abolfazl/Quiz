@@ -1,13 +1,13 @@
 export interface Question {
   id: number;
   questionText: string;
-  options: QuestionOptions[];
-  answerId: number;
+  options: QuestionOption[];
 }
 
-export interface QuestionOptions {
+export interface QuestionOption {
   id: number;
-  description: string;
+  questionText: string;
+  isAnswer: boolean;
 }
 
 export interface UserAnswers {
@@ -17,10 +17,11 @@ export interface UserAnswers {
 }
 
 export interface User {
-  userId?: number;
-  username?: string;
+  _id: string;
+  accessToken: string;
+  refreshToken: string;
   password?: string;
-  firstName?:string;
-  lastName?:string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
 }

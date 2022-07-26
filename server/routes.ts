@@ -1,22 +1,33 @@
-import { UserController } from './controllers/user.controller';
 import { Router, Application } from 'express';
+import { UserController } from './controllers/user.controller';
+import { QuestionController } from './controllers/question.controller';
 
 const setRoutes = (app: Application): void => {
+  setUserRoutes(app);
+  setQuestionRoutes(app);
+};
+
+const setUserRoutes = (app: Application) => {
   const router = Router();
-  const userCtrl = new UserController();
+  const controller = new UserController();
 
   // Users
-  router.route('/create').post(userCtrl.createUser.bind(userCtrl));
-  router.route('/login').post(userCtrl.login.bind(userCtrl));
-  // router.route('/login').post(userCtrl.login);
-  // router.route('/users').get(userCtrl.getAll);
-  // router.route('/users/count').get(userCtrl.count);
-  // router.route('/user/:id').get(userCtrl.get);
-  // router.route('/user/:id').put(userCtrl.update);
-  // router.route('/user/:id').delete(userCtrl.delete);
+  router.route('/create').post(controller.createUser.bind(controller));
+  router.route('/login').post(controller.login.bind(controller));
 
   // Apply the routes to our application with the prefix /api
   app.use('/users', router);
+};
+
+const setQuestionRoutes = (app: Application) => {
+  const router = Router();
+  const controller = new QuestionController();
+
+  // questions
+  router.route('/create').post(controller.createQuestion.bind(controller));
+
+  // Apply the routes to our application with the prefix /api
+  app.use('/questions', router);
 };
 
 export default setRoutes;
