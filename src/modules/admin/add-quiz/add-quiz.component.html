@@ -1,7 +1,7 @@
 <div class="form-container">
   <ul class="toolbar cf">
-    <li>
-      <a><i class="far fa-save" (click)="saveQuestion()"></i></a>
+    <li (click)="saveQuestion()">
+      <a><i class="far fa-save"></i></a>
     </li>
     <li>
       <a><i class="icon-heart-empty"></i></a>
@@ -13,6 +13,8 @@
       <a><i class="icon-cloud"></i></a>
     </li>
   </ul>
+
+  فضای کلیک
 
   <form [formGroup]="formGroup">
     <div class="form-item">
