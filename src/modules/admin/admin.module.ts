@@ -6,6 +6,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AdminRoutes } from './admin.routing';
 import { QuizListComponent } from './quiz-list/quiz-list.component';
 import { AddQuizComponent } from './add-quiz/add-quiz.component';
+import { AgGridModule } from 'ag-grid-angular';
 
 @NgModule({
   imports: [
@@ -14,6 +15,7 @@ import { AddQuizComponent } from './add-quiz/add-quiz.component';
     ReactiveFormsModule,
     HttpClientModule,
     AdminRoutes,
+    AgGridModule
   ],
   declarations: [AdminComponent, AddQuizComponent, QuizListComponent],
 })

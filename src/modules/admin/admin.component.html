@@ -1,9 +1,13 @@
-<div class="flex">
-  <div class="admin-menu flex column">
-    <a [routerLink]="['add-quiz']">add-quiz</a>
-    <a [routerLink]="['quiz-list']">quiz-list</a>
-  </div>
-  <div class="admin-form">
-    <router-outlet></router-outlet>
+<div class="flex-container flex column">
+  <nav class="admin-nav"><button (click)="logout()">خروج</button></nav>
+
+  <div class="flex flex-fill row">
+    <div class="admin-menu flex column">
+      <a [routerLink]="['add-quiz']">سوال جدید</a>
+      <a [routerLink]="['quiz-list']">لیست سوال ها</a>
+    </div>
+    <div class="admin-form">
+      <router-outlet></router-outlet>
+    </div>
   </div>
 </div>

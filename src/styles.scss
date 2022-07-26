@@ -1,3 +1,6 @@
+@import "~ag-grid-community/styles//ag-grid.css";
+@import "~ag-grid-community/styles//ag-theme-alpine.css";
+
 @font-face {
   font-family: "baseFont";
   src: url(assets/Lalezar-Regular.ttf);
@@ -39,6 +42,14 @@ div.main-page {
   display: flex;
 }
 
+.flex-container {
+  height: 100vh;
+}
+
+.flex-fill {
+  flex: 1;
+}
+
 .row {
   flex-direction: row;
 }
@@ -47,9 +58,12 @@ div.main-page {
   flex-direction: column;
 }
 
-.form-container{
+.form-container {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-15%, -50%);
+  padding: 2rem;
+  background: #b5cde7;
+  direction: rtl;
 }

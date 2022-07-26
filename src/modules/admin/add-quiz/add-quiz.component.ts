@@ -6,6 +6,7 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
+import { Router } from '@angular/router';
 import { QuestionOption } from 'src/models/models';
 import { AdminService } from 'src/services/admin/admin.service';
 
@@ -23,7 +24,8 @@ export class AddQuizComponent implements OnInit {
     options: new FormArray(this.getOptionsFormGroup()),
   });
 
-  constructor(private AdminService: AdminService) {}
+  constructor(private AdminService: AdminService,
+    private router : Router) {}
 
   ngOnInit(): void {}
 
@@ -40,7 +42,11 @@ export class AddQuizComponent implements OnInit {
       }
 
       const question = this.formGroup.value;
-      this.AdminService.addQuestion( question ).subscribe();
+      this.AdminService.addQuestion(question).subscribe((res) => {
+        if (res) {
+          this.router.navigate(['admin/quiz-list'])
+        }
+      });
     }
   }
 

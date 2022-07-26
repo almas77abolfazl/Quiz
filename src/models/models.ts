@@ -6,7 +6,7 @@ export interface Question {
 
 export interface QuestionOption {
   id: number;
-  questionText: string;
+  optionText: string;
   isAnswer: boolean;
 }
 
