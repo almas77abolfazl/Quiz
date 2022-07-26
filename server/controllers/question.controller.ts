@@ -10,7 +10,16 @@ export class QuestionController {
       await newQuestion.save();
       res.status(200).send(newQuestion);
     } catch (error: any) {
-      res.status(404).send(error.message);
+      res.status(400).send(error.message);
+    }
+  }
+
+  async getQuestions(req: Request, res: Response) {
+    try {
+      const allQuestions = await QuestionModel.find({});
+      res.status(200).send(allQuestions);
+    } catch (error: any) {
+      res.status(400).send(error.message);
     }
   }
 }

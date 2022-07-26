@@ -24,6 +24,7 @@ const setQuestionRoutes = (app: Application) => {
   const controller = new QuestionController();
 
   // questions
+  router.route('/').get(controller.getQuestions.bind(controller));
   router.route('/create').post(controller.createQuestion.bind(controller));
 
   // Apply the routes to our application with the prefix /api
