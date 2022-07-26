@@ -7,6 +7,7 @@ const setRoutes = (app: Application): void => {
 
   // Users
   router.route('/create').post(userCtrl.createUser.bind(userCtrl));
+  router.route('/login').post(userCtrl.login.bind(userCtrl));
   // router.route('/login').post(userCtrl.login);
   // router.route('/users').get(userCtrl.getAll);
   // router.route('/users/count').get(userCtrl.count);

@@ -72,17 +72,15 @@ export class ContainerComponent implements OnInit {
       username: f.username.value,
       password: f.password.value,
     };
-    this.authenticationService
-      .register(userData)
-      .subscribe(
-        (data: any) => {
-          this.router.navigate([this.returnUrl]);
-        },
-        (error: string) => {
-          this.error = error;
-          alert(error);
-          this.loading = false;
-        }
-      );
+    this.authenticationService.register(userData).subscribe(
+      (user: any) => {
+        this.router.navigate([this.returnUrl]);
+      },
+      (error: string) => {
+        this.error = error;
+        alert(error);
+        this.loading = false;
+      }
+    );
   }
 }

@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import * as bcrypt from 'bcryptjs';
 
 export enum Gender {
   male = 'male',
@@ -13,13 +12,13 @@ export interface Address {
   postCode: string;
 }
 
-export interface Season {
+export interface Session {
   token: string;
   expiresAt: number;
 }
 
 export interface IUser extends Document {
-  sessions: Season[];
+  sessions: Session[];
   email: string;
   username: string;
   password: string;
@@ -74,22 +73,3 @@ const UserSchema: Schema = new Schema({
 
 // Export the model and return your IUser interface
 export const UserModel = mongoose.model<IUser>('User', UserSchema);
-
-UserSchema.pre('save', function (next) {
-  let user = this;
-  let costFactor = 10;
-
-  if (user.isModified('password')) {
-    // if the password field has been edited/changed then run this code.
-
-    // Generate salt and hash password
-    bcrypt.genSalt(costFactor, (err, salt) => {
-      bcrypt.hash(user.password, salt, (err, hash) => {
-        user.password = hash;
-        next();
-      });
-    });
-  } else {
-    next();
-  }
-});

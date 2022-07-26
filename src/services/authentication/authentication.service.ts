@@ -24,11 +24,10 @@ export class AuthenticationService {
 
   login(username: string, password: string) {
     return this.webRequestService.login(username, password).pipe(
-      map((user: any) => {
-        // store user details and basic auth credentials in local storage to keep user logged in between page refreshes
-        user.authData = window.btoa(username + ':' + password);
+      map((result: any) => {
+        const user = result.body;
         localStorage.setItem('currentUser', JSON.stringify(user));
-        this.currentUserSubject.next(user[0]);
+        this.currentUserSubject.next(user);
         return user;
       })
     );
@@ -36,11 +35,10 @@ export class AuthenticationService {
 
   register(userData: User) {
     return this.webRequestService.signup(userData).pipe(
-      map((user: any) => {
-        // store user details and basic auth credentials in local storage to keep user logged in between page refreshes
-        user.authData = window.btoa(userData.username + ':' + userData.password);
+      map((result: any) => {
+        const user = result.body;
         localStorage.setItem('currentUser', JSON.stringify(user));
-        this.currentUserSubject.next(user[0]);
+        this.currentUserSubject.next(user);
         return user;
       })
     );
