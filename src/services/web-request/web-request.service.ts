@@ -54,7 +54,7 @@ export class WebRequestService {
     });
   }
 
-  getNewAccessToken(options: any): Observable<any> {
+  public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
   }
 }

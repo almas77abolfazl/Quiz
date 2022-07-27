@@ -14,6 +14,12 @@ const setUserRoutes = (app: Application) => {
   // Users
   router.route('/create').post(controller.createUser.bind(controller));
   router.route('/login').post(controller.login.bind(controller));
+  router
+    .route('/me/access-token')
+    .get(
+      controller.verifySession.bind(controller),//middleWare
+      controller.generateNewAccessToken.bind(controller)
+    );
 
   // Apply the routes to our application with the prefix /api
   app.use('/users', router);
