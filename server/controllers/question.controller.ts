@@ -22,4 +22,17 @@ export class QuestionController {
       res.status(400).send(error.message);
     }
   }
+
+  async getRandom(req: Request, res: Response) {
+    try {
+      const getRandom = await QuestionModel.aggregate([
+        {
+          $sample: { size: 1 },
+        },
+      ]);
+      res.status(200).send(getRandom);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  }
 }

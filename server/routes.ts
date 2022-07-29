@@ -50,6 +50,12 @@ const setQuestionRoutes = (app: Application) => {
       userController.authenticate.bind(userController),
       controller.createQuestion.bind(controller)
     );
+  router
+    .route('/random')
+    .get(
+      userController.authenticate.bind(userController),
+      controller.getRandom.bind(controller)
+    );
 
   // Apply the routes to our application with the prefix /api
   app.use('/questions', router);
