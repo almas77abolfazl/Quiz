@@ -25,12 +25,11 @@ export class UserController {
       const newUser = new UserModel(req.body);
       this.hashPassWord(newUser);
       await newUser.save();
-      const refreshToken = await this.createSession(newUser);
+      await this.createSession(newUser);
       const accessToken = await this.generateAccessAuthToken(newUser);
       newUser.password = '';
       const ResponseData = {
         user: newUser,
-        refreshToken,
         accessToken,
       };
       res.status(200).send(ResponseData);
@@ -44,12 +43,11 @@ export class UserController {
       let username = req.body.username;
       let password = req.body.password;
       const user = await this.findByCredentials(username, password);
-      const refreshToken = await this.createSession(user);
+      await this.createSession(user);
       const accessToken = await this.generateAccessAuthToken(user);
       user.password = '';
       const ResponseData = {
         user,
-        refreshToken,
         accessToken,
       };
       res.send(ResponseData);
@@ -60,39 +58,29 @@ export class UserController {
 
   public async generateNewAccessToken(req: Request, res: Response) {
     try {
-      let username = req.body.username;
-      let password = req.body.password;
-      const user = await this.findByCredentials(username, password);
-      const refreshToken = await this.createSession(user);
-      const accessToken = await this.generateAccessAuthToken(user);
-      user.password = '';
-      const ResponseData = {
-        user,
-        refreshToken,
-        accessToken,
-      };
-      res.send(ResponseData);
-    } catch (error: any) {
-      res.status(404).send(error.message);
+      let _id = req.header('_id') as string;
+      const user = (await this.findUserById(_id)) as IUser;
+      const accessToken = this.generateAccessAuthToken(user);
+      res.send({ accessToken });
+    } catch (error) {
+      res.status(400).send(error);
     }
   }
 
   public async verifySession(req: Request, res: Response, next: NextFunction) {
-    // grab the refresh token from the request header
-
     try {
-      let refreshToken = req.header('x-refresh-token') as string;
-
       // grab the _id from the request header
       let _id = req.header('_id') as string;
 
-      const user = await this.findByIdAndToken(_id, refreshToken);
+      const user = await this.findUserById(_id);
       if (!user) {
         // user couldn't be found
         throw new Error(
           'User not found. Make sure that the refresh token and user id are correct'
         );
       }
+
+      let refreshToken = user.sessions[user.sessions.length - 1].token;
 
       // if the code reaches here - the user was found
       // therefore the refresh token exists in the database - but we still have to check if it has expired or not
@@ -125,6 +113,23 @@ export class UserController {
     }
   }
 
+  public authenticate(req: Request, res: Response, next: NextFunction) {
+    let token = req.header('x-access-token') as string;
+
+    // verify the JWT
+    jwt.verify(token, jwtSecret, (err, decoded) => {
+      if (err) {
+        // there was an error
+        // jwt is invalid - * DO NOT AUTHENTICATE *
+        res.status(401).send(err);
+      } else {
+        // jwt is valid
+
+        next();
+      }
+    });
+  }
+
   private hashPassWord(user: IUser) {
     let costFactor = 10;
 
@@ -154,7 +159,7 @@ export class UserController {
     // Create the JSON Web Token and return that
     try {
       const token = jwt.sign({ _id: user._id.toHexString() }, jwtSecret, {
-        expiresIn: '15m',
+        expiresIn: '1m',
       });
       return token;
     } catch (error) {
@@ -223,15 +228,12 @@ export class UserController {
     });
   }
 
-  private findByIdAndToken(_id: string, token: string) {
+  private findUserById(_id: string) {
     // finds user by id and token
     // used in auth middleware (verifySession)
 
-    const User = this;
-
     return UserModel.findOne({
       _id,
-      'sessions.token': token,
     });
   }
 

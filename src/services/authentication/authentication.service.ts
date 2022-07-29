@@ -32,7 +32,7 @@ export class AuthenticationService {
     return this.webRequestService.login(username, password).pipe(
       map((result: any) => {
         const user = result.body;
-        this.setSession(user);
+        this.setSession(user.user._id, user.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
         return user;
@@ -44,7 +44,7 @@ export class AuthenticationService {
     return this.webRequestService.signup(userData).pipe(
       map((result: any) => {
         const user = result.body;
-        this.setSession(user);
+        this.setSession(user.user._id, user.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
         return user;
@@ -64,10 +64,6 @@ export class AuthenticationService {
     return localStorage.getItem('x-access-token');
   }
 
-  getRefreshToken() {
-    return localStorage.getItem('x-refresh-token');
-  }
-
   getUserId() {
     return localStorage.getItem('user-id');
   }
@@ -76,30 +72,27 @@ export class AuthenticationService {
     localStorage.setItem('x-access-token', accessToken);
   }
 
-  private setSession(user: User) {
-    localStorage.setItem('user-id', user._id);
-    localStorage.setItem('x-access-token', user.accessToken);
-    localStorage.setItem('x-refresh-token', user.refreshToken);
-  }
-
-  private removeSession() {
-    localStorage.removeItem('user-id');
-    localStorage.removeItem('x-access-token');
-    localStorage.removeItem('x-refresh-token');
-  }
-
   getNewAccessToken() {
     const options = {
       headers: {
-        'x-refresh-token': this.getRefreshToken(),
         _id: this.getUserId(),
       },
       observe: 'response',
     };
     return this.webRequestService.getNewAccessToken(options).pipe(
       tap((res: HttpResponse<any>) => {
-        this.setAccessToken(res.headers.get('x-access-token') || '');
+        this.setAccessToken(res.body.accessToken || '');
       })
     );
+  }
+
+  private setSession(id: string, accessToken: string) {
+    localStorage.setItem('user-id', id);
+    localStorage.setItem('x-access-token', accessToken);
+  }
+
+  private removeSession() {
+    localStorage.removeItem('user-id');
+    localStorage.removeItem('x-access-token');
   }
 }

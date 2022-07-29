@@ -18,8 +18,6 @@ export interface UserAnswers {
 
 export interface User {
   _id: string;
-  accessToken: string;
-  refreshToken: string;
   password?: string;
   firstName?: string;
   lastName?: string;
