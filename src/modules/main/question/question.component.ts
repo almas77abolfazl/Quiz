@@ -16,13 +16,13 @@ export class QuestionComponent {
 
   _question!: Question;
   @Input() set question(data: Question) {
-    if (data && data.id) {
+    if (data && data._id) {
       if (this.questionNumber === 10) {
         this.quizEnded();
         return;
       }
       this._question = {
-        id: data.id,
+        _id: data._id,
         questionText: data.questionText,
         options: data.options,
         // answerId: data.answerId,
@@ -82,7 +82,7 @@ export class QuestionComponent {
   }
 
   private quizEnded(): void {
-    this.router.navigate(['/quiz-result'], {
+    this.router.navigate(['main/quiz-result'], {
       state: { userAnswers: this.userAnswers },
     });
   }

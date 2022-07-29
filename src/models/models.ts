@@ -1,11 +1,11 @@
 export interface Question {
-  id: number;
+  _id: number;
   questionText: string;
   options: QuestionOption[];
 }
 
 export interface QuestionOption {
-  id: number;
+  _id: number;
   optionText: string;
   isAnswer: boolean;
 }

@@ -57,4 +57,8 @@ export class WebRequestService {
   public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
   }
+
+  public getRandomQuestion(options: any) {
+    return this.http.get(`${this.ROOT_URL}/questions/random`, options);
+  }
 }

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Question } from 'src/models/models';
+import { QuizService } from 'src/services/quiz/quiz.service';
 
 @Component({
   selector: 'app-quiz-page',
@@ -9,29 +10,20 @@ import { Question } from 'src/models/models';
 })
 export class QuizPageComponent implements OnInit {
   question = {} as Question;
-  questions: Question[] = [];
   randomId: number[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private quizService: QuizService) {}
 
   ngOnInit(): void {
-    const subscription = this.http
-      .get('/api/questions')
-      .subscribe((res: any) => {
-        this.questions = res;
-        this.findNextQuestion();
-        subscription.unsubscribe();
-      });
+    this.findNextQuestion();
   }
 
   public findNextQuestion(): void {
-    const randomId = Math.floor(Math.random() * this.questions.length);
-    if (randomId !== 0 && !this.randomId.includes(randomId)) {
-      this.question = this.questions.find((x) => x.id === randomId) as Question;
-      this.randomId.push(randomId);
-    } else
-      setTimeout(() => {
-        this.findNextQuestion();
-      }, 500);
+    const subscription = this.quizService
+      .getRandomQuestion()
+      .subscribe((res: any) => {
+        this.question = res.body[0];
+        subscription.unsubscribe();
+      });
   }
 }

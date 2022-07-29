@@ -8,6 +8,7 @@ import { StartQuizComponent } from './start-quiz/start-quiz.component';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MainRoutes } from './main.routing';
+import { QuizService } from 'src/services/quiz/quiz.service';
 
 @NgModule({
   imports: [
@@ -24,5 +25,6 @@ import { MainRoutes } from './main.routing';
     QuizResultComponent,
     StartQuizComponent,
   ],
+  providers: [QuizService],
 })
 export class MainModule {}
