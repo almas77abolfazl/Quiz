@@ -1,7 +1,8 @@
 import { Component, OnInit, Renderer2 } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { first } from 'rxjs/operators';
+import { User } from 'src/models/models';
 import { AuthenticationService } from 'src/services/authentication/authentication.service';
 
 @Component({
@@ -11,26 +12,22 @@ import { AuthenticationService } from 'src/services/authentication/authenticatio
 })
 export class ContainerComponent implements OnInit {
   loading = false;
-  returnUrl!: string;
   error = '';
   activeTabNumber = 1;
+  loginUrl = '/';
 
   constructor(
     private renderer: Renderer2,
-    private route: ActivatedRoute,
     private router: Router,
     private authenticationService: AuthenticationService
   ) {
     // redirect to home if already logged in
     if (this.authenticationService.currentUserValue) {
-      this.router.navigate(['/']);
+      this.router.navigate([this.loginUrl]);
     }
   }
 
-  ngOnInit() {
-    // get return url from route parameters or default to '/'
-    this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/admin';
-  }
+  ngOnInit() {}
 
   changeTab(
     activeTab: HTMLElement,
@@ -54,8 +51,8 @@ export class ContainerComponent implements OnInit {
       .login(f.username.value, f.password.value)
       .pipe(first())
       .subscribe(
-        (data: any) => {
-          this.router.navigate([this.returnUrl]);
+        (user: User) => {
+          this.navigateIntoTheApp(user);
         },
         (error: string) => {
           this.error = error;
@@ -73,8 +70,8 @@ export class ContainerComponent implements OnInit {
       password: f.password.value,
     };
     this.authenticationService.register(userData).subscribe(
-      (user: any) => {
-        this.router.navigate([this.returnUrl]);
+      (user: User) => {
+        this.navigateIntoTheApp(user);
       },
       (error: string) => {
         this.error = error;
@@ -82,5 +79,14 @@ export class ContainerComponent implements OnInit {
         this.loading = false;
       }
     );
+  }
+
+  navigateIntoTheApp(user: User) {
+    if (user.role === 'sa' || user.role === 'admin') {
+      this.loginUrl = '/admin';
+    } else {
+      this.loginUrl = '/main';
+    }
+    this.router.navigate([this.loginUrl]);
   }
 }

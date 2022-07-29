@@ -35,7 +35,7 @@ export class AuthenticationService {
         this.setSession(user.user._id, user.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
-        return user;
+        return user.user;
       })
     );
   }
@@ -47,7 +47,7 @@ export class AuthenticationService {
         this.setSession(user.user._id, user.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
-        return user;
+        return user.user;
       })
     );
   }

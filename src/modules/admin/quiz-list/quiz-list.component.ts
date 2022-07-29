@@ -19,8 +19,8 @@ export class QuizListComponent implements OnInit {
     {
       headerName: 'سوال',
       field: 'questionText',
-      flex: 1,
       cellStyle: { color: 'black', backgroundColor: '#b6b0b0' },
+      width: 300,
     },
     {
       headerName: 'گزینه اول',

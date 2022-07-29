@@ -26,7 +26,7 @@ export class UserController {
       this.hashPassWord(newUser);
       await newUser.save();
       await this.createSession(newUser);
-      const accessToken = await this.generateAccessAuthToken(newUser);
+      const accessToken = this.generateAccessAuthToken(newUser);
       newUser.password = '';
       const ResponseData = {
         user: newUser,
@@ -44,7 +44,7 @@ export class UserController {
       let password = req.body.password;
       const user = await this.findByCredentials(username, password);
       await this.createSession(user);
-      const accessToken = await this.generateAccessAuthToken(user);
+      const accessToken = this.generateAccessAuthToken(user);
       user.password = '';
       const ResponseData = {
         user,
@@ -215,7 +215,6 @@ export class UserController {
   ): Promise<IUser> {
     const user = await UserModel.findOne({ username });
     if (!user) throw new Error('not find');
-    console.log(user);
 
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, user.password, (err, res) => {
