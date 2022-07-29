@@ -12,6 +12,7 @@ const setUserRoutes = (app: Application) => {
   const controller = new UserController();
 
   // Users
+  router.route('/').get(controller.getUsers.bind(controller));
   router.route('/create').post(controller.createUser.bind(controller));
   router.route('/login').post(controller.login.bind(controller));
   router

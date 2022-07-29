@@ -6,6 +6,12 @@ export enum Gender {
   undisclosed = 'undisclosed',
 }
 
+export enum Roles {
+  normal = 'normal',
+  admin = 'admin',
+  sa = 'sa',
+}
+
 export interface Address {
   street: string;
   city: string;
@@ -26,6 +32,7 @@ export interface IUser extends Document {
   lastName?: string;
   gender?: Gender;
   address?: Address;
+  role: Roles;
 }
 
 const UserSchema: Schema = new Schema({
@@ -52,6 +59,11 @@ const UserSchema: Schema = new Schema({
   lastName: { type: String, trim: true },
   // Gets the Mongoose enum from the TypeScript enum
   gender: { type: String, enum: Object.values(Gender) },
+  role: {
+    type: String,
+    enum: Object.values(Roles),
+    default: 'normal',
+  },
   address: {
     street: { type: String },
     city: { type: String },

@@ -13,8 +13,7 @@ import { AdminService } from 'src/services/admin/admin.service';
 @Component({
   selector: 'app-add-quiz',
   templateUrl: './add-quiz.component.html',
-  styleUrls: ['./add-quiz.component.scss'],
-  providers: [AdminService],
+  styleUrls: ['./add-quiz.component.scss']
 })
 export class AddQuizComponent implements OnInit {
   optionGroups: FormGroup[] = [];

@@ -11,6 +11,15 @@ const jwtSecret = '51778657246321226641fsdklafjasdkljfsklfjd7148924065';
 export class UserController {
   constructor() {}
 
+  public async getUsers(req: Request, res: Response) {
+    try {
+      const allUsers = await UserModel.find({});
+      res.status(200).send(allUsers);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  }
+
   public async createUser(req: Request, res: Response) {
     try {
       const newUser = new UserModel(req.body);

@@ -5,8 +5,7 @@ import { AdminService } from 'src/services/admin/admin.service';
 @Component({
   selector: 'app-quiz-list',
   templateUrl: './quiz-list.component.html',
-  styleUrls: ['./quiz-list.component.scss'],
-  providers: [AdminService],
+  styleUrls: ['./quiz-list.component.scss']
 })
 export class QuizListComponent implements OnInit {
   columnDefs = [
