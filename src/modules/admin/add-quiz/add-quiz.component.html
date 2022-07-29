@@ -35,7 +35,7 @@
             autocomplete="off"
             formControlName="optionText"
           />
-          <label [for]="'optionText' + i">گزینه اول</label>
+          <label [for]="'optionText' + i">گزینه {{ i + 1 }}</label>
           <input
             type="checkbox"
             [name]="'isAnswer' + i"
