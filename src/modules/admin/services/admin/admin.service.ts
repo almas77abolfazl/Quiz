@@ -22,4 +22,8 @@ export class AdminService {
       })
     );
   }
+
+  deleteQuestion(question: Question) {
+    return this.webRequestService.deleteQuestion(question)
+  }
 }

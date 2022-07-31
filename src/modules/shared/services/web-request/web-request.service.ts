@@ -54,6 +54,12 @@ export class WebRequestService {
     });
   }
 
+  public deleteQuestion(question: Question): Observable<any> {
+    return this.http.delete(`${this.ROOT_URL}/questions/${question._id}`, {
+      observe: 'response',
+    });
+  }
+
   public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
   }

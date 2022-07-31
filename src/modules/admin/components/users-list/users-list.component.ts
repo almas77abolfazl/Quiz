@@ -24,13 +24,18 @@ export class UsersListComponent implements OnInit {
     },
   ];
 
+  currentRow: any;
+
   constructor(private adminService: AdminService) {}
 
   ngOnInit() {}
 
-  processCommand(command : Command){
+  processCommand(command: Command) {
     if (command.commandName === 'delete') {
-
     }
+  }
+
+  onSelectedRowChange(currentRow: any) {
+    this.currentRow = currentRow;
   }
 }

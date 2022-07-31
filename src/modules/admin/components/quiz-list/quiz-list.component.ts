@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CellStyle, ColDef } from 'ag-grid-community';
 import { map } from 'rxjs/operators';
-import { Question, QuestionOption } from 'src/models/models';
+import { Command, Question, QuestionOption } from 'src/models/models';
 import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
@@ -45,9 +45,34 @@ export class QuizListComponent implements OnInit {
     })
   );
 
+  doRedrawRows = false;
+
+  commands: Command[] = [
+    {
+      commandName: 'delete',
+      label: 'حذف',
+    },
+  ];
+
+  currentRow: any;
+
   constructor(private adminService: AdminService) {}
 
   ngOnInit() {}
+
+  public processCommand(command: Command) {
+    if (command.commandName === 'delete') {
+      this.adminService.deleteQuestion(this.currentRow).subscribe((res) => {
+        if (res) {
+          this.doRedrawRows = true;
+        }
+      });
+    }
+  }
+
+  public onSelectedRowChange(selectedRows: any) {
+    this.currentRow = selectedRows[0];
+  }
 
   private setCellStyles(value: string): CellStyle {
     if (value.endsWith('✅')) {
@@ -60,6 +85,7 @@ export class QuizListComponent implements OnInit {
     const rows: Question[] = [];
     questions.forEach((question: Question) => {
       const row: any = {};
+      row._id = question._id;
       row.questionText = question.questionText;
       let index = 1;
       question.options.forEach((option: QuestionOption) => {
