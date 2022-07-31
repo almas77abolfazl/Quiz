@@ -35,4 +35,14 @@ export class QuestionController {
       res.status(400).send(error.message);
     }
   }
+
+  async deleteQuestion(req: Request, res: Response) {
+    try {
+      const id = req.params.id;
+      await QuestionModel.findOneAndRemove({ _id: id });
+      res.status(200).send({ message: 'successfully deleted' });
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  }
 }
