@@ -8,6 +8,7 @@ const routes: Routes = [
   {
     path: '',
     component: AdminComponent,
+    pathMatch: 'full',
     children: [
       { path: 'add-quiz', component: AddQuizComponent },
       { path: 'quiz-list', component: QuizListComponent },

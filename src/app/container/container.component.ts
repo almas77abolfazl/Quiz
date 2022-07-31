@@ -1,6 +1,7 @@
 import { Component, OnInit, Renderer2 } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NgxSpinnerService } from 'ngx-spinner';
 import { first } from 'rxjs/operators';
 import { User } from 'src/models/models';
 import { AuthenticationService } from 'src/services/authentication/authentication.service';
@@ -11,7 +12,21 @@ import { AuthenticationService } from 'src/services/authentication/authenticatio
   styleUrls: ['./container.component.scss'],
 })
 export class ContainerComponent implements OnInit {
-  loading = false;
+  private _loading = false;
+
+  get loading() {
+    return this._loading;
+  }
+
+  set loading(value) {
+    this._loading = value;
+    if (value) {
+      this.spinner.show();
+    } else {
+      this.spinner.hide();
+    }
+  }
+
   error = '';
   activeTabNumber = 1;
   loginUrl = '/';
@@ -19,7 +34,8 @@ export class ContainerComponent implements OnInit {
   constructor(
     private renderer: Renderer2,
     private router: Router,
-    private authenticationService: AuthenticationService
+    private authenticationService: AuthenticationService,
+    private spinner: NgxSpinnerService
   ) {
     // redirect to home if already logged in
     if (this.authenticationService.currentUserValue) {
@@ -53,6 +69,7 @@ export class ContainerComponent implements OnInit {
       .subscribe(
         (user: User) => {
           this.navigateIntoTheApp(user);
+          this.loading = false;
         },
         (error: string) => {
           this.error = error;
@@ -72,6 +89,7 @@ export class ContainerComponent implements OnInit {
     this.authenticationService.register(userData).subscribe(
       (user: User) => {
         this.navigateIntoTheApp(user);
+        this.loading = false;
       },
       (error: string) => {
         this.error = error;

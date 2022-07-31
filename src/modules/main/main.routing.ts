@@ -14,7 +14,7 @@ const routes: Routes = [
     path: 'main',
     component: MainComponent,
     children: [
-      { path: '', redirectTo:'start-quiz' },
+      { path: '', redirectTo: 'start-quiz', pathMatch: 'full' },
       { path: 'start-quiz', component: StartQuizComponent },
       { path: 'quiz-page', component: QuizPageComponent },
       { path: 'quiz-result', component: QuizResultComponent },
