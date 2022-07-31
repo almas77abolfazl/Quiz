@@ -62,6 +62,12 @@ const setQuestionRoutes = (app: Application) => {
       userController.authenticate.bind(userController),
       controller.deleteQuestion.bind(controller)
     );
+  router
+    .route('/:id')
+    .get(
+      userController.authenticate.bind(userController),
+      controller.getQuestionById.bind(controller)
+    );
 
   // Apply the routes to our application with the prefix /api
   app.use('/questions', router);
