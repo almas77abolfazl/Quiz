@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
-import { ColDef } from 'ag-grid-community';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -11,6 +11,9 @@ export class GridComponent implements OnInit {
   @Input() columnDefs: ColDef[] = [];
   @Input() data$: Observable<any> = new Observable();
   @Input() hasCheckboxSelection = false;
+  @Output() selectedRowChange = new EventEmitter<any[]>();
+
+  private gridApi!: GridApi<any>;
 
   defaultColDef = {
     flex: 1,
@@ -41,5 +44,14 @@ export class GridComponent implements OnInit {
       this.rowData = data;
       this.loadCompleted = true;
     });
+  }
+
+  onSelectionChange(e: any) {
+    const selectedRows = this.gridApi.getSelectedRows();
+    this.selectedRowChange.emit(selectedRows)
+  }
+
+  onGridReady(params: GridReadyEvent<any>) {
+    this.gridApi = params.api;
   }
 }

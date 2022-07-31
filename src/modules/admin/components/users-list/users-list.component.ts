@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ColDef } from 'ag-grid-community';
+import { Command } from 'src/models/models';
 import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
@@ -16,7 +17,20 @@ export class UsersListComponent implements OnInit {
 
   data$ = this.adminService.users$;
 
+  commands: Command[] = [
+    {
+      commandName: 'delete',
+      label: 'حذف',
+    },
+  ];
+
   constructor(private adminService: AdminService) {}
 
   ngOnInit() {}
+
+  processCommand(command : Command){
+    if (command.commandName === 'delete') {
+
+    }
+  }
 }

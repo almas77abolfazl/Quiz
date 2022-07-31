@@ -4,6 +4,7 @@ import { AgGridModule } from 'ag-grid-angular';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GridComponent } from './components/grid/grid.component';
+import { ToolbarComponent } from './components/toolbar/toolbar.component';
 
 @NgModule({
   imports: [
@@ -13,13 +14,14 @@ import { GridComponent } from './components/grid/grid.component';
     HttpClientModule,
     AgGridModule,
   ],
-  declarations: [GridComponent],
+  declarations: [GridComponent, ToolbarComponent],
   exports: [
     GridComponent,
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
+    ToolbarComponent
   ],
 })
 export class SharedModule {}

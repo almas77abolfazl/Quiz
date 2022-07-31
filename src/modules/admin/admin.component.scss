@@ -4,13 +4,12 @@
 
   button {
     left: 0;
-    position: absolute;
-    z-index: 100;
+    position: relative;
   }
 }
 
 .admin-menu {
-  height: 100vh;
+  height: 100%;
   width: 300px;
   background-color: #aac5e0;
 

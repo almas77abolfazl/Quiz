@@ -25,3 +25,10 @@ export interface User {
   email?: string;
   role?: string;
 }
+
+export interface Command {
+  commandName: string;
+  label?: string;
+  icon?: string;
+  // other options
+}

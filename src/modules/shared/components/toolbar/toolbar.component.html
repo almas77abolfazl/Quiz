@@ -1,0 +1,5 @@
+<div class="toolbar-container flex end">
+  <div *ngFor="let command of commands">
+    <button (click)="onProcessCommand(command)">{{ command.label }}</button>
+  </div>
+</div>

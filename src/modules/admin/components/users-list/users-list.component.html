@@ -1,3 +1,8 @@
+<app-toolbar
+  [commands]="commands"
+  (processCommand)="processCommand($event)"
+></app-toolbar>
+
 <app-grid
   [columnDefs]="columnDefs"
   [data$]="data$"

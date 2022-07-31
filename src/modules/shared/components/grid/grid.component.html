@@ -7,6 +7,8 @@
     [defaultColDef]="defaultColDef"
     [rowSelection]="rowSelection"
     [enableRtl]="IsRtl"
+    (selectionChanged)="onSelectionChange($event)"
+    (gridReady)="onGridReady($event)"
   >
   </ag-grid-angular>
 </ng-container>
