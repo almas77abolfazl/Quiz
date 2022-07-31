@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import {
   AbstractControl,
-  FormArray,
-  FormControl,
-  FormGroup,
+  UntypedFormArray,
+  UntypedFormControl,
+  UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,11 +16,11 @@ import { AdminService } from 'src/services/admin/admin.service';
   styleUrls: ['./add-quiz.component.scss']
 })
 export class AddQuizComponent implements OnInit {
-  optionGroups: FormGroup[] = [];
+  optionGroups: UntypedFormGroup[] = [];
 
-  formGroup: FormGroup = new FormGroup({
-    questionText: new FormControl('', [Validators.required]),
-    options: new FormArray(this.getOptionsFormGroup()),
+  formGroup: UntypedFormGroup = new UntypedFormGroup({
+    questionText: new UntypedFormControl('', [Validators.required]),
+    options: new UntypedFormArray(this.getOptionsFormGroup()),
   });
 
   constructor(private AdminService: AdminService,
@@ -52,9 +52,9 @@ export class AddQuizComponent implements OnInit {
   private getOptionsFormGroup(): AbstractControl[] {
     const controls: AbstractControl[] = [];
     for (let index = 0; index < 4; index++) {
-      const optionsGroup = new FormGroup({
-        optionText: new FormControl('', [Validators.required]),
-        isAnswer: new FormControl(false),
+      const optionsGroup = new UntypedFormGroup({
+        optionText: new UntypedFormControl('', [Validators.required]),
+        isAnswer: new UntypedFormControl(false),
       });
       controls.push(optionsGroup);
       this.optionGroups.push(optionsGroup);

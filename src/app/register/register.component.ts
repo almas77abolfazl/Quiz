@@ -1,5 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { first } from 'rxjs/operators';
 import { AuthenticationService } from 'src/services/authentication/authentication.service';
@@ -12,9 +12,9 @@ import { AuthenticationService } from 'src/services/authentication/authenticatio
 export class RegisterComponent implements OnInit {
   @Output() registerSubmit = new EventEmitter<any>();
 
-  registerForm!: FormGroup;
+  registerForm!: UntypedFormGroup;
 
-  constructor(private formBuilder: FormBuilder) {}
+  constructor(private formBuilder: UntypedFormBuilder) {}
 
   ngOnInit(): void {
     this.registerForm = this.formBuilder.group({

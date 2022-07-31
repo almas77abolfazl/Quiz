@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -35,9 +35,9 @@ export class QuestionComponent {
     return this._question;
   }
 
-  formGroup: FormGroup = new FormGroup({
-    questionId: new FormControl(),
-    answer: new FormControl(),
+  formGroup: UntypedFormGroup = new UntypedFormGroup({
+    questionId: new UntypedFormControl(),
+    answer: new UntypedFormControl(),
   });
 
   timeNum = timeNum;
