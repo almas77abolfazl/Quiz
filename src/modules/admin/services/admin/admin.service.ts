@@ -23,7 +23,11 @@ export class AdminService {
     );
   }
 
-  deleteQuestion(question: Question) {
-    return this.webRequestService.deleteQuestion(question)
+  deleteQuestion(questionId: string) {
+    return this.webRequestService.delete(`questions/${questionId}`);
+  }
+
+  getQuestion(questionId: string): Observable<Question> {
+    return this.webRequestService.get(`questions/${questionId}`);
   }
 }

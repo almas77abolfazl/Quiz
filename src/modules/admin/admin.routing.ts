@@ -10,6 +10,7 @@ const routes: Routes = [
     component: AdminComponent,
     children: [
       { path: 'add-quiz', component: AddQuizComponent },
+      { path: 'add-quiz/:id', component: AddQuizComponent },
       { path: 'quiz-list', component: QuizListComponent },
       { path: 'users-list', component: UsersListComponent },
     ],

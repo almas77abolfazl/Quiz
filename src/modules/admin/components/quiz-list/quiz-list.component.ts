@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { CellStyle, ColDef } from 'ag-grid-community';
 import { map } from 'rxjs/operators';
 import { Command, Question, QuestionOption } from 'src/models/models';
@@ -52,21 +53,23 @@ export class QuizListComponent implements OnInit {
       commandName: 'delete',
       label: 'حذف',
     },
+    {
+      commandName: 'edit',
+      label: 'ویرایش',
+    },
   ];
 
-  currentRow: any;
+  currentRow!: Question;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private router: Router) {}
 
   ngOnInit() {}
 
   public processCommand(command: Command) {
     if (command.commandName === 'delete') {
-      this.adminService.deleteQuestion(this.currentRow).subscribe((res) => {
-        if (res) {
-          this.doRedrawRows = true;
-        }
-      });
+      this.doDelete();
+    } else if (command.commandName === 'edit') {
+      this.doEdit();
     }
   }
 
@@ -98,5 +101,21 @@ export class QuizListComponent implements OnInit {
       rows.push(row);
     });
     return rows;
+  }
+
+  private doEdit() {
+    if (!this.currentRow) {
+      alert('لطفا یکی از آیتم ها را انتخاب کنید.');
+      return;
+    }
+    this.router.navigate(['admin/add-quiz', this.currentRow._id]);
+  }
+
+  private doDelete() {
+    this.adminService.deleteQuestion(this.currentRow._id).subscribe((res) => {
+      if (res) {
+        this.doRedrawRows = true;
+      }
+    });
   }
 }

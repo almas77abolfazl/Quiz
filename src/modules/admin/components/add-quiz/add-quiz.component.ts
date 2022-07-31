@@ -6,9 +6,9 @@ import {
   UntypedFormGroup,
   Validators,
 } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { QuestionOption } from 'src/models/models';
+import { Question, QuestionOption } from 'src/models/models';
 import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
@@ -16,7 +16,7 @@ import { AdminService } from '../../services/admin/admin.service';
   templateUrl: './add-quiz.component.html',
   styleUrls: ['./add-quiz.component.scss'],
 })
-export class AddQuizComponent implements OnInit ,OnDestroy{
+export class AddQuizComponent implements OnInit, OnDestroy {
   optionGroups: UntypedFormGroup[] = [];
 
   formGroup: UntypedFormGroup = new UntypedFormGroup({
@@ -26,9 +26,24 @@ export class AddQuizComponent implements OnInit ,OnDestroy{
 
   subscriptions = new Subscription();
 
-  constructor(private adminService: AdminService, private router: Router) {}
+  constructor(
+    private adminService: AdminService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    const navigatedId = this.route.snapshot.paramMap.get('id');
+    if (navigatedId) {
+      this.adminService
+        .getQuestion(navigatedId)
+        .subscribe((question: Question) => {
+          if (question) {
+            this.formGroup.patchValue({ questionText: question.questionText });
+          }
+        });
+    }
+  }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();

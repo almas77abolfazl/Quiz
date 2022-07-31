@@ -13,23 +13,23 @@ export class WebRequestService {
     this.ROOT_URL = 'http://localhost:5000';
   }
 
-  public get(uri: string) {
+  public get(uri: string): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/${uri}`);
   }
 
-  public post(uri: string, payload: Object) {
+  public post(uri: string, payload: Object): Observable<any> {
     return this.http.post(`${this.ROOT_URL}/${uri}`, payload);
   }
 
-  public patch(uri: string, payload: Object) {
+  public patch(uri: string, payload: Object): Observable<any> {
     return this.http.patch(`${this.ROOT_URL}/${uri}`, payload);
   }
 
-  public delete(uri: string) {
+  public delete(uri: string): Observable<any> {
     return this.http.delete(`${this.ROOT_URL}/${uri}`);
   }
 
-  public login(username: string, password: string) {
+  public login(username: string, password: string): Observable<any> {
     return this.http.post(
       `${this.ROOT_URL}/users/login`,
       {
@@ -54,17 +54,11 @@ export class WebRequestService {
     });
   }
 
-  public deleteQuestion(question: Question): Observable<any> {
-    return this.http.delete(`${this.ROOT_URL}/questions/${question._id}`, {
-      observe: 'response',
-    });
-  }
-
   public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
   }
 
-  public getRandomQuestion(options: any) {
+  public getRandomQuestion(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/questions/random`, options);
   }
 }
