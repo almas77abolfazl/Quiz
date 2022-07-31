@@ -1,17 +1,18 @@
-import { Component, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2 } from '@angular/core';
 import { AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgxSpinnerService } from 'ngx-spinner';
+import { Subscription } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { User } from 'src/models/models';
-import { AuthenticationService } from 'src/services/authentication/authentication.service';
+import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 
 @Component({
   selector: 'app-Container',
   templateUrl: './container.component.html',
   styleUrls: ['./container.component.scss'],
 })
-export class ContainerComponent implements OnInit {
+export class ContainerComponent implements OnInit, OnDestroy {
   private _loading = false;
 
   get loading() {
@@ -27,9 +28,10 @@ export class ContainerComponent implements OnInit {
     }
   }
 
-  error = '';
   activeTabNumber = 1;
   loginUrl = '/';
+
+  subscriptions = new Subscription();
 
   constructor(
     private renderer: Renderer2,
@@ -43,9 +45,13 @@ export class ContainerComponent implements OnInit {
     }
   }
 
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
+
   ngOnInit() {}
 
-  changeTab(
+  public changeTab(
     activeTab: HTMLElement,
     unActiveTab: HTMLElement,
     activeTabNumber: number
@@ -61,45 +67,47 @@ export class ContainerComponent implements OnInit {
     this.activeTabNumber = activeTabNumber;
   }
 
-  onLoginSubmit(f: { [key: string]: AbstractControl }) {
+  public onLoginSubmit(f: { [key: string]: AbstractControl }) {
     this.loading = true;
-    this.authenticationService
-      .login(f.username.value, f.password.value)
-      .pipe(first())
-      .subscribe(
-        (user: User) => {
-          this.navigateIntoTheApp(user);
-          this.loading = false;
-        },
-        (error: string) => {
-          this.error = error;
-          alert(error);
-          this.loading = false;
-        }
-      );
+    this.subscriptions.add(
+      this.authenticationService
+        .login(f.username.value, f.password.value)
+        .pipe(first())
+        .subscribe(
+          (user: User) => {
+            this.navigateIntoTheApp(user);
+            this.loading = false;
+          },
+          (error: string) => {
+            alert(error);
+            this.loading = false;
+          }
+        )
+    );
   }
 
-  onRegisterSubmit(f: { [key: string]: AbstractControl }) {
+  public onRegisterSubmit(f: { [key: string]: AbstractControl }) {
     this.loading = true;
     const userData = {
       email: f.email.value,
       username: f.username.value,
       password: f.password.value,
     };
-    this.authenticationService.register(userData).subscribe(
-      (user: User) => {
-        this.navigateIntoTheApp(user);
-        this.loading = false;
-      },
-      (error: string) => {
-        this.error = error;
-        alert(error);
-        this.loading = false;
-      }
+    this.subscriptions.add(
+      this.authenticationService.register(userData).subscribe(
+        (user: User) => {
+          this.navigateIntoTheApp(user);
+          this.loading = false;
+        },
+        (error: string) => {
+          alert(error);
+          this.loading = false;
+        }
+      )
     );
   }
 
-  navigateIntoTheApp(user: User) {
+  private navigateIntoTheApp(user: User) {
     if (user.role === 'sa' || user.role === 'admin') {
       this.loginUrl = '/admin';
     } else {

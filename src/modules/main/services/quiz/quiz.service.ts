@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { WebRequestService } from '../web-request/web-request.service';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Injectable()
 export class QuizService {

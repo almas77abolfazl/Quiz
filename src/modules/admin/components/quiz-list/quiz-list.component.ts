@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { CellStyle, ColDef } from 'ag-grid-community';
+import { map } from 'rxjs/operators';
 import { Question, QuestionOption } from 'src/models/models';
-import { AdminService } from 'src/services/admin/admin.service';
+import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
   selector: 'app-quiz-list',
@@ -8,14 +10,7 @@ import { AdminService } from 'src/services/admin/admin.service';
   styleUrls: ['./quiz-list.component.scss'],
 })
 export class QuizListComponent implements OnInit {
-  setCellStyles(value: string) {
-    if (value.endsWith('✅')) {
-      //mark police cells as red
-      return { color: 'white', backgroundColor: '#2aab2a' };
-    }
-    return null;
-  }
-  columnDefs = [
+  columnDefs: ColDef[] = [
     {
       headerName: 'سوال',
       field: 'questionText',
@@ -44,28 +39,38 @@ export class QuizListComponent implements OnInit {
     },
   ];
 
-  rowData: any[] = [];
-
-  loadCompleted = false;
+  data$ = this.adminService.questions$.pipe(
+    map((questions: Question[]) => {
+      return this.setStructureOfQuestionRows(questions);
+    })
+  );
 
   constructor(private adminService: AdminService) {}
 
-  ngOnInit() {
-    this.adminService.questions$.subscribe((questions: Question[]) => {
-      questions.forEach((question: Question) => {
-        const row: any = {};
-        row.questionText = question.questionText;
-        let index = 1;
-        question.options.forEach((option: QuestionOption) => {
-          row['option' + index] = option.optionText;
-          if (option.isAnswer) {
-            row['option' + index] += '✅';
-          }
-          ++index;
-        });
-        this.rowData.push(row);
+  ngOnInit() {}
+
+  private setCellStyles(value: string): CellStyle {
+    if (value.endsWith('✅')) {
+      return { color: 'white', backgroundColor: '#2aab2a' };
+    }
+    return {};
+  }
+
+  private setStructureOfQuestionRows(questions: Question[]): Question[] {
+    const rows: Question[] = [];
+    questions.forEach((question: Question) => {
+      const row: any = {};
+      row.questionText = question.questionText;
+      let index = 1;
+      question.options.forEach((option: QuestionOption) => {
+        row['option' + index] = option.optionText;
+        if (option.isAnswer) {
+          row['option' + index] += ' ✅';
+        }
+        ++index;
       });
-      this.loadCompleted = true;
+      rows.push(row);
     });
+    return rows;
   }
 }

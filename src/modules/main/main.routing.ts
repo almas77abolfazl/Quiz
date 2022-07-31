@@ -1,8 +1,8 @@
 import { MainComponent } from './main.component';
 import { Routes, RouterModule } from '@angular/router';
-import { StartQuizComponent } from './start-quiz/start-quiz.component';
-import { QuizPageComponent } from './quiz-page/quiz-page.component';
-import { QuizResultComponent } from './quiz-result/quiz-result.component';
+import { QuizPageComponent } from './components/quiz-page/quiz-page.component';
+import { QuizResultComponent } from './components/quiz-result/quiz-result.component';
+import { StartQuizComponent } from './components/start-quiz/start-quiz.component';
 
 const routes: Routes = [
   {

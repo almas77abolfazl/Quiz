@@ -5,12 +5,12 @@ import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { NgxSpinnerModule } from 'ngx-spinner';
 
-import { RegisterComponent } from './register/register.component';
 import { BasicAuthInterceptor } from '../helpers/basic-auth.interceptor';
-import { ContainerComponent } from './container/container.component';
-import { LoginComponent } from './login/login.component';
+import { LoginComponent } from './components/login/login.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { ContainerComponent } from './components/container/container.component';
+import { RegisterComponent } from './components/register/register.component';
 
 
 @NgModule({

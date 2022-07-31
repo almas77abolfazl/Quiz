@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Question, User } from 'src/models/models';
-import { WebRequestService } from '../web-request/web-request.service';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Injectable()
 export class AdminService {

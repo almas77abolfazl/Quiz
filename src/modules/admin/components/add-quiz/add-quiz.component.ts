@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   UntypedFormArray,
@@ -7,15 +7,16 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { QuestionOption } from 'src/models/models';
-import { AdminService } from 'src/services/admin/admin.service';
+import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
   selector: 'app-add-quiz',
   templateUrl: './add-quiz.component.html',
-  styleUrls: ['./add-quiz.component.scss']
+  styleUrls: ['./add-quiz.component.scss'],
 })
-export class AddQuizComponent implements OnInit {
+export class AddQuizComponent implements OnInit ,OnDestroy{
   optionGroups: UntypedFormGroup[] = [];
 
   formGroup: UntypedFormGroup = new UntypedFormGroup({
@@ -23,10 +24,15 @@ export class AddQuizComponent implements OnInit {
     options: new UntypedFormArray(this.getOptionsFormGroup()),
   });
 
-  constructor(private AdminService: AdminService,
-    private router : Router) {}
+  subscriptions = new Subscription();
+
+  constructor(private adminService: AdminService, private router: Router) {}
 
   ngOnInit(): void {}
+
+  ngOnDestroy(): void {
+    this.subscriptions.unsubscribe();
+  }
 
   public saveQuestion(): void {
     if (this.formGroup.valid) {
@@ -41,11 +47,13 @@ export class AddQuizComponent implements OnInit {
       }
 
       const question = this.formGroup.value;
-      this.AdminService.addQuestion(question).subscribe((res) => {
-        if (res) {
-          this.router.navigate(['admin/quiz-list'])
-        }
-      });
+      this.subscriptions.add(
+        this.adminService.addQuestion(question).subscribe((res) => {
+          if (res) {
+            this.router.navigate(['admin/quiz-list']);
+          }
+        })
+      );
     }
   }
 

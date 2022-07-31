@@ -1,24 +1,17 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AdminComponent } from './admin.component';
-import { HttpClientModule } from '@angular/common/http';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
+import { SharedModule } from '../shared/shared.module';
+
 import { AdminRoutes } from './admin.routing';
-import { QuizListComponent } from './quiz-list/quiz-list.component';
-import { AddQuizComponent } from './add-quiz/add-quiz.component';
-import { AgGridModule } from 'ag-grid-angular';
-import { UsersListComponent } from './users-list/users-list.component';
-import { AdminService } from 'src/services/admin/admin.service';
+import { AdminService } from './services/admin/admin.service';
+
+import { AdminComponent } from './admin.component';
+import { AddQuizComponent } from './components/add-quiz/add-quiz.component';
+import { QuizListComponent } from './components/quiz-list/quiz-list.component';
+import { UsersListComponent } from './components/users-list/users-list.component';
 
 @NgModule({
-  imports: [
-    CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
-    HttpClientModule,
-    AdminRoutes,
-    AgGridModule,
-  ],
+  imports: [SharedModule, AdminRoutes],
   declarations: [
     AdminComponent,
     AddQuizComponent,
