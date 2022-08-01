@@ -39,7 +39,10 @@ export class AddQuizComponent implements OnInit, OnDestroy {
         .getQuestion(navigatedId)
         .subscribe((question: Question) => {
           if (question) {
-            this.formGroup.patchValue({ questionText: question.questionText });
+            this.formGroup.patchValue({
+              questionText: question.questionText,
+              options: question.options,
+            });
           }
         });
     }

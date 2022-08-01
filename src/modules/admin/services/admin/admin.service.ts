@@ -28,6 +28,8 @@ export class AdminService {
   }
 
   getQuestion(questionId: string): Observable<Question> {
-    return this.webRequestService.get(`questions/${questionId}`);
+    return this.webRequestService
+      .get(`questions/${questionId}`)
+      .pipe(map((x) => x.question));
   }
 }
