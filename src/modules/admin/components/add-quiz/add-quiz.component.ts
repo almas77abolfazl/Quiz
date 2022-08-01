@@ -36,17 +36,8 @@ export class AddQuizComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    const navigatedId = this.route.snapshot.paramMap.get('id');
-    if (navigatedId) {
-      this.adminService
-        .getQuestion(navigatedId)
-        .subscribe((question: Question) => {
-          if (question) {
-            this.isNew = false;
-            this.formGroup.setValue(question);
-          }
-        });
-    }
+    this.loadFormOnNavigation();
+    this.onIsAnswerChanges();
   }
 
   ngOnDestroy(): void {
@@ -96,5 +87,37 @@ export class AddQuizComponent implements OnInit, OnDestroy {
       this.optionGroups.push(optionsGroup);
     }
     return controls;
+  }
+
+  private loadFormOnNavigation() {
+    const navigatedId = this.route.snapshot.paramMap.get('id');
+    if (navigatedId) {
+      this.adminService
+        .getQuestion(navigatedId)
+        .subscribe((question: Question) => {
+          if (question) {
+            this.isNew = false;
+            this.formGroup.setValue(question);
+          }
+        });
+    }
+  }
+
+  private onIsAnswerChanges() {
+    const options = this.formGroup.get('options') as UntypedFormArray;
+
+    const isAnswers: UntypedFormControl[] = [];
+    options.controls.forEach((formGroup: any) => {
+      isAnswers.push(formGroup.controls.isAnswer);
+      formGroup.controls.isAnswer.valueChanges.subscribe((next: boolean) => {
+        if (next) {
+          isAnswers.forEach((isAnswer) => {
+            if (isAnswer !== formGroup.controls.isAnswer) {
+              isAnswer.setValue(false);
+            }
+          });
+        }
+      });
+    });
   }
 }
