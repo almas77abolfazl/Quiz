@@ -112,6 +112,10 @@ export class QuizListComponent implements OnInit {
   }
 
   private doDelete() {
+    if (!this.currentRow) {
+      alert('لطفا یکی از آیتم ها را انتخاب کنید.');
+      return;
+    }
     this.adminService.deleteQuestion(this.currentRow._id).subscribe((res) => {
       if (res) {
         this.doRedrawRows = true;
