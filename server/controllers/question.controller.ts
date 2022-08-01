@@ -14,6 +14,22 @@ export class QuestionController {
     }
   }
 
+  async updateQuestion(req: Request, res: Response) {
+    try {
+      const updatedQuestion = await QuestionModel.findOneAndUpdate(
+        {
+          _id: req.body._id,
+        },
+        {
+          $set: req.body,
+        }
+      );
+      res.status(200).send(updatedQuestion);
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  }
+
   async getQuestions(req: Request, res: Response) {
     try {
       const allQuestions = await QuestionModel.find({});

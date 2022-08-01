@@ -51,6 +51,12 @@ const setQuestionRoutes = (app: Application) => {
       controller.createQuestion.bind(controller)
     );
   router
+    .route('/update')
+    .post(
+      userController.authenticate.bind(userController),
+      controller.updateQuestion.bind(controller)
+    );
+  router
     .route('/random')
     .get(
       userController.authenticate.bind(userController),
