@@ -20,11 +20,14 @@ export class AddQuizComponent implements OnInit, OnDestroy {
   optionGroups: UntypedFormGroup[] = [];
 
   formGroup: UntypedFormGroup = new UntypedFormGroup({
+    _id: new UntypedFormControl('', []),
+    __v: new UntypedFormControl('', []),
     questionText: new UntypedFormControl('', [Validators.required]),
     options: new UntypedFormArray(this.getOptionsFormGroup()),
   });
 
   subscriptions = new Subscription();
+  isNew = true;
 
   constructor(
     private adminService: AdminService,
@@ -39,10 +42,8 @@ export class AddQuizComponent implements OnInit, OnDestroy {
         .getQuestion(navigatedId)
         .subscribe((question: Question) => {
           if (question) {
-            this.formGroup.patchValue({
-              questionText: question.questionText,
-              options: question.options,
-            });
+            this.isNew = false;
+            this.formGroup.setValue(question);
           }
         });
     }
@@ -65,13 +66,21 @@ export class AddQuizComponent implements OnInit, OnDestroy {
       }
 
       const question = this.formGroup.value;
-      this.subscriptions.add(
-        this.adminService.addQuestion(question).subscribe((res) => {
+      if (this.isNew) {
+        this.subscriptions.add(
+          this.adminService.addQuestion(question).subscribe((res) => {
+            if (res) {
+              this.router.navigate(['admin/quiz-list']);
+            }
+          })
+        );
+      } else {
+        this.adminService.updateQuestion(question).subscribe((res) => {
           if (res) {
             this.router.navigate(['admin/quiz-list']);
           }
-        })
-      );
+        });
+      }
     }
   }
 
@@ -79,6 +88,7 @@ export class AddQuizComponent implements OnInit, OnDestroy {
     const controls: AbstractControl[] = [];
     for (let index = 0; index < 4; index++) {
       const optionsGroup = new UntypedFormGroup({
+        _id: new UntypedFormControl('', []),
         optionText: new UntypedFormControl('', [Validators.required]),
         isAnswer: new UntypedFormControl(false),
       });

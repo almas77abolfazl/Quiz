@@ -54,6 +54,12 @@ export class WebRequestService {
     });
   }
 
+  public updateQuestion(question: Question): Observable<any> {
+    return this.http.post(`${this.ROOT_URL}/questions/update`, question, {
+      observe: 'response',
+    });
+  }
+
   public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
   }

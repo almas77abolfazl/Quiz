@@ -23,6 +23,10 @@ export class AdminService {
     );
   }
 
+  updateQuestion(question: Question) {
+    return this.webRequestService.updateQuestion(question);
+  }
+
   deleteQuestion(questionId: string) {
     return this.webRequestService.delete(`questions/${questionId}`);
   }
