@@ -3,13 +3,34 @@ import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
 
-import { IUser, Session, UserModel } from '../models/user.model';
+import { IUser, Roles, Session, UserModel } from '../models/user.model';
 
 // JWT Secret
 const jwtSecret = '51778657246321226641fsdklafjasdkljfsklfjd7148924065';
 
 export class UserController {
   constructor() {}
+
+  public async addDefaultAdmin() {
+    UserModel.find({ role: Roles.sa }).then(async (superAdmin) => {
+      if (superAdmin.length === 0) {
+        try {
+          const newUser = new UserModel({
+            username: 'admin',
+            email: 'default@email.com',
+            password: '123',
+            role: Roles.sa,
+          });
+          this.hashPassWord(newUser);
+          await newUser.save();
+          await this.createSession(newUser);
+          console.log('default admin successfully added.');
+        } catch (error: any) {
+          console.log(error);
+        }
+      }
+    });
+  }
 
   public async getUsers(req: Request, res: Response) {
     try {
