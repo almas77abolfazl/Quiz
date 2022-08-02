@@ -50,12 +50,16 @@ export class QuizListComponent implements OnInit {
 
   commands: Command[] = [
     {
-      commandName: 'delete',
-      label: 'حذف',
+      commandName: 'new',
+      label: 'جدید',
     },
     {
       commandName: 'edit',
       label: 'ویرایش',
+    },
+    {
+      commandName: 'delete',
+      label: 'حذف',
     },
   ];
 
@@ -66,10 +70,16 @@ export class QuizListComponent implements OnInit {
   ngOnInit() {}
 
   public processCommand(command: Command) {
-    if (command.commandName === 'delete') {
-      this.doDelete();
-    } else if (command.commandName === 'edit') {
-      this.doEdit();
+    switch (command.commandName) {
+      case 'delete':
+        this.doDelete();
+        break;
+      case 'edit':
+        this.doEdit();
+        break;
+      case 'new':
+        this.doNew();
+        break;
     }
   }
 
@@ -121,5 +131,9 @@ export class QuizListComponent implements OnInit {
         this.doRedrawRows = true;
       }
     });
+  }
+
+  private doNew() {
+    this.router.navigate(['admin/add-quiz']);
   }
 }
