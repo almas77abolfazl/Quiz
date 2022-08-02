@@ -1,7 +1,9 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-
-
+import {
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
 
 @Component({
   selector: 'app-register',
@@ -13,6 +15,11 @@ export class RegisterComponent implements OnInit {
 
   registerForm!: UntypedFormGroup;
 
+  // convenience getter for easy access to form fields
+  get f() {
+    return this.registerForm.controls;
+  }
+
   constructor(private formBuilder: UntypedFormBuilder) {}
 
   ngOnInit(): void {
@@ -23,12 +30,7 @@ export class RegisterComponent implements OnInit {
     });
   }
 
-  // convenience getter for easy access to form fields
-  get f() {
-    return this.registerForm.controls;
-  }
-
-  onSubmit() {
+  onSubmit(): void {
     // stop here if form is invalid
     if (this.registerForm.invalid) {
       return;

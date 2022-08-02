@@ -1,5 +1,9 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import {
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators,
+} from '@angular/forms';
 
 @Component({
   selector: 'app-login',
@@ -11,6 +15,10 @@ export class LoginComponent implements OnInit {
 
   loginForm!: UntypedFormGroup;
 
+  // convenience getter for easy access to form fields
+  get f() {
+    return this.loginForm.controls;
+  }
   constructor(private formBuilder: UntypedFormBuilder) {}
 
   ngOnInit(): void {
@@ -20,12 +28,7 @@ export class LoginComponent implements OnInit {
     });
   }
 
-  // convenience getter for easy access to form fields
-  get f() {
-    return this.loginForm.controls;
-  }
-
-  onSubmit() {
+  onSubmit(): void {
     // stop here if form is invalid
     if (this.loginForm.invalid) {
       return;

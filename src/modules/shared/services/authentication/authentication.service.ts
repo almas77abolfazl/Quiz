@@ -1,12 +1,12 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { User } from 'src/models/models';
 import { WebRequestService } from '../web-request/web-request.service';
-
 
 @Injectable({
   providedIn: 'root',
@@ -15,9 +15,14 @@ export class AuthenticationService {
   public currentUser: Observable<User | null>;
   private currentUserSubject: BehaviorSubject<User | null>;
 
+  public get currentUserValue(): User | null {
+    return this.currentUserSubject.value;
+  }
+
   constructor(
     private webRequestService: WebRequestService,
-    private router: Router
+    private router: Router,
+    private spinner: NgxSpinnerService
   ) {
     this.currentUserSubject = new BehaviorSubject<User | null>(
       JSON.parse(localStorage.getItem('currentUser') as string)
@@ -25,13 +30,11 @@ export class AuthenticationService {
     this.currentUser = this.currentUserSubject.asObservable();
   }
 
-  public get currentUserValue(): User | null {
-    return this.currentUserSubject.value;
-  }
-
-  login(username: string, password: string) {
-    return this.webRequestService.login(username, password).pipe(
+  public login(userData: Partial<User>): Observable<User> {
+    this.spinner.show();
+    return this.webRequestService.login(userData).pipe(
       map((result: any) => {
+        this.spinner.hide();
         const user = result.body;
         this.setSession(user.user._id, user.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
@@ -41,9 +44,11 @@ export class AuthenticationService {
     );
   }
 
-  register(userData: Partial<User>) {
+  public register(userData: Partial<User>): Observable<User> {
+    this.spinner.show();
     return this.webRequestService.signup(userData).pipe(
       map((result: any) => {
+        this.spinner.hide();
         const user = result.body;
         this.setSession(user.user._id, user.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
@@ -53,7 +58,7 @@ export class AuthenticationService {
     );
   }
 
-  logout() {
+  public logout(): void {
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
     this.removeSession();
@@ -61,19 +66,15 @@ export class AuthenticationService {
     this.router.navigate(['/login']);
   }
 
-  getAccessToken() {
-    return localStorage.getItem('x-access-token');
+  public getAccessToken(): string {
+    return localStorage.getItem('x-access-token') || '';
   }
 
-  getUserId() {
-    return localStorage.getItem('user-id');
+  public getUserId(): string {
+    return localStorage.getItem('user-id') || '';
   }
 
-  setAccessToken(accessToken: string) {
-    localStorage.setItem('x-access-token', accessToken);
-  }
-
-  getNewAccessToken() {
+  public getNewAccessToken(): Observable<HttpResponse<any>> {
     const options = {
       headers: {
         _id: this.getUserId(),
@@ -87,13 +88,17 @@ export class AuthenticationService {
     );
   }
 
-  private setSession(id: string, accessToken: string) {
+  private setSession(id: string, accessToken: string): void {
     localStorage.setItem('user-id', id);
     localStorage.setItem('x-access-token', accessToken);
   }
 
-  private removeSession() {
+  private removeSession(): void {
     localStorage.removeItem('user-id');
     localStorage.removeItem('x-access-token');
+  }
+
+  private setAccessToken(accessToken: string): void {
+    localStorage.setItem('x-access-token', accessToken);
   }
 }

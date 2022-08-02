@@ -5,9 +5,10 @@ import {
   HttpInterceptor,
   HttpErrorResponse,
 } from '@angular/common/http';
-import { empty, Observable, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
+import { NgxSpinnerService } from 'ngx-spinner';
 
 @Injectable()
 export class BasicAuthInterceptor implements HttpInterceptor {
@@ -15,7 +16,10 @@ export class BasicAuthInterceptor implements HttpInterceptor {
 
   accessTokenRefreshed: Subject<any> = new Subject();
 
-  constructor(private authenticationService: AuthenticationService) {}
+  constructor(
+    private authenticationService: AuthenticationService,
+    private spinner: NgxSpinnerService
+  ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<any> {
     // Handle the request
@@ -24,7 +28,7 @@ export class BasicAuthInterceptor implements HttpInterceptor {
     // call next() and handle the response
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        console.log(error);
+        this.spinner.hide();
 
         if (error.status === 401) {
           // 401 error so we are unauthorized
@@ -38,12 +42,13 @@ export class BasicAuthInterceptor implements HttpInterceptor {
             catchError((err: any) => {
               console.log(err);
               this.authenticationService.logout();
-              return empty();
+              return of(err);
             })
           );
         }
 
-        return throwError(error);
+        alert(error.error);
+        return of(error);
       })
     );
   }

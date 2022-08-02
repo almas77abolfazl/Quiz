@@ -32,7 +32,7 @@ export class UserController {
     });
   }
 
-  public async getUsers(req: Request, res: Response) {
+  public async getUsers(req: Request, res: Response, next: NextFunction) {
     try {
       const allUsers = await UserModel.find({});
       allUsers.forEach((user) => {
@@ -44,7 +44,7 @@ export class UserController {
     }
   }
 
-  public async createUser(req: Request, res: Response) {
+  public async createUser(req: Request, res: Response, next: NextFunction) {
     try {
       const newUser = new UserModel(req.body);
       this.hashPassWord(newUser);
@@ -58,11 +58,11 @@ export class UserController {
       };
       res.status(200).send(ResponseData);
     } catch (error: any) {
-      res.status(400).send(error.message);
+      res.status(404).send(error);
     }
   }
 
-  public async login(req: Request, res: Response) {
+  public async login(req: Request, res: Response, next: NextFunction) {
     try {
       let username = req.body.username;
       let password = req.body.password;
@@ -76,11 +76,15 @@ export class UserController {
       };
       res.send(ResponseData);
     } catch (error: any) {
-      res.status(404).send(error.message);
+      res.status(404).send(error);
     }
   }
 
-  public async generateNewAccessToken(req: Request, res: Response) {
+  public async generateNewAccessToken(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
     try {
       let _id = req.header('_id') as string;
       const user = (await this.findUserById(_id)) as IUser;
@@ -99,9 +103,7 @@ export class UserController {
       const user = await this.findUserById(_id);
       if (!user) {
         // user couldn't be found
-        throw new Error(
-          'User not found. Make sure that the refresh token and user id are correct'
-        );
+        throw 'User not found. Make sure that the refresh token and user id are correct';
       }
 
       let refreshToken = user.sessions[user.sessions.length - 1].token;
@@ -130,7 +132,7 @@ export class UserController {
         next();
       } else {
         // the session is not valid
-        throw new Error('Refresh token has expired or the session is invalid');
+        throw 'Refresh token has expired or the session is invalid';
       }
     } catch (error) {
       res.status(401).send(error);
@@ -238,14 +240,14 @@ export class UserController {
     password: string
   ): Promise<IUser> {
     const user = await UserModel.findOne({ username });
-    if (!user) throw new Error('not find');
+    if (!user) throw 'user not find';
 
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, user.password, (err, res) => {
         if (res) {
           return resolve(user);
         } else {
-          throw new Error('passwordNotMatched');
+          return reject('passwordNotMatched');
         }
       });
     });

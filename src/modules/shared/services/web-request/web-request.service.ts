@@ -29,17 +29,10 @@ export class WebRequestService {
     return this.http.delete(`${this.ROOT_URL}/${uri}`);
   }
 
-  public login(username: string, password: string): Observable<any> {
-    return this.http.post(
-      `${this.ROOT_URL}/users/login`,
-      {
-        username,
-        password,
-      },
-      {
-        observe: 'response',
-      }
-    );
+  public login(useData: Partial<User>): Observable<any> {
+    return this.http.post(`${this.ROOT_URL}/users/login`, useData, {
+      observe: 'response',
+    });
   }
 
   public signup(useData: Partial<User>): Observable<any> {
