@@ -21,7 +21,7 @@ import { ToolbarComponent } from './components/toolbar/toolbar.component';
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
-    ToolbarComponent
+    ToolbarComponent,
   ],
 })
 export class SharedModule {}
