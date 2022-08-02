@@ -35,6 +35,9 @@ export class UserController {
   public async getUsers(req: Request, res: Response) {
     try {
       const allUsers = await UserModel.find({});
+      allUsers.forEach((user) => {
+        user.password = '';
+      });
       res.status(200).send(allUsers);
     } catch (error: any) {
       res.status(400).send(error.message);
