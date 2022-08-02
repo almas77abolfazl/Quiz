@@ -22,32 +22,34 @@ export class GridComponent implements OnInit, OnChanges {
   @Input() doRedrawRows = false;
   @Output() selectedRowChange = new EventEmitter<any[]>();
 
-  private gridApi!: GridApi<any>;
-
-  defaultColDef = {
+  public defaultColDef = {
     flex: 1,
     minWidth: 100,
   };
 
-  rowSelection: 'single' | 'multiple' = 'single';
+  public rowSelection: 'single' | 'multiple' = 'single';
 
-  IsRtl = true;
+  public IsRtl = true;
 
-  rowData: any[] = [];
+  public rowData: any[] = [];
 
-  loadCompleted = false;
+  public overlayLoadingTemplate =
+    '<span class="ag-overlay-loading-center">در حال بارگزاری</span>';
+  public overlayNoRowsTemplate =
+    '<span class="no-rows">هیچ ردیفی وجود ندارد.</span>';
+
+  private gridApi!: GridApi<any>;
 
   constructor() {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.doRedrawRows?.currentValue) {
-      this.redrawRows();
+      this.loadData();
     }
   }
 
   ngOnInit() {
     this.addSelectCheckBox();
-    this.loadData();
   }
 
   onSelectionChange(e: any) {
@@ -57,16 +59,16 @@ export class GridComponent implements OnInit, OnChanges {
 
   onGridReady(params: GridReadyEvent<any>) {
     this.gridApi = params.api;
-  }
-
-  redrawRows() {
     this.loadData();
   }
 
   private loadData() {
+    this.gridApi.showLoadingOverlay();
+
     const subscription = this.data$.subscribe((data) => {
+      this.gridApi.hideOverlay();
       this.rowData = data;
-      this.loadCompleted = true;
+
       subscription.unsubscribe();
     });
   }
