@@ -10,29 +10,34 @@ export interface IQuestion extends Document {
   options: Option[];
 }
 
-const QuestionSchema: Schema = new Schema({
-  questionText: {
-    type: String,
-    required: true,
-    minlength: 1,
-    trim: true,
-    unique: true,
-  },
-
-  options: [
-    {
-      optionText: {
-        type: String,
-        required: true,
-        minlength: 1,
-        trim: true,
-      },
-      isAnswer: {
-        type: Boolean,
-      },
+const QuestionSchema: Schema = new Schema(
+  {
+    questionText: {
+      type: String,
+      required: true,
+      minlength: 1,
+      trim: true,
+      unique: true,
     },
-  ],
-});
+
+    options: [
+      {
+        optionText: {
+          type: String,
+          required: true,
+          minlength: 1,
+          trim: true,
+        },
+        isAnswer: {
+          type: Boolean,
+        },
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
 
 // Export the model and return your IQuestion interface
 export const QuestionModel = mongoose.model<IQuestion>(
