@@ -76,7 +76,10 @@ export class GridComponent implements OnInit, OnChanges {
       this.columnDefs.splice(0, 0, {
         headerName: 'انتخاب',
         field: '',
-        width: 100,
+        pinned: 'right',
+        lockPinned: true,
+        width: 70,
+        minWidth: 50,
         flex: 0,
         checkboxSelection: true,
       });

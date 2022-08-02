@@ -20,9 +20,9 @@ export class AddQuizComponent implements OnInit, OnDestroy {
   optionGroups: UntypedFormGroup[] = [];
 
   formGroup: UntypedFormGroup = new UntypedFormGroup({
-    _id: new UntypedFormControl('', []),
-    __v: new UntypedFormControl('', []),
-    questionText: new UntypedFormControl('', [Validators.required]),
+    _id: new UntypedFormControl(null, []),
+    __v: new UntypedFormControl(null, []),
+    questionText: new UntypedFormControl(null, [Validators.required]),
     options: new UntypedFormArray(this.getOptionsFormGroup()),
   });
 
@@ -59,11 +59,13 @@ export class AddQuizComponent implements OnInit, OnDestroy {
       const question = this.formGroup.value;
       if (this.isNew) {
         this.subscriptions.add(
-          this.adminService.addQuestion(question).subscribe((res) => {
-            if (res) {
-              this.router.navigate(['admin/quiz-list']);
-            }
-          })
+          this.adminService
+            .addQuestion(this.removeNullProperties(question))
+            .subscribe((res) => {
+              if (res) {
+                this.router.navigate(['admin/quiz-list']);
+              }
+            })
         );
       } else {
         this.adminService.updateQuestion(question).subscribe((res) => {
@@ -79,8 +81,8 @@ export class AddQuizComponent implements OnInit, OnDestroy {
     const controls: AbstractControl[] = [];
     for (let index = 0; index < 4; index++) {
       const optionsGroup = new UntypedFormGroup({
-        _id: new UntypedFormControl('', []),
-        optionText: new UntypedFormControl('', [Validators.required]),
+        _id: new UntypedFormControl(null, []),
+        optionText: new UntypedFormControl(null, [Validators.required]),
         isAnswer: new UntypedFormControl(false),
       });
       controls.push(optionsGroup);
@@ -119,5 +121,14 @@ export class AddQuizComponent implements OnInit, OnDestroy {
         }
       });
     });
+  }
+
+  private removeNullProperties(obj: any) {
+    for (const propName in obj) {
+      if (obj[propName] === null || obj[propName] === undefined) {
+        delete obj[propName];
+      }
+    }
+    return obj;
   }
 }

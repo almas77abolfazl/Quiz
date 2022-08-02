@@ -1,12 +1,16 @@
-<app-toolbar
-  [commands]="commands"
-  (processCommand)="processCommand($event)"
-></app-toolbar>
+<div class="flex-container flex column">
+  <app-toolbar
+    [commands]="commands"
+    (processCommand)="processCommand($event)"
+  ></app-toolbar>
 
-<app-grid
-  [columnDefs]="columnDefs"
-  [data$]="data$"
-  [hasCheckboxSelection]="true"
-  (selectedRowChange)="onSelectedRowChange($event)"
-  [doRedrawRows]="doRedrawRows"
-></app-grid>
+  <div class="flex-fill">
+    <app-grid
+      [columnDefs]="columnDefs"
+      [data$]="data$"
+      [hasCheckboxSelection]="true"
+      (selectedRowChange)="onSelectedRowChange($event)"
+      [doRedrawRows]="doRedrawRows"
+    ></app-grid>
+  </div>
+</div>
