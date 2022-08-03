@@ -3,14 +3,14 @@
     <div id="formContent">
       <!-- Tabs Titles -->
       <h2 class="active" #firstTab (click)="changeTab(firstTab, secondTab, 1)">
-        Sign In
+        {{ "labels.logIn" | translate }}
       </h2>
       <h2
         class="inactive underlineHover"
         #secondTab
         (click)="changeTab(secondTab, firstTab, 2)"
       >
-        Sign Up
+        {{ "labels.signUp" | translate }}
       </h2>
 
       <ng-container [ngSwitch]="activeTabNumber">
@@ -18,7 +18,9 @@
           <app-login (loginSubmit)="onLoginSubmit($event)"></app-login>
         </ng-container>
         <ng-container *ngSwitchCase="2">
-          <app-register (registerSubmit)="onRegisterSubmit($event)"></app-register>
+          <app-register
+            (registerSubmit)="onRegisterSubmit($event)"
+          ></app-register>
         </ng-container>
       </ng-container>
     </div>

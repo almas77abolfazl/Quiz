@@ -5,6 +5,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GridComponent } from './components/grid/grid.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
+import { TranslateModule } from '@ngx-translate/core';
 
 @NgModule({
   imports: [
@@ -13,6 +14,7 @@ import { ToolbarComponent } from './components/toolbar/toolbar.component';
     ReactiveFormsModule,
     HttpClientModule,
     AgGridModule,
+    TranslateModule
   ],
   declarations: [GridComponent, ToolbarComponent],
   exports: [
@@ -22,6 +24,7 @@ import { ToolbarComponent } from './components/toolbar/toolbar.component';
     ReactiveFormsModule,
     HttpClientModule,
     ToolbarComponent,
+    TranslateModule
   ],
 })
 export class SharedModule {}

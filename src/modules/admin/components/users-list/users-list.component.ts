@@ -10,9 +10,9 @@ import { AdminService } from '../../services/admin/admin.service';
 })
 export class UsersListComponent implements OnInit {
   columnDefs: ColDef[] = [
-    { headerName: 'نام کاربری', field: 'username' },
-    { headerName: 'ایمیل', field: 'email' },
-    { headerName: 'نقش', field: 'role' },
+    { headerName: 'labels.username', field: 'username' },
+    { headerName: 'labels.email', field: 'email' },
+    { headerName: 'labels.role', field: 'role' },
   ];
 
   data$ = this.adminService.users$;
@@ -20,7 +20,7 @@ export class UsersListComponent implements OnInit {
   commands: Command[] = [
     {
       commandName: 'delete',
-      label: 'حذف',
+      label: 'labels.delete',
     },
   ];
 

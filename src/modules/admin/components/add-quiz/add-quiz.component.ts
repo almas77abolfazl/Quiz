@@ -52,7 +52,7 @@ export class AddQuizComponent implements OnInit, OnDestroy {
       );
 
       if (isAnswersValues.length === 0) {
-        alert('لطفا یکی از گزینه ها را به عنوان جواب تنظیم کنید.');
+        alert('Messages.setOneOfTheOptionsAsAnswer');
         return;
       }
 

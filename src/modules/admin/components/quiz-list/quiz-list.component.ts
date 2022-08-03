@@ -13,28 +13,28 @@ import { AdminService } from '../../services/admin/admin.service';
 export class QuizListComponent implements OnInit {
   columnDefs: ColDef[] = [
     {
-      headerName: 'سوال',
+      headerName: 'labels.questionText',
       field: 'questionText',
       cellStyle: { color: 'black', backgroundColor: '#b6b0b0' },
       width: 300,
     },
     {
-      headerName: 'گزینه اول',
+      headerName: 'labels.firstOption',
       field: 'option1',
       cellStyle: (params: any) => this.setCellStyles(params.value),
     },
     {
-      headerName: 'گزینه دوم',
+      headerName: 'labels.secondOption',
       field: 'option2',
       cellStyle: (params: any) => this.setCellStyles(params.value),
     },
     {
-      headerName: 'گزینه سوم',
+      headerName: 'labels.thirdOption',
       field: 'option3',
       cellStyle: (params: any) => this.setCellStyles(params.value),
     },
     {
-      headerName: 'گزینه چهارم',
+      headerName: 'labels.fourthOption',
       field: 'option4',
       cellStyle: (params: any) => this.setCellStyles(params.value),
     },
@@ -51,15 +51,15 @@ export class QuizListComponent implements OnInit {
   commands: Command[] = [
     {
       commandName: 'new',
-      label: 'جدید',
+      label: 'labels.new',
     },
     {
       commandName: 'edit',
-      label: 'ویرایش',
+      label: 'labels.edit',
     },
     {
       commandName: 'delete',
-      label: 'حذف',
+      label: 'labels.delete',
     },
   ];
 
@@ -115,7 +115,7 @@ export class QuizListComponent implements OnInit {
 
   private doEdit() {
     if (!this.currentRow) {
-      alert('لطفا یکی از آیتم ها را انتخاب کنید.');
+      alert('messages.selectItem');
       return;
     }
     this.router.navigate(['admin/add-quiz', this.currentRow._id]);
@@ -123,7 +123,7 @@ export class QuizListComponent implements OnInit {
 
   private doDelete() {
     if (!this.currentRow) {
-      alert('لطفا یکی از آیتم ها را انتخاب کنید.');
+      alert('messages.selectItem');
       return;
     }
     this.adminService.deleteQuestion(this.currentRow._id).subscribe((res) => {

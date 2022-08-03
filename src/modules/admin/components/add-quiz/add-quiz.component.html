@@ -19,7 +19,7 @@
       <textarea
         autocomplete="off"
         rows="5"
-        [placeholder]="'سوال'"
+        [placeholder]="'labels.questionText' | translate"
         formControlName="questionText"
       ></textarea>
     </div>
@@ -35,7 +35,7 @@
             autocomplete="off"
             formControlName="optionText"
           />
-          <label [for]="'optionText' + i">گزینه {{ i + 1 }}</label>
+          <label [for]="'optionText' + i">{{"labels.option" | translate}} {{ i + 1 }}</label>
           <input
             type="checkbox"
             [name]="'isAnswer' + i"

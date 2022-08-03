@@ -10,7 +10,7 @@
     id="username"
     class="fadeIn second"
     name="username"
-    placeholder="username"
+    [placeholder]="'labels.username' | translate"
     formControlName="username"
   />
   <input
@@ -18,13 +18,13 @@
     id="password"
     class="fadeIn third"
     name="password"
-    placeholder="password"
+    [placeholder]="'labels.password' | translate"
     formControlName="password"
   />
-  <input type="submit" class="fadeIn fourth" value="Log In" />
+  <input type="submit" class="fadeIn fourth" [value]="'labels.logIn' | translate" />
 </form>
 
 <!-- Remind Passowrd -->
 <div id="formFooter">
-  <a class="underlineHover" href="#">Forgot Password?</a>
+  <a class="underlineHover" href="#">{{ "labels.forgotPassword" | translate }}</a>
 </div>

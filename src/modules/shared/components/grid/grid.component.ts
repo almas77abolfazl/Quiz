@@ -7,6 +7,7 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable } from 'rxjs';
 
@@ -34,13 +35,13 @@ export class GridComponent implements OnInit, OnChanges {
   public rowData: any[] = [];
 
   public overlayLoadingTemplate =
-    '<span class="ag-overlay-loading-center">در حال بارگزاری</span>';
+    '<span class="ag-overlay-loading-center">در حال بارگزاری...</span>';
   public overlayNoRowsTemplate =
     '<span class="no-rows">هیچ ردیفی وجود ندارد.</span>';
 
   private gridApi!: GridApi<any>;
 
-  constructor() {}
+  constructor(private translateService: TranslateService) {}
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.doRedrawRows?.currentValue) {
@@ -50,6 +51,11 @@ export class GridComponent implements OnInit, OnChanges {
 
   ngOnInit() {
     this.addSelectCheckBox();
+    this.columnDefs.forEach((col) => {
+      this.translateService.get(col.headerName || '').subscribe((x) => {
+        col.headerName = x;
+      });
+    });
   }
 
   onSelectionChange(e: any) {
@@ -76,7 +82,7 @@ export class GridComponent implements OnInit, OnChanges {
   private addSelectCheckBox() {
     if (this.hasCheckboxSelection) {
       this.columnDefs.splice(0, 0, {
-        headerName: 'انتخاب',
+        headerName: 'labels.select',
         field: '',
         pinned: 'right',
         lockPinned: true,

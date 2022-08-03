@@ -10,7 +10,7 @@
     id="username"
     class="fadeIn second"
     name="username"
-    placeholder="username"
+    [placeholder]="'labels.username'| translate"
     formControlName="username"
   />
   <input
@@ -18,7 +18,7 @@
     id="password"
     class="fadeIn third"
     name="password"
-    placeholder="password"
+    [placeholder]="'labels.password'| translate"
     formControlName="password"
   />
   <input
@@ -26,10 +26,10 @@
     id="email"
     class="fadeIn fourth"
     name="email"
-    placeholder="email"
+    [placeholder]="'labels.email'| translate"
     formControlName="email"
   />
-  <input type="submit" class="fadeIn fifth" value="Sign Up" />
+  <input type="submit" class="fadeIn fifth" [value]="'labels.signUp'| translate" />
 </form>
 
 <!-- Remind Passowrd -->

@@ -1,6 +1,32 @@
 {
-  "password": "گذرواژه",
-  "username": "نام کاربری",
-  "ForgotPassword": "کلمه عبور خود را فراموش کرده اید؟",
-  "LogIn": "ورود به سیستم"
+  "labels": {
+    "password": "گذرواژه",
+    "username": "نام کاربری",
+    "forgotPassword": "کلمه عبور خود را فراموش کرده اید؟",
+    "logIn": "ورود به سیستم",
+    "signUp": "ثبت نام",
+    "email": "ایمیل",
+    "goToQuizPage": "رفتن به صفحه آزمون",
+    "usersList": "لیست کاربران",
+    "addQuiz": "سوال جدید",
+    "quizList": "لیست سوالات",
+    "logOut": "خروج",
+    "questionText": "متن سوال",
+    "option": "گزینه",
+    "firstOption": "گزینه اول",
+    "secondOption": "گزینه دوم",
+    "thirdOption": "گزینه سوم",
+    "fourthOption": "گزینه چهارم",
+    "new": "جدید",
+    "edit": "ویرایش",
+    "delete": "حذف",
+    "role": "نقش",
+    "select": "انتخاب"
+  },
+  "messages": {
+    "selectItem": "لطفا یکی از آیتم ها را انتخاب کنید.",
+    "setOneOfTheOptionsAsAnswer": "لطفا یکی از گزینه ها را به عنوان جواب تنظیم کنید.",
+    "thereAreNoRows":"هیچ ردیفی وجود ندارد.",
+    "loading":"در حال بارگزاری..."
+  }
 }

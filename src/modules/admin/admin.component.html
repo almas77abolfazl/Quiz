@@ -1,14 +1,14 @@
 <div class="flex-container flex column">
   <nav class="admin-nav flex end">
-    <button [routerLink]="['/main']">رفتن به صفحه آزمون</button>
-    <button (click)="logout()">خروج</button>
+    <button [routerLink]="['/main']">{{ "labels.goToQuizPage" | translate }}</button>
+    <button (click)="logout()">{{ "labels.logOut" | translate }}</button>
   </nav>
 
   <div class="flex flex-fill row">
     <div class="admin-menu flex column">
-      <a [routerLink]="['users-list']">لیست کاربران</a>
-      <a [routerLink]="['add-quiz']">سوال جدید</a>
-      <a [routerLink]="['quiz-list']">لیست سوال ها</a>
+      <a [routerLink]="['users-list']">{{ "labels.usersList" | translate }}</a>
+      <a [routerLink]="['add-quiz']">{{ "labels.addQuiz" | translate }}</a>
+      <a [routerLink]="['quiz-list']">{{ "labels.quizList" | translate }}</a>
     </div>
     <div class="admin-form">
       <router-outlet></router-outlet>
