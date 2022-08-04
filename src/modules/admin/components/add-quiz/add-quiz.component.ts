@@ -22,6 +22,8 @@ export class AddQuizComponent implements OnInit, OnDestroy {
   formGroup: UntypedFormGroup = new UntypedFormGroup({
     _id: new UntypedFormControl(null, []),
     __v: new UntypedFormControl(null, []),
+    createdAt: new UntypedFormControl(null, []),
+    updatedAt: new UntypedFormControl(null, []),
     questionText: new UntypedFormControl(null, [Validators.required]),
     options: new UntypedFormArray(this.getOptionsFormGroup()),
   });
@@ -127,6 +129,12 @@ export class AddQuizComponent implements OnInit, OnDestroy {
     for (const propName in obj) {
       if (obj[propName] === null || obj[propName] === undefined) {
         delete obj[propName];
+      } else if (obj[propName].constructor === Array) {
+        obj[propName].forEach((obj2: any) => {
+          this.removeNullProperties(obj2);
+        });
+      }else if (typeof obj[propName] === 'object') {
+        this.removeNullProperties(obj[propName]);
       }
     }
     return obj;
