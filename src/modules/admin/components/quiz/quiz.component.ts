@@ -12,11 +12,11 @@ import { FormBase } from 'src/modules/shared/base-classes/form.base';
 import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
-  selector: 'app-add-quiz',
-  templateUrl: './add-quiz.component.html',
-  styleUrls: ['./add-quiz.component.scss'],
+  selector: 'app-quiz',
+  templateUrl: './quiz.component.html',
+  styleUrls: ['./quiz.component.scss'],
 })
-export class AddQuizComponent extends FormBase<Question> {
+export class QuizComponent extends FormBase<Question> {
   //#region public variables
 
   optionGroups: FormGroup[] = [];

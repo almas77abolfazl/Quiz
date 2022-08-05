@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { ColDef } from 'ag-grid-community';
+
 import { Command } from 'src/models/models';
 import { GridSelectEditorComponent } from 'src/modules/shared/components/grid-select-editor/grid-select-editor.component';
 import { AdminService } from '../../services/admin/admin.service';
@@ -39,24 +41,29 @@ export class UsersListComponent implements OnInit {
 
   commands: Command[] = [
     {
-      commandName: 'save',
-      label: 'labels.save',
+      commandName: 'edit',
+      label: 'labels.edit',
     },
   ];
 
   currentRow: any;
 
-  constructor(private adminService: AdminService) {}
+  constructor(private adminService: AdminService, private router: Router) {}
 
   ngOnInit() {}
 
   processCommand(command: Command) {
-    if (command.commandName === 'save') {
-      this
+    if (command.commandName === 'edit') {
+      if (!this.currentRow) {
+        alert('messages.selectItem');
+        return;
+      }
+      // this.router.navigate(['admin/user', this.currentRow._id]);
+      alert('این قسمت هنوز کامل نشده است')
     }
   }
 
-  onSelectedRowChange(currentRow: any) {
-    this.currentRow = currentRow;
+  onSelectedRowChange(selectedRows: any) {
+    this.currentRow = selectedRows[0];
   }
 }

@@ -7,4 +7,5 @@
   [columnDefs]="columnDefs"
   [data$]="data$"
   [hasCheckboxSelection]="true"
+  (selectedRowChange)="onSelectedRowChange($event)"
 ></app-grid>

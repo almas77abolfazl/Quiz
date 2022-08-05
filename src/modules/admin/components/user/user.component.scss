@@ -1,0 +1,310 @@
+.form-item {
+  display: flex;
+  position: relative;
+  margin-bottom: 15px;
+  input[type="text"] {
+    display: block;
+    width: 400px;
+    height: 40px;
+    border: solid 1px #ccc;
+    transition: all 0.3s ease;
+    padding: 0 15px;
+    &:focus {
+      border-color: blue;
+    }
+  }
+  textarea {
+    display: block;
+    width: 400px;
+    height: 40px;
+    border: solid 1px #ccc;
+    transition: all 0.3s ease;
+    padding: 0 15px;
+    &:focus {
+      border-color: blue;
+    }
+  }
+  label {
+    position: absolute;
+    cursor: text;
+    z-index: 2;
+    top: 13px;
+    right: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #fff;
+    padding: 0 10px;
+    color: #999;
+    transition: all 0.3s ease;
+    border: 1px solid;
+  }
+  input:focus + label,
+  input:valid + label {
+    font-size: 11px;
+    top: -5px;
+  }
+  input:focus + label {
+    color: blue;
+  }
+}
+
+////////
+
+.cf:before,
+.cf:after {
+  content: "";
+  display: table;
+}
+.cf:after {
+  clear: both;
+}
+
+.toolbar {
+  padding: 0;
+  border-radius: 4px;
+  box-shadow: 0 0 3px rgba(64, 100, 138, 0.3), 0 2px 4px #3b5c7f,
+    0 12px 18px rgba(64, 100, 138, 0.4);
+}
+.toolbar li {
+  float: left;
+  list-style: none;
+  width: 25%;
+  text-align: center;
+}
+.toolbar a {
+  background: #f4f7f9;
+  background: -moz-linear-gradient(
+    top,
+    #f4f7f9 0%,
+    #f7fafd 4%,
+    #ecf2f7 30%,
+    #e4ebf3 68%,
+    #dce4ee 89%,
+    #d5e0eb 92%,
+    #c7d3e0 96%,
+    #c6d2df 100%
+  );
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(0%, #f4f7f9),
+    color-stop(4%, #f7fafd),
+    color-stop(30%, #ecf2f7),
+    color-stop(68%, #e4ebf3),
+    color-stop(89%, #dce4ee),
+    color-stop(92%, #d5e0eb),
+    color-stop(96%, #c7d3e0),
+    color-stop(100%, #c6d2df)
+  );
+  background: -webkit-linear-gradient(
+    top,
+    #f4f7f9 0%,
+    #f7fafd 4%,
+    #ecf2f7 30%,
+    #e4ebf3 68%,
+    #dce4ee 89%,
+    #d5e0eb 92%,
+    #c7d3e0 96%,
+    #c6d2df 100%
+  );
+  background: -o-linear-gradient(
+    top,
+    #f4f7f9 0%,
+    #f7fafd 4%,
+    #ecf2f7 30%,
+    #e4ebf3 68%,
+    #dce4ee 89%,
+    #d5e0eb 92%,
+    #c7d3e0 96%,
+    #c6d2df 100%
+  );
+  background: -ms-linear-gradient(
+    top,
+    #f4f7f9 0%,
+    #f7fafd 4%,
+    #ecf2f7 30%,
+    #e4ebf3 68%,
+    #dce4ee 89%,
+    #d5e0eb 92%,
+    #c7d3e0 96%,
+    #c6d2df 100%
+  );
+  background: linear-gradient(
+    to bottom,
+    #f4f7f9 0%,
+    #f7fafd 4%,
+    #ecf2f7 30%,
+    #e4ebf3 68%,
+    #dce4ee 89%,
+    #d5e0eb 92%,
+    #c7d3e0 96%,
+    #c6d2df 100%
+  );
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#f4f7f9', endColorstr='#c6d2df',GradientType=0 );
+  border-left: 1px solid rgba(79, 123, 170, 0.4);
+  border-right: 1px solid rgba(255, 255, 255, 0.3);
+  color: #40648a;
+  display: block;
+  font-size: 27px;
+  height: 54px;
+  line-height: 57px;
+  text-decoration: none;
+  text-shadow: 0 1px 0 #fff;
+}
+.toolbar li:first-child a {
+  border-left: none;
+  border-radius: 4px 0 0 4px;
+}
+.toolbar li:last-child a {
+  border-right: none;
+  border-radius: 0 4px 4px 0;
+}
+.toolbar a:hover {
+  background: #aac5e0;
+  background: -moz-linear-gradient(
+    top,
+    #aac5e0 0%,
+    #adc8e4 4%,
+    #a2c0de 30%,
+    #9ab9da 68%,
+    #92b2d5 89%,
+    #8baed2 92%,
+    #7da1c7 96%,
+    #7ca0c6 100%
+  );
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(0%, #aac5e0),
+    color-stop(4%, #adc8e4),
+    color-stop(30%, #a2c0de),
+    color-stop(68%, #9ab9da),
+    color-stop(89%, #92b2d5),
+    color-stop(92%, #8baed2),
+    color-stop(96%, #7da1c7),
+    color-stop(100%, #7ca0c6)
+  );
+  background: -webkit-linear-gradient(
+    top,
+    #aac5e0 0%,
+    #adc8e4 4%,
+    #a2c0de 30%,
+    #9ab9da 68%,
+    #92b2d5 89%,
+    #8baed2 92%,
+    #7da1c7 96%,
+    #7ca0c6 100%
+  );
+  background: -o-linear-gradient(
+    top,
+    #aac5e0 0%,
+    #adc8e4 4%,
+    #a2c0de 30%,
+    #9ab9da 68%,
+    #92b2d5 89%,
+    #8baed2 92%,
+    #7da1c7 96%,
+    #7ca0c6 100%
+  );
+  background: -ms-linear-gradient(
+    top,
+    #aac5e0 0%,
+    #adc8e4 4%,
+    #a2c0de 30%,
+    #9ab9da 68%,
+    #92b2d5 89%,
+    #8baed2 92%,
+    #7da1c7 96%,
+    #7ca0c6 100%
+  );
+  background: linear-gradient(
+    to bottom,
+    #aac5e0 0%,
+    #adc8e4 4%,
+    #a2c0de 30%,
+    #9ab9da 68%,
+    #92b2d5 89%,
+    #8baed2 92%,
+    #7da1c7 96%,
+    #7ca0c6 100%
+  );
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#aac5e0', endColorstr='#7ca0c6',GradientType=0 );
+  color: #fff;
+  text-shadow: 0 1px 0 #40648a;
+}
+.toolbar a:active {
+  background: #8aafd5;
+  background: -moz-linear-gradient(
+    top,
+    #8aafd5 0%,
+    #8db2d9 4%,
+    #82aad3 30%,
+    #7aa3cf 68%,
+    #729cca 89%,
+    #6b98c7 92%,
+    #5d8bbc 96%,
+    #5c8abb 100%
+  );
+  background: -webkit-gradient(
+    linear,
+    left top,
+    left bottom,
+    color-stop(0%, #8aafd5),
+    color-stop(4%, #8db2d9),
+    color-stop(30%, #82aad3),
+    color-stop(68%, #7aa3cf),
+    color-stop(89%, #729cca),
+    color-stop(92%, #6b98c7),
+    color-stop(96%, #5d8bbc),
+    color-stop(100%, #5c8abb)
+  );
+  background: -webkit-linear-gradient(
+    top,
+    #8aafd5 0%,
+    #8db2d9 4%,
+    #82aad3 30%,
+    #7aa3cf 68%,
+    #729cca 89%,
+    #6b98c7 92%,
+    #5d8bbc 96%,
+    #5c8abb 100%
+  );
+  background: -o-linear-gradient(
+    top,
+    #8aafd5 0%,
+    #8db2d9 4%,
+    #82aad3 30%,
+    #7aa3cf 68%,
+    #729cca 89%,
+    #6b98c7 92%,
+    #5d8bbc 96%,
+    #5c8abb 100%
+  );
+  background: -ms-linear-gradient(
+    top,
+    #8aafd5 0%,
+    #8db2d9 4%,
+    #82aad3 30%,
+    #7aa3cf 68%,
+    #729cca 89%,
+    #6b98c7 92%,
+    #5d8bbc 96%,
+    #5c8abb 100%
+  );
+  background: linear-gradient(
+    to bottom,
+    #8aafd5 0%,
+    #8db2d9 4%,
+    #82aad3 30%,
+    #7aa3cf 68%,
+    #729cca 89%,
+    #6b98c7 92%,
+    #5d8bbc 96%,
+    #5c8abb 100%
+  );
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#8aafd5', endColorstr='#5c8abb',GradientType=0 );
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3) inset;
+  text-shadow: 0 -1px 0 #40648a;
+}

@@ -1,0 +1,82 @@
+<div class="form-container">
+  <ul class="toolbar cf">
+    <li (click)="saveUser()">
+      <a><i class="far fa-save"></i></a>
+    </li>
+    <li>
+      <a><i class="icon-heart-empty"></i></a>
+    </li>
+    <li>
+      <a><i class="icon-comments-alt"></i></a>
+    </li>
+    <li>
+      <a><i class="icon-cloud"></i></a>
+    </li>
+  </ul>
+
+  <form [formGroup]="formGroup">
+    <div class="form-item">
+      <input
+        type="text"
+        id="username"
+        autocomplete="off"
+        formControlName="username"
+      />
+      <label [for]="'username'">{{ "labels.username" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="password"
+        id="password"
+        autocomplete="off"
+        formControlName="password"
+      />
+      <label [for]="'password'">{{ "labels.password" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="email"
+        autocomplete="off"
+        formControlName="email"
+      />
+      <label [for]="'email'">{{ "labels.email" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="firstName"
+        autocomplete="off"
+        formControlName="firstName"
+      />
+      <label [for]="'firstName'">{{ "labels.firstName" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="lastName"
+        autocomplete="off"
+        formControlName="lastName"
+      />
+      <label [for]="'lastName'">{{ "labels.lastName" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="gender"
+        autocomplete="off"
+        formControlName="gender"
+      />
+      <label [for]="'gender'">{{ "labels.gender" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <input
+        type="text"
+        id="address"
+        autocomplete="off"
+        formControlName="address"
+      />
+      <label [for]="'address'">{{ "labels.address" | translate }}</label>
+    </div>
+  </form>
+</div>

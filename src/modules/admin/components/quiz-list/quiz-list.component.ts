@@ -118,7 +118,7 @@ export class QuizListComponent implements OnInit {
       alert('messages.selectItem');
       return;
     }
-    this.router.navigate(['admin/add-quiz', this.currentRow._id]);
+    this.router.navigate(['admin/quiz', this.currentRow._id]);
   }
 
   private doDelete() {
@@ -134,6 +134,6 @@ export class QuizListComponent implements OnInit {
   }
 
   private doNew() {
-    this.router.navigate(['admin/add-quiz']);
+    this.router.navigate(['admin/quiz']);
   }
 }

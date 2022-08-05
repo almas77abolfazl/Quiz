@@ -8,7 +8,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
+import { CellValueChangedEvent, ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable } from 'rxjs';
 
 @Component({
@@ -22,6 +22,7 @@ export class GridComponent implements OnInit, OnChanges {
   @Input() hasCheckboxSelection = false;
   @Input() doRedrawRows = false;
   @Output() selectedRowChange = new EventEmitter<any[]>();
+  @Output() cellValueChanged = new EventEmitter<CellValueChangedEvent>();
 
   public defaultColDef = {
     flex: 1,
@@ -66,6 +67,10 @@ export class GridComponent implements OnInit, OnChanges {
   onGridReady(params: GridReadyEvent<any>) {
     this.gridApi = params.api;
     this.loadData();
+  }
+
+  onCellValueChanged(params: CellValueChangedEvent) {
+    this.cellValueChanged.emit(params)
   }
 
   private loadData() {
