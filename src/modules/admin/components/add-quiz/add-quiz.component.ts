@@ -1,14 +1,14 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import {
   AbstractControl,
-  UntypedFormArray,
-  UntypedFormControl,
-  UntypedFormGroup,
+  FormArray,
+  FormControl,
+  FormGroup,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { Question, QuestionOption } from 'src/models/models';
+import { FormBase } from 'src/modules/shared/base-classes/form.base';
 import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
@@ -16,48 +16,30 @@ import { AdminService } from '../../services/admin/admin.service';
   templateUrl: './add-quiz.component.html',
   styleUrls: ['./add-quiz.component.scss'],
 })
-export class AddQuizComponent implements OnInit, OnDestroy {
-  optionGroups: UntypedFormGroup[] = [];
+export class AddQuizComponent extends FormBase<Question> {
+  //#region public variables
 
-  formGroup: UntypedFormGroup = new UntypedFormGroup({
-    _id: new UntypedFormControl(null, []),
-    __v: new UntypedFormControl(null, []),
-    createdAt: new UntypedFormControl(null, []),
-    updatedAt: new UntypedFormControl(null, []),
-    questionText: new UntypedFormControl(null, [Validators.required]),
-    options: new UntypedFormArray(this.getOptionsFormGroup()),
-  });
+  optionGroups: FormGroup[] = [];
 
-  subscriptions = new Subscription();
-  isNew = true;
+  //#endregion
+
+  //#region Ctor
 
   constructor(
     private adminService: AdminService,
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
-
-  ngOnInit(): void {
-    this.loadFormOnNavigation();
-    this.onIsAnswerChanges();
+    route: ActivatedRoute
+  ) {
+    super(route);
   }
 
-  ngOnDestroy(): void {
-    this.subscriptions.unsubscribe();
-  }
+  //#endregion
+
+  //#region public methods
 
   public saveQuestion(): void {
-    if (this.formGroup.valid) {
-      const options = this.formGroup.get('options');
-      const isAnswersValues: QuestionOption[] = options?.value.filter(
-        (option: QuestionOption) => option.isAnswer
-      );
-
-      if (isAnswersValues.length === 0) {
-        alert('Messages.setOneOfTheOptionsAsAnswer');
-        return;
-      }
-
+    const canSave = this.validateFormBeforeSave();
+    if (canSave) {
       const question = this.formGroup.value;
       if (this.isNew) {
         this.subscriptions.add(
@@ -70,22 +52,71 @@ export class AddQuizComponent implements OnInit, OnDestroy {
             })
         );
       } else {
-        this.adminService.updateQuestion(question).subscribe((res) => {
-          if (res) {
-            this.router.navigate(['admin/quiz-list']);
-          }
-        });
+        this.subscriptions.add(
+          this.adminService.updateQuestion(question).subscribe((res) => {
+            if (res) {
+              this.router.navigate(['admin/quiz-list']);
+            }
+          })
+        );
       }
     }
+  }
+
+  //#endregion
+
+  //#region protected methods
+
+  protected getFormGroup(): FormGroup<any> {
+    return new FormGroup({
+      _id: new FormControl(null, []),
+      __v: new FormControl(null, []),
+      createdAt: new FormControl(null, []),
+      updatedAt: new FormControl(null, []),
+      questionText: new FormControl(null, [Validators.required]),
+      options: new FormArray(this.getOptionsFormGroup()),
+    });
+  }
+
+  protected virtualNgOnInit(): void {
+    this.onIsAnswerChanges();
+  }
+
+  protected virtualLoadFormOnNavigation(navigatedId: string): void {
+    this.subscriptions.add(
+      this.adminService
+        .getQuestion(navigatedId)
+        .subscribe((question: Question) => {
+          if (question) {
+            this.formGroup.setValue(question);
+          }
+        })
+    );
+  }
+
+  //#endregion
+
+  //#region private methods
+
+  private validateFormBeforeSave(): boolean {
+    const options = this.formGroup.get('options');
+    const isAnswersValues: QuestionOption[] = options?.value.filter(
+      (option: QuestionOption) => option.isAnswer
+    );
+    if (isAnswersValues.length === 0) {
+      alert('Messages.setOneOfTheOptionsAsAnswer');
+      return false;
+    }
+    return this.formGroup.valid;
   }
 
   private getOptionsFormGroup(): AbstractControl[] {
     const controls: AbstractControl[] = [];
     for (let index = 0; index < 4; index++) {
-      const optionsGroup = new UntypedFormGroup({
-        _id: new UntypedFormControl(null, []),
-        optionText: new UntypedFormControl(null, [Validators.required]),
-        isAnswer: new UntypedFormControl(false),
+      const optionsGroup = new FormGroup({
+        _id: new FormControl(null, []),
+        optionText: new FormControl(null, [Validators.required]),
+        isAnswer: new FormControl(false),
       });
       controls.push(optionsGroup);
       this.optionGroups.push(optionsGroup);
@@ -93,24 +124,10 @@ export class AddQuizComponent implements OnInit, OnDestroy {
     return controls;
   }
 
-  private loadFormOnNavigation() {
-    const navigatedId = this.route.snapshot.paramMap.get('id');
-    if (navigatedId) {
-      this.adminService
-        .getQuestion(navigatedId)
-        .subscribe((question: Question) => {
-          if (question) {
-            this.isNew = false;
-            this.formGroup.setValue(question);
-          }
-        });
-    }
-  }
+  private onIsAnswerChanges(): void {
+    const options = this.getFromArray('options');
 
-  private onIsAnswerChanges() {
-    const options = this.formGroup.get('options') as UntypedFormArray;
-
-    const isAnswers: UntypedFormControl[] = [];
+    const isAnswers: FormControl[] = [];
     options.controls.forEach((formGroup: any) => {
       isAnswers.push(formGroup.controls.isAnswer);
       formGroup.controls.isAnswer.valueChanges.subscribe((next: boolean) => {
@@ -125,18 +142,5 @@ export class AddQuizComponent implements OnInit, OnDestroy {
     });
   }
 
-  private removeNullProperties(obj: any) {
-    for (const propName in obj) {
-      if (obj[propName] === null || obj[propName] === undefined) {
-        delete obj[propName];
-      } else if (obj[propName].constructor === Array) {
-        obj[propName].forEach((obj2: any) => {
-          this.removeNullProperties(obj2);
-        });
-      }else if (typeof obj[propName] === 'object') {
-        this.removeNullProperties(obj[propName]);
-      }
-    }
-    return obj;
-  }
+  //#endregion
 }
