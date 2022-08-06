@@ -65,8 +65,8 @@ export class QuestionController {
   async getQuestionById(req: Request, res: Response) {
     try {
       const id = req.params.id;
-      const question = await QuestionModel.findOne({ _id: id });
-      res.status(200).send({ question });
+      const data = await QuestionModel.findOne({ _id: id });
+      res.status(200).send({ data });
     } catch (error: any) {
       res.status(400).send(error.message);
     }

@@ -58,8 +58,8 @@ export class UsersListComponent implements OnInit {
         alert('messages.selectItem');
         return;
       }
-      // this.router.navigate(['admin/user', this.currentRow._id]);
-      alert('این قسمت هنوز کامل نشده است')
+      this.router.navigate(['admin/user', this.currentRow._id]);
+      // alert('این قسمت هنوز کامل نشده است')
     }
   }
 

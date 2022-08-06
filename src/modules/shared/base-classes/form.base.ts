@@ -7,6 +7,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { WebRequestService } from '../services/web-request/web-request.service';
 
 @Component({ template: '' })
 export abstract class FormBase<T> implements OnInit, OnDestroy {
@@ -15,7 +16,12 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   public isNew = true;
 
-  constructor(private _route: ActivatedRoute) {}
+  abstract entityName: string;
+
+  constructor(
+    private _route: ActivatedRoute,
+    private webRequestService: WebRequestService
+  ) {}
 
   public removeNullProperties(obj: any) {
     for (const propName in obj) {
@@ -85,10 +91,19 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   //#region private methods
 
-  private loadFormOnNavigation() {
+  private loadFormOnNavigation(): void {
     const navigatedId = this._route.snapshot.paramMap.get('id');
     if (navigatedId) {
       this.isNew = false;
+      this.subscriptions.add(
+        this.webRequestService
+          ?.getEntity(this.entityName, navigatedId)
+          .subscribe((res) => {
+            if (res) {
+              this.formGroup.setValue(res);
+            }
+          })
+      );
       this.virtualLoadFormOnNavigation(navigatedId);
     }
   }

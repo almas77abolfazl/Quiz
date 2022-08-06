@@ -31,9 +31,5 @@ export class AdminService {
     return this.webRequestService.delete(`questions/${questionId}`);
   }
 
-  getQuestion(questionId: string): Observable<Question> {
-    return this.webRequestService
-      .get(`questions/${questionId}`)
-      .pipe(map((x) => x.question));
-  }
+
 }

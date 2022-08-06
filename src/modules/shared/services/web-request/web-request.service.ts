@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Question, User } from 'src/models/models';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root',
@@ -59,5 +60,10 @@ export class WebRequestService {
 
   public getRandomQuestion(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/questions/random`, options);
+  }
+
+  getEntity(entityName: string, id: string): Observable<any> {
+    const url = `${entityName}/${id}`;
+    return this.get(url).pipe(map((x) => x.data));
   }
 }

@@ -3,6 +3,7 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-user',
@@ -10,8 +11,10 @@ import { FormBase } from 'src/modules/shared/base-classes/form.base';
   styleUrls: ['./user.component.scss'],
 })
 export class UserComponent extends FormBase<User> {
-  constructor(route: ActivatedRoute) {
-    super(route);
+  entityName = 'user';
+
+  constructor(route: ActivatedRoute, WBservice: WebRequestService) {
+    super(route, WBservice);
   }
 
   //#region public methods

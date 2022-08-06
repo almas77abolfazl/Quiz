@@ -9,6 +9,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { Question, QuestionOption } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
@@ -19,6 +20,8 @@ import { AdminService } from '../../services/admin/admin.service';
 export class QuizComponent extends FormBase<Question> {
   //#region public variables
 
+  entityName = 'questions';
+
   optionGroups: FormGroup[] = [];
 
   //#endregion
@@ -28,9 +31,10 @@ export class QuizComponent extends FormBase<Question> {
   constructor(
     private adminService: AdminService,
     private router: Router,
-    route: ActivatedRoute
+    route: ActivatedRoute,
+    WBservice: WebRequestService
   ) {
-    super(route);
+    super(route, WBservice);
   }
 
   //#endregion
@@ -80,18 +84,6 @@ export class QuizComponent extends FormBase<Question> {
 
   protected virtualNgOnInit(): void {
     this.onIsAnswerChanges();
-  }
-
-  protected virtualLoadFormOnNavigation(navigatedId: string): void {
-    this.subscriptions.add(
-      this.adminService
-        .getQuestion(navigatedId)
-        .subscribe((question: Question) => {
-          if (question) {
-            this.formGroup.setValue(question);
-          }
-        })
-    );
   }
 
   //#endregion

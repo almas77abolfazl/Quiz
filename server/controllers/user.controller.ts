@@ -44,6 +44,16 @@ export class UserController {
     }
   }
 
+  public async getUserById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const id = req.params.id;
+      const data = await UserModel.findOne({ _id: id });
+      res.status(200).send({ data });
+    } catch (error: any) {
+      res.status(400).send(error.message);
+    }
+  }
+
   public async createUser(req: Request, res: Response, next: NextFunction) {
     try {
       const newUser = new UserModel(req.body);
