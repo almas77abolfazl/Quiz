@@ -42,17 +42,9 @@ export class WebRequestService {
     });
   }
 
-  public addQuestion(question: Question): Observable<any> {
-    return this.http.post(`${this.ROOT_URL}/questions/create`, question, {
-      observe: 'response',
-    });
-  }
 
-  public updateQuestion(question: Question): Observable<any> {
-    return this.http.post(`${this.ROOT_URL}/questions/update`, question, {
-      observe: 'response',
-    });
-  }
+
+
 
   public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
@@ -65,5 +57,11 @@ export class WebRequestService {
   getEntity(entityName: string, id: string): Observable<any> {
     const url = `${entityName}/${id}`;
     return this.get(url).pipe(map((x) => x.data));
+  }
+
+  saveEntity(entityName: string, entity: any): Observable<any> {
+    return this.http.post(`${this.ROOT_URL}/${entityName}`, entity, {
+      observe: 'response',
+    });
   }
 }

@@ -14,22 +14,7 @@ export class AdminService {
 
   constructor(private webRequestService: WebRequestService) {}
 
-  addQuestion(question: Question) {
-    return this.webRequestService.addQuestion(question).pipe(
-      map((result: any) => {
-        const question = result.body;
-        return question;
-      })
-    );
-  }
-
-  updateQuestion(question: Question) {
-    return this.webRequestService.updateQuestion(question);
-  }
-
   deleteQuestion(questionId: string) {
     return this.webRequestService.delete(`questions/${questionId}`);
   }
-
-
 }

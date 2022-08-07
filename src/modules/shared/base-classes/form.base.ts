@@ -12,8 +12,8 @@ import { WebRequestService } from '../services/web-request/web-request.service';
 @Component({ template: '' })
 export abstract class FormBase<T> implements OnInit, OnDestroy {
   readonly subscriptions = new Subscription();
-  public formGroup!: FormGroup;
 
+  public formGroup!: FormGroup;
   public isNew = true;
 
   abstract entityName: string;
@@ -23,7 +23,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     private webRequestService: WebRequestService
   ) {}
 
-  public removeNullProperties(obj: any) {
+  public removeNullProperties(obj: any): any {
     for (const propName in obj) {
       if (obj[propName] === null || obj[propName] === undefined) {
         delete obj[propName];
@@ -58,6 +58,22 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     return this.formGroup.get(fieldName) as FormArray;
   }
 
+  public save(): void {
+    const canSave = this.validateFormBeforeSave();
+    if (canSave) {
+      const sData = this.removeNullProperties(this.formGroup.value);
+      this.subscriptions.add(
+        this.webRequestService
+          .saveEntity(this.entityName, this.removeNullProperties(sData))
+          .subscribe((res) => {
+            if (res) {
+              this.virtualAfterSave();
+            }
+          })
+      );
+    }
+  }
+
   //#region lifeCycle hooks
 
   ngOnInit(): void {
@@ -85,7 +101,11 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   protected virtualNgOnDestroy() {}
 
-  protected virtualLoadFormOnNavigation(navigatedId: string) {}
+  protected validateFormBeforeSave(): boolean {
+    return true;
+  }
+
+  protected virtualAfterSave() {}
 
   //#endregion
 
@@ -100,13 +120,23 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
           ?.getEntity(this.entityName, navigatedId)
           .subscribe((res) => {
             if (res) {
-              this.formGroup.setValue(res);
+              this.setFormValue(res);
             }
           })
       );
-      this.virtualLoadFormOnNavigation(navigatedId);
     }
   }
 
+  private setFormValue(res: any): void {
+    for (const key in res) {
+      if (Object.prototype.hasOwnProperty.call(res, key)) {
+        const value = res[key];
+        const formControl = this.formGroup.get(key);
+        if (formControl) {
+          formControl.setValue(value);
+        }
+      }
+    }
+  }
   //#endregion
 }

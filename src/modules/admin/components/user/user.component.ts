@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
 import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
@@ -11,15 +11,14 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
   styleUrls: ['./user.component.scss'],
 })
 export class UserComponent extends FormBase<User> {
-  entityName = 'user';
+  entityName = 'users';
 
-  constructor(route: ActivatedRoute, WBservice: WebRequestService) {
+  constructor(route: ActivatedRoute, WBservice: WebRequestService,
+    private router : Router) {
     super(route, WBservice);
   }
 
   //#region public methods
-
-  public saveUser() {}
 
   //#endregion
 
@@ -38,5 +37,9 @@ export class UserComponent extends FormBase<User> {
       gender: new FormControl(null, []),
       address: new FormControl(null, []),
     });
+  }
+
+  protected virtualAfterSave(): void {
+    this.router.navigate(['admin/users-list']);
   }
 }

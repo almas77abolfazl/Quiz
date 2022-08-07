@@ -41,32 +41,6 @@ export class QuizComponent extends FormBase<Question> {
 
   //#region public methods
 
-  public saveQuestion(): void {
-    const canSave = this.validateFormBeforeSave();
-    if (canSave) {
-      const question = this.formGroup.value;
-      if (this.isNew) {
-        this.subscriptions.add(
-          this.adminService
-            .addQuestion(this.removeNullProperties(question))
-            .subscribe((res) => {
-              if (res) {
-                this.router.navigate(['admin/quiz-list']);
-              }
-            })
-        );
-      } else {
-        this.subscriptions.add(
-          this.adminService.updateQuestion(question).subscribe((res) => {
-            if (res) {
-              this.router.navigate(['admin/quiz-list']);
-            }
-          })
-        );
-      }
-    }
-  }
-
   //#endregion
 
   //#region protected methods
@@ -86,11 +60,7 @@ export class QuizComponent extends FormBase<Question> {
     this.onIsAnswerChanges();
   }
 
-  //#endregion
-
-  //#region private methods
-
-  private validateFormBeforeSave(): boolean {
+  protected validateFormBeforeSave(): boolean {
     const options = this.formGroup.get('options');
     const isAnswersValues: QuestionOption[] = options?.value.filter(
       (option: QuestionOption) => option.isAnswer
@@ -101,6 +71,14 @@ export class QuizComponent extends FormBase<Question> {
     }
     return this.formGroup.valid;
   }
+
+  protected virtualAfterSave(): void {
+    this.router.navigate(['admin/quiz-list']);
+  }
+
+  //#endregion
+
+  //#region private methods
 
   private getOptionsFormGroup(): AbstractControl[] {
     const controls: AbstractControl[] = [];

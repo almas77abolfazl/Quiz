@@ -22,7 +22,11 @@
     "delete": "حذف",
     "save": "ذخیره",
     "role": "نقش",
-    "select": "انتخاب"
+    "select": "انتخاب",
+    "firstName": "نام",
+    "lastName": "نام خانوادگی",
+    "gender": "جنسیت",
+    "address": "آدرس"
   },
   "messages": {
     "selectItem": "لطفا یکی از آیتم ها را انتخاب کنید.",
