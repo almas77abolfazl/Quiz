@@ -19,7 +19,7 @@ const setUserRoutes = (app: Application) => {
       controller.getUsers.bind(controller)
     );
 
-  router.route('/create').post(controller.createUser.bind(controller));
+  router.route('/').post(controller.saveUser.bind(controller));
 
   router.route('/login').post(controller.login.bind(controller));
 
@@ -50,30 +50,28 @@ const setQuestionRoutes = (app: Application) => {
       userController.authenticate.bind(userController),
       controller.getQuestions.bind(controller)
     );
+
   router
-    .route('/create')
+    .route('/')
     .post(
       userController.authenticate.bind(userController),
-      controller.createQuestion.bind(controller)
+      controller.saveQuestion.bind(controller)
     );
-  router
-    .route('/update')
-    .post(
-      userController.authenticate.bind(userController),
-      controller.updateQuestion.bind(controller)
-    );
+
   router
     .route('/random')
     .get(
       userController.authenticate.bind(userController),
       controller.getRandom.bind(controller)
     );
+
   router
     .route('/:id')
     .delete(
       userController.authenticate.bind(userController),
       controller.deleteQuestion.bind(controller)
     );
+
   router
     .route('/:id')
     .get(

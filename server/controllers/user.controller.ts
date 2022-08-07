@@ -48,9 +48,20 @@ export class UserController {
     try {
       const id = req.params.id;
       const data = await UserModel.findOne({ _id: id });
+      if (data) {
+        data.password = '';
+      }
       res.status(200).send({ data });
     } catch (error: any) {
       res.status(400).send(error.message);
+    }
+  }
+
+  public async saveUser(req: Request, res: Response, next: NextFunction) {
+    if (req.body._id) {
+      await this.updateUser(req, res, next);
+    } else {
+      await this.createUser(req, res, next);
     }
   }
 
@@ -69,6 +80,27 @@ export class UserController {
       res.status(200).send(ResponseData);
     } catch (error: any) {
       res.status(404).send(error);
+    }
+  }
+
+  async updateUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const newUser = new UserModel(req.body);
+      this.hashPassWord(newUser);
+      const updatedUser = await UserModel.findOneAndUpdate(
+        {
+          _id: req.body._id,
+        },
+        {
+          $set: newUser,
+        }
+      );
+      if (updatedUser) {
+        updatedUser.password = '';
+      }
+      res.status(200).send(updatedUser);
+    } catch (error: any) {
+      res.status(400).send(error.message);
     }
   }
 

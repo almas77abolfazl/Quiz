@@ -1,10 +1,16 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { QuestionModel } from '../models/question.model';
 
 export class QuestionController {
   constructor() {}
 
-  async createQuestion(req: Request, res: Response) {
+  async saveQuestion(req: Request, res: Response, next: NextFunction) {
+    if (req.body._id) {
+      await this.updateQuestion(req, res, next);
+    } else await this.createQuestion(req, res, next);
+  }
+
+  async createQuestion(req: Request, res: Response, next: NextFunction) {
     try {
       const newQuestion = new QuestionModel(req.body);
       await newQuestion.save();
@@ -14,7 +20,7 @@ export class QuestionController {
     }
   }
 
-  async updateQuestion(req: Request, res: Response) {
+  async updateQuestion(req: Request, res: Response, next: NextFunction) {
     try {
       const updatedQuestion = await QuestionModel.findOneAndUpdate(
         {
@@ -30,7 +36,7 @@ export class QuestionController {
     }
   }
 
-  async getQuestions(req: Request, res: Response) {
+  async getQuestions(req: Request, res: Response, next: NextFunction) {
     try {
       const allQuestions = await QuestionModel.find({});
       res.status(200).send(allQuestions);
@@ -39,7 +45,7 @@ export class QuestionController {
     }
   }
 
-  async getRandom(req: Request, res: Response) {
+  async getRandom(req: Request, res: Response, next: NextFunction) {
     try {
       const getRandom = await QuestionModel.aggregate([
         {
@@ -52,7 +58,7 @@ export class QuestionController {
     }
   }
 
-  async deleteQuestion(req: Request, res: Response) {
+  async deleteQuestion(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
       await QuestionModel.findOneAndRemove({ _id: id });
@@ -62,7 +68,7 @@ export class QuestionController {
     }
   }
 
-  async getQuestionById(req: Request, res: Response) {
+  async getQuestionById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
       const data = await QuestionModel.findOne({ _id: id });
