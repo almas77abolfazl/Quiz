@@ -1,3 +1,7 @@
+.admin-container{
+  height: 100vh;
+}
+
 .admin-nav {
   width: 100%;
   background-color: #222222;
@@ -25,4 +29,6 @@
 .admin-form {
   flex: 1;
   background: #5c8abbd4;
+  width: calc(100% - 300px);
+  position: relative;
 }
