@@ -7,6 +7,7 @@ import { AuthenticationService } from '../shared/services/authentication/authent
   styleUrls: ['./admin.component.scss'],
 })
 export class AdminComponent implements OnInit {
+  currentUserName = this.authenticationService.currentUserValue?.user.username
   constructor(private authenticationService: AuthenticationService) {}
 
   ngOnInit() {}
@@ -14,4 +15,6 @@ export class AdminComponent implements OnInit {
   logout() {
     this.authenticationService.logout();
   }
+
+
 }

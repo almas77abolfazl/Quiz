@@ -1,7 +1,13 @@
 <div class="admin-container flex column">
-  <nav class="admin-nav flex end">
-    <button [routerLink]="['/main']">{{ "labels.goToQuizPage" | translate }}</button>
-    <button (click)="logout()">{{ "labels.logOut" | translate }}</button>
+  <nav class="admin-nav flex space-between">
+    <p>{{ "messages.welcome" | translate: { user: currentUserName } }}</p>
+
+    <div>
+      <button [routerLink]="['/main']">
+        {{ "labels.goToQuizPage" | translate }}
+      </button>
+      <button (click)="logout()">{{ "labels.logOut" | translate }}</button>
+    </div>
   </nav>
 
   <div class="flex flex-fill row">

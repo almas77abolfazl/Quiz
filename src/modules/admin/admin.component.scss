@@ -1,4 +1,4 @@
-.admin-container{
+.admin-container {
   height: 100vh;
 }
 
@@ -6,9 +6,15 @@
   width: 100%;
   background-color: #222222;
 
+
   button {
     left: 0;
     position: relative;
+  }
+  p {
+    color: #fff;
+    margin: 0;
+    padding: 0 1rem;
   }
 }
 
