@@ -31,7 +31,15 @@
   "messages": {
     "selectItem": "لطفا یکی از آیتم ها را انتخاب کنید.",
     "setOneOfTheOptionsAsAnswer": "لطفا یکی از گزینه ها را به عنوان جواب تنظیم کنید.",
-    "thereAreNoRows":"هیچ ردیفی وجود ندارد.",
-    "loading":"در حال بارگزاری..."
+    "thereAreNoRows": "هیچ ردیفی وجود ندارد.",
+    "loading": "در حال بارگزاری..."
+  },
+  "enums": {
+    "male": "مرد",
+    "female": "زن",
+    "undisclosed": "",
+    "normal": "کاربر معمولی",
+    "admin": "ادمین",
+    "sa": "سوپر ادمین"
   }
 }

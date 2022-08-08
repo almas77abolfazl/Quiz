@@ -35,6 +35,7 @@ export class UserComponent extends FormBase<User> {
       firstName: new FormControl(null, []),
       lastName: new FormControl(null, []),
       gender: new FormControl(null, []),
+      sessions: new FormControl(null, []),
       address: new FormControl(null, []),
     });
   }

@@ -1,7 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
-import { Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of, Subscription } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { Command } from 'src/models/models';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
@@ -21,7 +22,10 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
 
   abstract entityName: string;
 
-  constructor(private webRequestService: WebRequestService) {}
+  constructor(
+    private webRequestService: WebRequestService,
+    public translateService: TranslateService
+  ) {}
 
   //#region public
 
@@ -92,6 +96,10 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
     return data;
   }
 
+  protected virtualChangeStructureOfDataAsync(data: T[]): Observable<T[]> {
+    return of(data);
+  }
+
   //#endregion
 
   //#region private methods
@@ -101,6 +109,9 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
     this.webRequestService
       .get(this.entityName)
       .pipe(
+        switchMap((res: T[]) => {
+          return this.virtualChangeStructureOfDataAsync(res);
+        }),
         map((res: T[]) => {
           return this.virtualChangeStructureOfData(res);
         })

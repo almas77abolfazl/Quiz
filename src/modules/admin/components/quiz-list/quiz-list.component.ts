@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { CellStyle, ColDef } from 'ag-grid-community';
 import { Command, Question, QuestionOption } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
@@ -13,8 +14,12 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
 export class QuizListComponent extends ListBase<Question> {
   entityName = 'questions';
 
-  constructor(private router: Router, webReq: WebRequestService) {
-    super(webReq);
+  constructor(
+    private router: Router,
+    webReq: WebRequestService,
+    translateService: TranslateService
+  ) {
+    super(webReq, translateService);
   }
 
   public processCommand(command: Command) {

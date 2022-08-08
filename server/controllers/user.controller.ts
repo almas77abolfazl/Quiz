@@ -21,9 +21,8 @@ export class UserController {
             password: '123',
             role: Roles.sa,
           });
-          this.hashPassWord(newUser);
+          await this.hashPassWord(newUser);
           await newUser.save();
-          await this.createSession(newUser);
           console.log('default admin successfully added.');
         } catch (error: any) {
           console.log(error);
@@ -68,11 +67,11 @@ export class UserController {
   public async createUser(req: Request, res: Response, next: NextFunction) {
     try {
       const newUser = new UserModel(req.body);
-      this.hashPassWord(newUser);
+      await this.hashPassWord(newUser);
       await newUser.save();
       await this.createSession(newUser);
       const accessToken = this.generateAccessAuthToken(newUser);
-      newUser.password = '';
+      newUser.password = 'null';
       const ResponseData = {
         user: newUser,
         accessToken,
@@ -86,7 +85,7 @@ export class UserController {
   async updateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const newUser = new UserModel(req.body);
-      this.hashPassWord(newUser);
+      await this.hashPassWord(newUser);
       const updatedUser = await UserModel.findOneAndUpdate(
         {
           _id: req.body._id,
@@ -96,7 +95,7 @@ export class UserController {
         }
       );
       if (updatedUser) {
-        updatedUser.password = '';
+        updatedUser.password = 'null';
       }
       res.status(200).send(updatedUser);
     } catch (error: any) {
@@ -199,18 +198,29 @@ export class UserController {
   }
 
   private hashPassWord(user: IUser) {
-    let costFactor = 10;
+    return new Promise((resolve, reject) => {
+      let costFactor = 10;
 
-    if (user.isModified('password')) {
-      // if the password field has been edited/changed then run this code.
+      if (user.isModified('password')) {
+        // if the password field has been edited/changed then run this code.
 
-      // Generate salt and hash password
-      bcrypt.genSalt(costFactor, (err, salt) => {
-        bcrypt.hash(user.password, salt, (err, hash) => {
-          user.password = hash;
+        // Generate salt and hash password
+        bcrypt.genSalt(costFactor, (err, salt) => {
+          if (err) {
+            reject(err);
+          } else {
+            bcrypt.hash(user.password, salt, (err, hash) => {
+              if (err) {
+                reject(err);
+              } else {
+                user.password = hash;
+                resolve(user);
+              }
+            });
+          }
         });
-      });
-    }
+      } else reject();
+    });
   }
 
   private async createSession(user: IUser) {

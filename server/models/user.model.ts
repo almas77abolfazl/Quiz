@@ -12,12 +12,6 @@ export enum Roles {
   sa = 'sa',
 }
 
-export interface Address {
-  street: string;
-  city: string;
-  postCode: string;
-}
-
 export interface Session {
   token: string;
   expiresAt: number;
@@ -31,7 +25,7 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   gender?: Gender;
-  address?: Address;
+  address?: string;
   role: Roles;
 }
 
@@ -59,17 +53,17 @@ const UserSchema: Schema = new Schema(
     firstName: { type: String, trim: true },
     lastName: { type: String, trim: true },
     // Gets the Mongoose enum from the TypeScript enum
-    gender: { type: String, enum: Object.values(Gender) },
+    gender: {
+      type: String,
+      enum: Object.values(Gender),
+      default: Gender.undisclosed,
+    },
     role: {
       type: String,
       enum: Object.values(Roles),
       default: 'normal',
     },
-    address: {
-      street: { type: String },
-      city: { type: String },
-      postCode: { type: String },
-    },
+    address: { type: String, trim: true },
     sessions: [
       {
         token: {

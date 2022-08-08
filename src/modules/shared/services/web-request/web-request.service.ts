@@ -37,14 +37,10 @@ export class WebRequestService {
   }
 
   public signup(useData: Partial<User>): Observable<any> {
-    return this.http.post(`${this.ROOT_URL}/users/create`, useData, {
+    return this.http.post(`${this.ROOT_URL}/users`, useData, {
       observe: 'response',
     });
   }
-
-
-
-
 
   public getNewAccessToken(options: any): Observable<any> {
     return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);

@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { ColDef } from 'ag-grid-community';
+import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
@@ -14,8 +16,12 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
 export class UsersListComponent extends ListBase<User> {
   entityName = 'users';
 
-  constructor(webReq: WebRequestService, private router: Router) {
-    super(webReq);
+  constructor(
+    webReq: WebRequestService,
+    private router: Router,
+    translateService: TranslateService
+  ) {
+    super(webReq, translateService);
   }
 
   public processCommand(command: Command) {
@@ -48,5 +54,23 @@ export class UsersListComponent extends ListBase<User> {
       },
     ];
     return commands;
+  }
+
+  protected virtualChangeStructureOfDataAsync(
+    data: User[]
+  ): Observable<User[]> {
+    return new Observable((subscriber) => {
+      data.forEach((x, idx, array) => {
+        this.translateService
+          .get(('enums.' + x.role) as string)
+          .subscribe((r) => {
+            x.role = r;
+            if (idx === array.length - 1) {
+              subscriber.next(data);
+              subscriber.complete();
+            }
+          });
+      });
+    });
   }
 }
