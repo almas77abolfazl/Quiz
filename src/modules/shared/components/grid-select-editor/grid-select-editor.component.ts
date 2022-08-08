@@ -17,3 +17,10 @@ export class GridSelectEditorComponent implements ICellRendererAngularComp {
     return false;
   }
 }
+
+// usage
+// cellRenderer: GridSelectEditorComponent,
+// cellEditor: 'agSelectCellEditor',
+// cellEditorParams: {
+//   values: roles,
+// },

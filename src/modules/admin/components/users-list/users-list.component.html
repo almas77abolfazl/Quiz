@@ -5,7 +5,8 @@
 
 <app-grid
   [columnDefs]="columnDefs"
-  [data$]="data$"
+  [rowData]="rowData"
   [hasCheckboxSelection]="true"
   (selectedRowChange)="onSelectedRowChange($event)"
+  (gridReady)="onGridReady($event)"
 ></app-grid>

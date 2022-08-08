@@ -7,10 +7,10 @@
   <div class="flex-fill">
     <app-grid
       [columnDefs]="columnDefs"
-      [data$]="data$"
+      [rowData]="rowData"
       [hasCheckboxSelection]="true"
       (selectedRowChange)="onSelectedRowChange($event)"
-      [doRedrawRows]="doRedrawRows"
+      (gridReady)="onGridReady($event)"
     ></app-grid>
   </div>
 </div>

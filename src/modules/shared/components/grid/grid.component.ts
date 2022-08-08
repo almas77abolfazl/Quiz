@@ -8,8 +8,12 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { CellValueChangedEvent, ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
-import { Observable } from 'rxjs';
+import {
+  CellValueChangedEvent,
+  ColDef,
+  GridApi,
+  GridReadyEvent,
+} from 'ag-grid-community';
 
 @Component({
   selector: 'app-grid',
@@ -18,37 +22,31 @@ import { Observable } from 'rxjs';
 })
 export class GridComponent implements OnInit, OnChanges {
   @Input() columnDefs: ColDef[] = [];
-  @Input() data$: Observable<any> = new Observable();
+  @Input() rowData: any[] = [];
   @Input() hasCheckboxSelection = false;
-  @Input() doRedrawRows = false;
   @Output() selectedRowChange = new EventEmitter<any[]>();
   @Output() cellValueChanged = new EventEmitter<CellValueChangedEvent>();
+  @Output() gridReady = new EventEmitter<GridReadyEvent>();
 
   public defaultColDef = {
     flex: 1,
     minWidth: 100,
   };
 
+  public gridApi!: GridApi<any>;
+
   public rowSelection: 'single' | 'multiple' = 'single';
 
   public IsRtl = true;
-
-  public rowData: any[] = [];
 
   public overlayLoadingTemplate =
     '<span class="ag-overlay-loading-center">در حال بارگزاری...</span>';
   public overlayNoRowsTemplate =
     '<span class="no-rows">هیچ ردیفی وجود ندارد.</span>';
 
-  private gridApi!: GridApi<any>;
-
   constructor(private translateService: TranslateService) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.doRedrawRows?.currentValue) {
-      this.loadData();
-    }
-  }
+  ngOnChanges(changes: SimpleChanges): void {}
 
   ngOnInit() {
     this.addSelectCheckBox();
@@ -64,24 +62,13 @@ export class GridComponent implements OnInit, OnChanges {
     this.selectedRowChange.emit(selectedRows);
   }
 
-  onGridReady(params: GridReadyEvent<any>) {
+  onGridReady(params: GridReadyEvent) {
     this.gridApi = params.api;
-    this.loadData();
+    this.gridReady.emit(params);
   }
 
   onCellValueChanged(params: CellValueChangedEvent) {
-    this.cellValueChanged.emit(params)
-  }
-
-  private loadData() {
-    this.gridApi.showLoadingOverlay();
-
-    const subscription = this.data$.subscribe((data) => {
-      this.gridApi.hideOverlay();
-      this.rowData = data;
-
-      subscription.unsubscribe();
-    });
+    this.cellValueChanged.emit(params);
   }
 
   private addSelectCheckBox() {

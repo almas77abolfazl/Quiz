@@ -1,73 +1,21 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CellStyle, ColDef } from 'ag-grid-community';
-import { map } from 'rxjs/operators';
 import { Command, Question, QuestionOption } from 'src/models/models';
-import { AdminService } from '../../services/admin/admin.service';
+import { ListBase } from 'src/modules/shared/base-classes/list.base';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-quiz-list',
   templateUrl: './quiz-list.component.html',
   styleUrls: ['./quiz-list.component.scss'],
 })
-export class QuizListComponent implements OnInit {
-  columnDefs: ColDef[] = [
-    {
-      headerName: 'labels.questionText',
-      field: 'questionText',
-      cellStyle: { color: 'black', backgroundColor: '#b6b0b0' },
-      width: 300,
-    },
-    {
-      headerName: 'labels.firstOption',
-      field: 'option1',
-      cellStyle: (params: any) => this.setCellStyles(params.value),
-    },
-    {
-      headerName: 'labels.secondOption',
-      field: 'option2',
-      cellStyle: (params: any) => this.setCellStyles(params.value),
-    },
-    {
-      headerName: 'labels.thirdOption',
-      field: 'option3',
-      cellStyle: (params: any) => this.setCellStyles(params.value),
-    },
-    {
-      headerName: 'labels.fourthOption',
-      field: 'option4',
-      cellStyle: (params: any) => this.setCellStyles(params.value),
-    },
-  ];
+export class QuizListComponent extends ListBase<Question> {
+  entityName = 'questions';
 
-  data$ = this.adminService.questions$.pipe(
-    map((questions: Question[]) => {
-      return this.setStructureOfQuestionRows(questions);
-    })
-  );
-
-  doRedrawRows = false;
-
-  commands: Command[] = [
-    {
-      commandName: 'new',
-      label: 'labels.new',
-    },
-    {
-      commandName: 'edit',
-      label: 'labels.edit',
-    },
-    {
-      commandName: 'delete',
-      label: 'labels.delete',
-    },
-  ];
-
-  currentRow!: Question;
-
-  constructor(private adminService: AdminService, private router: Router) {}
-
-  ngOnInit() {}
+  constructor(private router: Router, webReq: WebRequestService) {
+    super(webReq);
+  }
 
   public processCommand(command: Command) {
     switch (command.commandName) {
@@ -83,18 +31,57 @@ export class QuizListComponent implements OnInit {
     }
   }
 
-  public onSelectedRowChange(selectedRows: any) {
-    this.currentRow = selectedRows[0];
+  protected getColumns(): ColDef[] {
+    const columns = [
+      {
+        headerName: 'labels.questionText',
+        field: 'questionText',
+        cellStyle: { color: 'black', backgroundColor: '#b6b0b0' },
+        width: 300,
+      },
+      {
+        headerName: 'labels.firstOption',
+        field: 'option1',
+        cellStyle: (params: any) => this.setCellStyles(params.value),
+      },
+      {
+        headerName: 'labels.secondOption',
+        field: 'option2',
+        cellStyle: (params: any) => this.setCellStyles(params.value),
+      },
+      {
+        headerName: 'labels.thirdOption',
+        field: 'option3',
+        cellStyle: (params: any) => this.setCellStyles(params.value),
+      },
+      {
+        headerName: 'labels.fourthOption',
+        field: 'option4',
+        cellStyle: (params: any) => this.setCellStyles(params.value),
+      },
+    ];
+    return columns;
   }
 
-  private setCellStyles(value: string): CellStyle {
-    if (value.endsWith('✅')) {
-      return { color: 'white', backgroundColor: '#2aab2a' };
-    }
-    return {};
+  protected getCommands(): Command[] {
+    const commands: Command[] = [
+      {
+        commandName: 'new',
+        label: 'labels.new',
+      },
+      {
+        commandName: 'edit',
+        label: 'labels.edit',
+      },
+      {
+        commandName: 'delete',
+        label: 'labels.delete',
+      },
+    ];
+    return commands;
   }
 
-  private setStructureOfQuestionRows(questions: Question[]): Question[] {
+  protected virtualChangeStructureOfData(questions: Question[]): Question[] {
     const rows: Question[] = [];
     questions.forEach((question: Question) => {
       const row: any = {};
@@ -113,27 +100,26 @@ export class QuizListComponent implements OnInit {
     return rows;
   }
 
-  private doEdit() {
-    if (!this.currentRow) {
-      alert('messages.selectItem');
-      return;
+  private setCellStyles(value: string): CellStyle {
+    if (value.endsWith('✅')) {
+      return { color: 'white', backgroundColor: '#2aab2a' };
     }
-    this.router.navigate(['admin/quiz', this.currentRow._id]);
+    return {};
   }
 
-  private doDelete() {
-    if (!this.currentRow) {
-      alert('messages.selectItem');
-      return;
+  private doEdit(): void {
+    if (this.validateBeforeDoOperationOnCurrentRow()) {
+      this.router.navigate(['admin/quiz', this.currentRow._id]);
     }
-    this.adminService.deleteQuestion(this.currentRow._id).subscribe((res) => {
-      if (res) {
-        this.doRedrawRows = true;
-      }
-    });
   }
 
-  private doNew() {
+  private doDelete(): void {
+    if (this.validateBeforeDoOperationOnCurrentRow()) {
+      this.deleteEntity(this.currentRow._id);
+    }
+  }
+
+  private doNew(): void {
     this.router.navigate(['admin/quiz']);
   }
 }
