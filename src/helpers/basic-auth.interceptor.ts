@@ -5,16 +5,14 @@ import {
   HttpInterceptor,
   HttpErrorResponse,
 } from '@angular/common/http';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, Subscriber } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 import { NgxSpinnerService } from 'ngx-spinner';
 
 @Injectable()
 export class BasicAuthInterceptor implements HttpInterceptor {
-  refreshingAccessToken!: boolean;
-
-  accessTokenRefreshed: Subject<any> = new Subject();
+  reqForNewAccessToken!: boolean;
 
   constructor(
     private authenticationService: AuthenticationService,
@@ -34,17 +32,24 @@ export class BasicAuthInterceptor implements HttpInterceptor {
           // 401 error so we are unauthorized
 
           // refresh the access token
-          return this.refreshAccessToken().pipe(
-            switchMap(() => {
-              request = this.addAuthHeader(request);
-              return next.handle(request);
-            }),
-            catchError((err: any) => {
-              console.log(err);
-              this.authenticationService.logout();
-              return of(err);
-            })
-          );
+          if (!this.reqForNewAccessToken) {
+            return this.refreshAccessToken().pipe(
+              switchMap(() => {
+                request = this.addAuthHeader(request);
+                return next.handle(request);
+              }),
+              catchError((err: any) => {
+                console.log(err);
+                this.authenticationService.logout();
+                return of(err);
+              })
+            );
+          } else {
+            // In this situation, there is no user or user token refresh and it must be logged out
+            console.log(error.message);
+            this.authenticationService.logout();
+            return of(error);
+          }
         }
 
         alert(error.error);
@@ -54,25 +59,14 @@ export class BasicAuthInterceptor implements HttpInterceptor {
   }
 
   refreshAccessToken() {
-    if (this.refreshingAccessToken) {
-      return new Observable((observer) => {
-        this.accessTokenRefreshed.subscribe(() => {
-          // this code will run when the access token has been refreshed
-          observer.next();
-          observer.complete();
-        });
-      });
-    } else {
-      this.refreshingAccessToken = true;
-      // we want to call a method in the auth service to send a request to refresh the access token
-      return this.authenticationService.getNewAccessToken().pipe(
-        tap(() => {
-          console.log('Access Token Refreshed!');
-          this.refreshingAccessToken = false;
-          this.accessTokenRefreshed.next();
-        })
-      );
-    }
+    // we want to call a method in the auth service to send a request to refresh the access token
+    this.reqForNewAccessToken = true;
+    return this.authenticationService.getNewAccessToken().pipe(
+      tap(() => {
+        this.reqForNewAccessToken = false;
+        console.log('Access Token Refreshed!');
+      })
+    );
   }
 
   addAuthHeader(request: HttpRequest<any>) {
