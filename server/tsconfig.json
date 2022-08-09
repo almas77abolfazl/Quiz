@@ -1,23 +1,26 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "allowJs": true,
+    "allowJs": false,
     "outDir": "../dist",
     "module": "commonjs",
     "baseUrl": "",
     "types": ["node"],
     "target": "es2015",
     "moduleResolution": "node",
-    "lib": [
-      "es2015"
-    ],
+    "lib": ["es2015"],
     "sourceMap": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "strict": true,
-    "typeRoots": [
-      "node_modules/@types"
-    ],
+    "typeRoots": ["node_modules/@types"]
   },
-  "files": []
+  "files": [
+    "app.ts",
+    "routes.ts",
+    "db.ts",
+    "controllers/question.controller.ts",
+    "controllers/user.controller.ts",
+    "models/question.model.ts",
+    "models/user.model.ts"
+  ]
 }
