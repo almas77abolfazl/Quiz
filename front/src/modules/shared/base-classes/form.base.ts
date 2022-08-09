@@ -1,11 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormControl,
-  FormGroup,
-} from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { Component, Injector, OnDestroy, OnInit } from '@angular/core';
+import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
@@ -18,10 +14,17 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   abstract entityName: string;
 
-  constructor(
-    private _route: ActivatedRoute,
-    private webRequestService: WebRequestService
-  ) {}
+  public webRequestService: WebRequestService;
+  public dialog: MatDialog;
+  public router: Router;
+  public route: ActivatedRoute;
+
+  constructor(injector: Injector) {
+    this.route = injector.get(ActivatedRoute);
+    this.webRequestService = injector.get(WebRequestService);
+    this.dialog = injector.get(MatDialog);
+    this.router = injector.get(Router);
+  }
 
   public removeNullProperties(obj: any): any {
     for (const propName in obj) {
@@ -112,7 +115,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
   //#region private methods
 
   private loadFormOnNavigation(): void {
-    const navigatedId = this._route.snapshot.paramMap.get('id');
+    const navigatedId = this.route.snapshot.paramMap.get('id');
     if (navigatedId) {
       this.isNew = false;
       this.subscriptions.add(

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Injector } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ColDef } from 'ag-grid-community';
@@ -16,12 +16,8 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
 export class UsersListComponent extends ListBase<User> {
   entityName = 'users';
 
-  constructor(
-    webReq: WebRequestService,
-    private router: Router,
-    translateService: TranslateService
-  ) {
-    super(webReq, translateService);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   public processCommand(command: Command) {

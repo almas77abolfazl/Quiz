@@ -1,4 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  Injector,
+  OnDestroy,
+  OnInit,
+} from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable, of, Subscription } from 'rxjs';
@@ -22,10 +30,17 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
 
   abstract entityName: string;
 
-  constructor(
-    private webRequestService: WebRequestService,
-    public translateService: TranslateService
-  ) {}
+  public webRequestService: WebRequestService;
+  public translateService: TranslateService;
+  public dialog: MatDialog;
+  public router: Router;
+
+  constructor(injector: Injector) {
+    this.webRequestService = injector.get(WebRequestService);
+    this.translateService = injector.get(TranslateService);
+    this.dialog = injector.get(MatDialog);
+    this.router = injector.get(Router);
+  }
 
   //#region public
 

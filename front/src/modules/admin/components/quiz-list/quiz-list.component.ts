@@ -1,10 +1,7 @@
-import { Component } from '@angular/core';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, Injector } from '@angular/core';
 import { CellStyle, ColDef } from 'ag-grid-community';
 import { Command, Question, QuestionOption } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
-import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-quiz-list',
@@ -14,12 +11,8 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
 export class QuizListComponent extends ListBase<Question> {
   entityName = 'questions';
 
-  constructor(
-    private router: Router,
-    webReq: WebRequestService,
-    translateService: TranslateService
-  ) {
-    super(webReq, translateService);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   public processCommand(command: Command) {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Injector } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -6,11 +6,8 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import { Question, QuestionOption } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
-import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
-import { AdminService } from '../../services/admin/admin.service';
 
 @Component({
   selector: 'app-quiz',
@@ -28,18 +25,9 @@ export class QuizComponent extends FormBase<Question> {
 
   //#region Ctor
 
-  constructor(
-    private adminService: AdminService,
-    private router: Router,
-    route: ActivatedRoute,
-    WBservice: WebRequestService
-  ) {
-    super(route, WBservice);
+  constructor(injector: Injector) {
+    super(injector);
   }
-
-  //#endregion
-
-  //#region public methods
 
   //#endregion
 

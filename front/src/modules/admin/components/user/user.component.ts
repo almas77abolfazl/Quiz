@@ -1,9 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Injector } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
-import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-user',
@@ -13,9 +11,8 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
 export class UserComponent extends FormBase<User> {
   entityName = 'users';
 
-  constructor(route: ActivatedRoute, WBservice: WebRequestService,
-    private router : Router) {
-    super(route, WBservice);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   //#region public methods
@@ -41,6 +38,7 @@ export class UserComponent extends FormBase<User> {
   }
 
   protected virtualAfterSave(): void {
+    // this.dialog.open();
     this.router.navigate(['admin/users-list']);
   }
 }
