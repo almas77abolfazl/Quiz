@@ -62,18 +62,20 @@
     </div>
     <div class="form-item">
       <select id="gender" name="gender" formControlName="gender">
-        <option value="undisclosed">{{'enums.undisclosed'| translate}}</option>
-        <option value="male">{{'enums.male' | translate}}</option>
-        <option value="female">{{'enums.female' |translate}}</option>
+        <option value="undisclosed">
+          {{ "enums.undisclosed" | translate }}
+        </option>
+        <option value="male">{{ "enums.male" | translate }}</option>
+        <option value="female">{{ "enums.female" | translate }}</option>
       </select>
       <label [for]="'gender'">{{ "labels.gender" | translate }}</label>
     </div>
-    <div class="form-item">
-      <select id="gender" name="gender" formControlName="role">
-        <option value="normal">{{'enums.normal'| translate}}</option>
-        <option value="admin">{{'enums.admin' | translate}}</option>
+    <div class="form-item" *ngIf="getControl('role').value !== 'sa'">
+      <select id="role" name="role" formControlName="role">
+        <option value="normal">{{ "enums.normal" | translate }}</option>
+        <option value="admin">{{ "enums.admin" | translate }}</option>
       </select>
-      <label [for]="'gender'">{{ "labels.role" | translate }}</label>
+      <label [for]="'role'">{{ "labels.role" | translate }}</label>
     </div>
     <div class="form-item">
       <input
