@@ -20,7 +20,9 @@
     "db.ts",
     "controllers/question.controller.ts",
     "controllers/user.controller.ts",
+    "controllers/category.controller.ts",
     "models/question.model.ts",
-    "models/user.model.ts"
+    "models/user.model.ts",
+    "models/category.model.ts",
   ]
 }

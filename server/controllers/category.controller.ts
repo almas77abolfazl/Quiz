@@ -1,28 +1,28 @@
-import { NextFunction, Request, Response } from 'express';
-import { QuestionModel } from '../models/question.model';
+import { NextFunction, Request, Response } from "express";
+import { CategoryModel } from "../models/category.model";
 
 export class CategoryController {
   constructor() {}
 
-  async saveQuestion(req: Request, res: Response, next: NextFunction) {
+  async saveCategory(req: Request, res: Response, next: NextFunction) {
     if (req.body._id) {
-      await this.updateQuestion(req, res, next);
-    } else await this.createQuestion(req, res, next);
+      await this.updateCategory(req, res, next);
+    } else await this.createCategory(req, res, next);
   }
 
-  async createQuestion(req: Request, res: Response, next: NextFunction) {
+  async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const newQuestion = new QuestionModel(req.body);
-      await newQuestion.save();
-      res.status(200).send(newQuestion);
+      const newCategory = new CategoryModel(req.body);
+      await newCategory.save();
+      res.status(200).send(newCategory);
     } catch (error: any) {
       res.status(400).send(error.message);
     }
   }
 
-  async updateQuestion(req: Request, res: Response, next: NextFunction) {
+  async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const updatedQuestion = await QuestionModel.findOneAndUpdate(
+      const updatedCategory = await CategoryModel.findOneAndUpdate(
         {
           _id: req.body._id,
         },
@@ -30,48 +30,35 @@ export class CategoryController {
           $set: req.body,
         }
       );
-      res.status(200).send(updatedQuestion);
+      res.status(200).send(updatedCategory);
     } catch (error: any) {
       res.status(400).send(error.message);
     }
   }
 
-  async getQuestions(req: Request, res: Response, next: NextFunction) {
+  async getCategories(req: Request, res: Response, next: NextFunction) {
     try {
-      const allQuestions = await QuestionModel.find({});
-      res.status(200).send(allQuestions);
+      const allCategories = await CategoryModel.find({});
+      res.status(200).send(allCategories);
     } catch (error: any) {
       res.status(400).send(error.message);
     }
   }
 
-  async getRandom(req: Request, res: Response, next: NextFunction) {
-    try {
-      const getRandom = await QuestionModel.aggregate([
-        {
-          $sample: { size: 1 },
-        },
-      ]);
-      res.status(200).send(getRandom);
-    } catch (error: any) {
-      res.status(400).send(error.message);
-    }
-  }
-
-  async deleteQuestion(req: Request, res: Response, next: NextFunction) {
+  async deleteCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
-      await QuestionModel.findOneAndRemove({ _id: id });
-      res.status(200).send({ message: 'successfully deleted' });
+      await CategoryModel.findOneAndRemove({ _id: id });
+      res.status(200).send({ message: "successfully deleted" });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
   }
 
-  async getQuestionById(req: Request, res: Response, next: NextFunction) {
+  async getCategoryById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
-      const data = await QuestionModel.findOne({ _id: id });
+      const data = await CategoryModel.findOne({ _id: id });
       res.status(200).send({ data });
     } catch (error: any) {
       res.status(400).send(error.message);

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { CategoryModel } from '../models/category.model';
 import { QuestionModel } from '../models/question.model';
 
 export class QuestionController {
@@ -12,6 +13,8 @@ export class QuestionController {
 
   async createQuestion(req: Request, res: Response, next: NextFunction) {
     try {
+      const category = await CategoryModel.findById(req.body.categoryId)
+      req.body.categoryTitle = category?.title
       const newQuestion = new QuestionModel(req.body);
       await newQuestion.save();
       res.status(200).send(newQuestion);
