@@ -25,6 +25,8 @@ export class QuestionComponent {
         _id: data._id,
         questionText: data.questionText,
         options: data.options,
+        categoryTitle: data.categoryTitle,
+        level: data.level,
         // answerId: data.answerId,
       };
       this.setCountDown();

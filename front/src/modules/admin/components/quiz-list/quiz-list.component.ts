@@ -32,6 +32,16 @@ export class QuizListComponent extends ListBase<Question> {
   protected getColumns(): ColDef[] {
     const columns = [
       {
+        headerName: 'labels.category',
+        field: 'categoryTitle',
+        flex: 1,
+      },
+      {
+        headerName: 'labels.level',
+        field: 'level',
+        flex: 1,
+      },
+      {
         headerName: 'labels.questionText',
         field: 'questionText',
         cellStyle: { color: 'black', backgroundColor: '#b6b0b0' },
@@ -85,6 +95,8 @@ export class QuizListComponent extends ListBase<Question> {
       const row: any = {};
       row._id = question._id;
       row.questionText = question.questionText;
+      row.categoryTitle = question.categoryTitle;
+      row.level = question.level;
       let index = 1;
       question.options.forEach((option: QuestionOption) => {
         row['option' + index] = option.optionText;

@@ -18,7 +18,7 @@
     <div class="form-item">
       <select id="category" name="category" formControlName="categoryId">
         <ng-container *ngFor="let category of categories$ | async">
-          <option [value]="category.id">
+          <option [value]="category._id">
             {{ category.title }}
           </option>
         </ng-container>
