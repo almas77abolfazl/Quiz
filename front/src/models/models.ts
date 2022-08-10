@@ -2,6 +2,8 @@ export interface Question {
   _id: string;
   questionText: string;
   options: QuestionOption[];
+  level: Levels;
+  categoryTitle: string;
 }
 
 export interface QuestionOption {
@@ -35,4 +37,11 @@ export interface Command {
 export interface Category {
   _id: string;
   categoryTitle: string;
+}
+
+enum Levels {
+  easy = 'easy',
+  medium = 'medium',
+  hard = 'hard',
+  veryHard = 'veryHard',
 }

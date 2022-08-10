@@ -27,7 +27,7 @@ export class CategoryListComponent extends ListBase<Category> {
   }
 
   protected getColumns(): ColDef<any>[] {
-    return [{ field: 'categoryTitle', headerName: 'labels.category' }];
+    return [{ field: 'title', headerName: 'labels.category' }];
   }
   protected getCommands(): Command[] {
     const commands: Command[] = [

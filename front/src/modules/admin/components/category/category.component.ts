@@ -18,9 +18,7 @@ export class CategoryComponent extends FormBase<Category> {
   protected getFormGroup(): FormGroup<any> {
     return new FormGroup({
       _id: new FormControl(null, []),
-      categoryTitle: new FormControl(null, []),
+      title: new FormControl(null, []),
     });
   }
-
-
 }
