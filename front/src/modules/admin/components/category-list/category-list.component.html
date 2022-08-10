@@ -1,0 +1,16 @@
+<div class="flex-container flex column">
+  <app-toolbar
+    [commands]="commands"
+    (processCommand)="processCommand($event)"
+  ></app-toolbar>
+
+  <div class="flex-fill">
+    <app-grid
+      [columnDefs]="columnDefs"
+      [rowData]="rowData"
+      [hasCheckboxSelection]="true"
+      (selectedRowChange)="onSelectedRowChange($event)"
+      (gridReady)="onGridReady($event)"
+    ></app-grid>
+  </div>
+</div>

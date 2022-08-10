@@ -10,6 +10,8 @@ import { QuizComponent } from './components/quiz/quiz.component';
 import { QuizListComponent } from './components/quiz-list/quiz-list.component';
 import { UsersListComponent } from './components/users-list/users-list.component';
 import { UserComponent } from './components/user/user.component';
+import { CategoryComponent } from './components/category/category.component';
+import { CategoryListComponent } from './components/category-list/category-list.component';
 
 @NgModule({
   imports: [SharedModule, AdminRoutes],
@@ -18,7 +20,9 @@ import { UserComponent } from './components/user/user.component';
     QuizComponent,
     QuizListComponent,
     UsersListComponent,
-    UserComponent
+    UserComponent,
+    CategoryComponent,
+    CategoryListComponent,
   ],
   providers: [AdminService],
 })

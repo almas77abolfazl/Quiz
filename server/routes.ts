@@ -5,6 +5,7 @@ import { QuestionController } from './controllers/question.controller';
 const setRoutes = (app: Application): void => {
   setUserRoutes(app);
   setQuestionRoutes(app);
+  // setCategoryRoutes(app);
 };
 
 const setUserRoutes = (app: Application) => {
@@ -82,5 +83,50 @@ const setQuestionRoutes = (app: Application) => {
   // Apply the routes to our application with the prefix /api
   app.use('/questions', router);
 };
+
+// const setCategoryRoutes = (app: Application) => {
+//   const router = Router();
+//   const controller = new CategoryController();
+//   const userController = new UserController();
+
+//   // questions
+//   router
+//     .route('/')
+//     .get(
+//       userController.authenticate.bind(userController),
+//       controller.getQuestions.bind(controller)
+//     );
+
+//   router
+//     .route('/')
+//     .post(
+//       userController.authenticate.bind(userController),
+//       controller.saveQuestion.bind(controller)
+//     );
+
+//   router
+//     .route('/random')
+//     .get(
+//       userController.authenticate.bind(userController),
+//       controller.getRandom.bind(controller)
+//     );
+
+//   router
+//     .route('/:id')
+//     .delete(
+//       userController.authenticate.bind(userController),
+//       controller.deleteQuestion.bind(controller)
+//     );
+
+//   router
+//     .route('/:id')
+//     .get(
+//       userController.authenticate.bind(userController),
+//       controller.getQuestionById.bind(controller)
+//     );
+
+//   // Apply the routes to our application with the prefix /api
+//   app.use('/questions', router);
+// };
 
 export default setRoutes;

@@ -21,6 +21,8 @@ export class QuizComponent extends FormBase<Question> {
 
   optionGroups: FormGroup[] = [];
 
+  categories$ = this.webRequestService.get('categories');
+
   //#endregion
 
   //#region Ctor
@@ -40,6 +42,9 @@ export class QuizComponent extends FormBase<Question> {
       createdAt: new FormControl(null, []),
       updatedAt: new FormControl(null, []),
       questionText: new FormControl(null, [Validators.required]),
+      categoryId: new FormControl(null, [Validators.required]),
+      categoryTitle: new FormControl(null, [Validators.required]),
+      level: new FormControl(null, [Validators.required]),
       options: new FormArray(this.getOptionsFormGroup()),
     });
   }

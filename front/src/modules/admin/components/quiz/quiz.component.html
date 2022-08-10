@@ -16,6 +16,33 @@
 
   <form [formGroup]="formGroup">
     <div class="form-item">
+      <select id="category" name="category" formControlName="categoryId">
+        <ng-container *ngFor="let category of categories$ | async">
+          <option [value]="category.id">
+            {{ category.title }}
+          </option>
+        </ng-container>
+      </select>
+      <label [for]="'category'">{{ "labels.category" | translate }}</label>
+    </div>
+    <div class="form-item">
+      <select id="level" name="level" formControlName="level">
+        <option value="easy">
+          {{ "labels.easy" | translate }}
+        </option>
+        <option value="medium">
+          {{ "labels.medium" | translate }}
+        </option>
+        <option value="hard">
+          {{ "labels.hard" | translate }}
+        </option>
+        <option value="veryHard">
+          {{ "labels.veryHard" | translate }}
+        </option>
+      </select>
+      <label [for]="'category'">{{ "labels.category" | translate }}</label>
+    </div>
+    <div class="form-item">
       <textarea
         autocomplete="off"
         rows="5"
@@ -35,7 +62,9 @@
             autocomplete="off"
             formControlName="optionText"
           />
-          <label [for]="'optionText' + i">{{"labels.option" | translate}} {{ i + 1 }}</label>
+          <label [for]="'optionText' + i"
+            >{{ "labels.option" | translate }} {{ i + 1 }}</label
+          >
           <input
             type="checkbox"
             [name]="'isAnswer' + i"

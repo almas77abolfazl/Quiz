@@ -1,13 +1,23 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from "mongoose";
 
 interface Option {
   optionText: string;
   isAnswer: boolean;
 }
 
+enum Levels {
+  easy = "easy",
+  medium = "medium",
+  hard = "hard",
+  veryHard = "veryHard",
+}
+
 export interface IQuestion extends Document {
   questionText: string;
   options: Option[];
+  categoryId: string;
+  categoryTitle: string;
+  level: string;
 }
 
 const QuestionSchema: Schema = new Schema(
@@ -33,6 +43,18 @@ const QuestionSchema: Schema = new Schema(
         },
       },
     ],
+    categoryId: {
+      type: String,
+      required: true,
+    },
+    categoryTitle: {
+      type: String,
+    },
+    level: {
+      type: String,
+      enum: Object.values(Levels),
+      default: Levels.easy,
+    },
   },
   {
     timestamps: true,
@@ -41,6 +63,6 @@ const QuestionSchema: Schema = new Schema(
 
 // Export the model and return your IQuestion interface
 export const QuestionModel = mongoose.model<IQuestion>(
-  'Question',
+  "Question",
   QuestionSchema
 );

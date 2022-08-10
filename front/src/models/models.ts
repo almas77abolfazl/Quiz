@@ -32,3 +32,7 @@ export interface Command {
   icon?: string;
   // other options
 }
+export interface Category {
+  _id: string;
+  categoryTitle: string;
+}

@@ -41,4 +41,14 @@ export class UserComponent extends FormBase<User> {
     // this.dialog.open();
     this.router.navigate(['admin/users-list']);
   }
+
+  protected validateFormBeforeSave(): boolean {
+    const validation = !!this.getControl('password').value;
+
+    if (!validation) {
+      alert('messages.passwordIsReq');
+    }
+
+    return validation;
+  }
 }
