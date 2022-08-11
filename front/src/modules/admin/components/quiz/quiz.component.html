@@ -28,19 +28,19 @@
     <div class="form-item">
       <select id="level" name="level" formControlName="level">
         <option value="easy">
-          {{ "labels.easy" | translate }}
+          {{ "enums.easy" | translate }}
         </option>
         <option value="medium">
-          {{ "labels.medium" | translate }}
+          {{ "enums.medium" | translate }}
         </option>
         <option value="hard">
-          {{ "labels.hard" | translate }}
+          {{ "enums.hard" | translate }}
         </option>
         <option value="veryHard">
-          {{ "labels.veryHard" | translate }}
+          {{ "enums.veryHard" | translate }}
         </option>
       </select>
-      <label [for]="'category'">{{ "labels.category" | translate }}</label>
+      <label [for]="'level'">{{ "labels.level" | translate }}</label>
     </div>
     <div class="form-item">
       <textarea

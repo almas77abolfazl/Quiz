@@ -1,5 +1,6 @@
 import { Component, Injector } from '@angular/core';
 import { CellStyle, ColDef } from 'ag-grid-community';
+import { Observable } from 'rxjs';
 import { Command, Question, QuestionOption } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
 
@@ -108,6 +109,24 @@ export class QuizListComponent extends ListBase<Question> {
       rows.push(row);
     });
     return rows;
+  }
+
+  protected virtualChangeStructureOfDataAsync(
+    data: Question[]
+  ): Observable<Question[]> {
+    return new Observable((subscriber) => {
+      data.forEach((x, idx, array) => {
+        this.translateService
+          .get(('enums.' + x.level) as string)
+          .subscribe((level) => {
+            x.level = level;
+            if (idx === array.length - 1) {
+              subscriber.next(data);
+              subscriber.complete();
+            }
+          });
+      });
+    });
   }
 
   private setCellStyles(value: string): CellStyle {

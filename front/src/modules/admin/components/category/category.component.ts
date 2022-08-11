@@ -21,4 +21,8 @@ export class CategoryComponent extends FormBase<Category> {
       title: new FormControl(null, []),
     });
   }
+
+  protected virtualAfterSave(): void {
+    this.router.navigate(['admin/category-list']);
+  }
 }

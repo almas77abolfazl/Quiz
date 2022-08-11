@@ -1,12 +1,9 @@
 import { Component, Injector } from '@angular/core';
-import { Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { ColDef } from 'ag-grid-community';
 import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
-import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-users-list',
