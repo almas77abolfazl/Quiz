@@ -7,6 +7,7 @@ import { GridComponent } from './components/grid/grid.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { MatDialogModule } from '@angular/material/dialog';
+import { DialogComponent } from './components/dialog/dialog.component';
 
 @NgModule({
   imports: [
@@ -18,7 +19,7 @@ import { MatDialogModule } from '@angular/material/dialog';
     TranslateModule,
     MatDialogModule,
   ],
-  declarations: [GridComponent, ToolbarComponent],
+  declarations: [GridComponent, ToolbarComponent, DialogComponent],
   exports: [
     GridComponent,
     CommonModule,
@@ -27,6 +28,7 @@ import { MatDialogModule } from '@angular/material/dialog';
     HttpClientModule,
     ToolbarComponent,
     TranslateModule,
+    DialogComponent,
   ],
 })
 export class SharedModule {}
