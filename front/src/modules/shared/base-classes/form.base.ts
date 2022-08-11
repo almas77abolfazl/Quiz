@@ -88,6 +88,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
         message: message,
         buttons: ['ok'],
       },
+      direction: 'rtl',
     });
   }
 
