@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
+import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 
 @Component({
   selector: 'app-users-list',
@@ -13,17 +14,16 @@ import { ListBase } from 'src/modules/shared/base-classes/list.base';
 export class UsersListComponent extends ListBase<User> {
   entityName = 'users';
 
-  constructor(injector: Injector) {
+  constructor(
+    injector: Injector,
+    private authenticationService: AuthenticationService
+  ) {
     super(injector);
   }
 
   public processCommand(command: Command) {
     if (command.commandName === 'edit') {
-      if (!this.currentRow) {
-        alert('messages.selectItem');
-        return;
-      }
-      this.router.navigate(['admin/user', this.currentRow._id]);
+      this.doEdit();
     }
   }
 
@@ -65,5 +65,24 @@ export class UsersListComponent extends ListBase<User> {
           });
       });
     });
+  }
+
+  private doEdit() {
+    const userInfo = this.getUserInfo();
+    if (!this.currentRow) {
+      alert('messages.selectItem');
+      return;
+    } else if (
+      userInfo.role === 'admin' &&
+      this.currentRow._id !== userInfo._id
+    ) {
+      alert('messages.cannotEditOtherUserInformation');
+      return;
+    }
+    this.router.navigate(['admin/user', this.currentRow._id]);
+  }
+
+  private getUserInfo(): User {
+    return this.authenticationService.currentUserValue?.user as User;
   }
 }

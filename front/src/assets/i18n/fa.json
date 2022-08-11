@@ -36,7 +36,8 @@
     "setOneOfTheOptionsAsAnswer": "لطفا یکی از گزینه ها را به عنوان جواب تنظیم کنید.",
     "thereAreNoRows": "هیچ ردیفی وجود ندارد.",
     "loading": "در حال بارگزاری...",
-    "welcome": "کاربر گرامی {{user}} خوش آمدید."
+    "welcome": "کاربر گرامی {{user}} خوش آمدید.",
+    "cannotEditOtherUserInformation": "نمیتوانید اطلاعات کاربر دیگری را ویرایش کنید."
   },
   "enums": {
     "male": "مرد",
