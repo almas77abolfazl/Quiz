@@ -72,7 +72,9 @@ export class QuestionController {
   async getQuestionById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
-      const data = await QuestionModel.findOne({ _id: id });
+      const data = await QuestionModel.findOne({ _id: id }).populate(
+        "category"
+      );
       res.status(200).send({ data });
     } catch (error: any) {
       res.status(400).send(error.message);

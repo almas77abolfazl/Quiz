@@ -53,8 +53,12 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     );
   }
 
-  public getControl(fieldName: string): AbstractControl {
+  public getSubControl(fieldName: string): AbstractControl {
     return this.formGroup.get(fieldName) as AbstractControl;
+  }
+
+  public getSubFormGroup(fieldName: string): FormGroup {
+    return this.formGroup.get(fieldName) as FormGroup;
   }
 
   public getFromArray(fieldName: string): FormArray {

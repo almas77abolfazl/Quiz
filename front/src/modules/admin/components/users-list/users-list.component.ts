@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
+import { DialogComponent } from 'src/modules/shared/components/dialog/dialog.component';
 import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 
 @Component({
@@ -76,7 +77,9 @@ export class UsersListComponent extends ListBase<User> {
       userInfo.role === 'admin' &&
       this.currentRow._id !== userInfo._id
     ) {
-      alert('messages.cannotEditOtherUserInformation');
+      this.dialog.open(DialogComponent, {
+        data: { headerTitle: 'messages.cannotEditOtherUserInformation' },
+      });
       return;
     }
     this.router.navigate(['admin/user', this.currentRow._id]);

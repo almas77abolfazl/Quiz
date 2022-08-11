@@ -70,7 +70,7 @@
       </select>
       <label [for]="'gender'">{{ "labels.gender" | translate }}</label>
     </div>
-    <div class="form-item" *ngIf="getControl('role').value !== 'sa'">
+    <div class="form-item" *ngIf="getSubControl('role').value !== 'sa'">
       <select id="role" name="role" formControlName="role">
         <option value="normal">{{ "enums.normal" | translate }}</option>
         <option value="admin">{{ "enums.admin" | translate }}</option>

@@ -43,7 +43,7 @@ export class UserComponent extends FormBase<User> {
   }
 
   protected validateFormBeforeSave(): boolean {
-    const validation = !!this.getControl('password').value;
+    const validation = !!this.getSubControl('password').value;
 
     if (!validation) {
       alert('messages.passwordIsReq');

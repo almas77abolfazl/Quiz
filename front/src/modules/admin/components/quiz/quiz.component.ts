@@ -6,7 +6,8 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { Question, QuestionOption } from 'src/models/models';
+import { Observable } from 'rxjs';
+import { Category, Question, QuestionOption } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
 
 @Component({
@@ -21,7 +22,9 @@ export class QuizComponent extends FormBase<Question> {
 
   optionGroups: FormGroup[] = [];
 
-  categories$ = this.webRequestService.get('category');
+  categories$ = this.webRequestService.get('category') as Observable<
+    Category[]
+  >;
 
   //#endregion
 
@@ -42,7 +45,13 @@ export class QuizComponent extends FormBase<Question> {
       createdAt: new FormControl(null, []),
       updatedAt: new FormControl(null, []),
       questionText: new FormControl(null, [Validators.required]),
-      category: new FormControl(null, [Validators.required]),
+      category: new FormGroup({
+        _id: new FormControl(null, [Validators.required]),
+        __v: new FormControl(null, []),
+        createdAt: new FormControl(null, []),
+        updatedAt: new FormControl(null, []),
+        title: new FormControl(null, [Validators.required]),
+      }),
       level: new FormControl(null, [Validators.required]),
       options: new FormArray(this.getOptionsFormGroup()),
     });
@@ -50,6 +59,7 @@ export class QuizComponent extends FormBase<Question> {
 
   protected virtualNgOnInit(): void {
     this.onIsAnswerChanges();
+    this.onCategoryIdChanges();
   }
 
   protected validateFormBeforeSave(): boolean {
@@ -102,6 +112,24 @@ export class QuizComponent extends FormBase<Question> {
         }
       });
     });
+  }
+
+  private onCategoryIdChanges() {
+    const formGroup = this.getSubFormGroup('category');
+    this.subscriptions.add(
+      formGroup.get('_id')?.valueChanges.subscribe((newValue) => {
+        if (newValue) {
+          this.subscriptions.add(
+            this.categories$.subscribe((categories) => {
+              const selectedCategory = categories.find(
+                (x) => x._id === newValue
+              );
+              formGroup.get('title')?.setValue(selectedCategory?.title);
+            })
+          );
+        }
+      })
+    );
   }
 
   //#endregion
