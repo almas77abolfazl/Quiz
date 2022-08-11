@@ -22,7 +22,7 @@ export class AdminComponent implements OnInit {
     const firstName = currentUser?.firstName || '';
     const lastName = currentUser?.lastName || '';
     let fullName = firstName + ' ' + lastName;
-    if (!fullName) {
+    if (!fullName || fullName === ' ') {
       fullName = currentUser?.username || '';
     }
     return fullName;
