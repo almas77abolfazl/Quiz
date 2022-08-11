@@ -3,7 +3,7 @@ export interface Question {
   questionText: string;
   options: QuestionOption[];
   level: Levels;
-  categoryTitle: string;
+  category: Category;
 }
 
 export interface QuestionOption {
@@ -36,7 +36,7 @@ export interface Command {
 }
 export interface Category {
   _id: string;
-  categoryTitle: string;
+  title: string;
 }
 
 enum Levels {

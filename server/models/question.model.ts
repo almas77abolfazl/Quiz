@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { ICategory } from "./category.model";
 
 interface Option {
   optionText: string;
@@ -15,8 +16,7 @@ enum Levels {
 export interface IQuestion extends Document {
   questionText: string;
   options: Option[];
-  categoryId: string;
-  categoryTitle: string;
+  category: ICategory;
   level: string;
 }
 
@@ -43,12 +43,10 @@ const QuestionSchema: Schema = new Schema(
         },
       },
     ],
-    categoryId: {
-      type: String,
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
       required: true,
-    },
-    categoryTitle: {
-      type: String,
     },
     level: {
       type: String,

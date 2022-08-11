@@ -42,8 +42,7 @@ export class QuizComponent extends FormBase<Question> {
       createdAt: new FormControl(null, []),
       updatedAt: new FormControl(null, []),
       questionText: new FormControl(null, [Validators.required]),
-      categoryId: new FormControl(null, [Validators.required]),
-      categoryTitle: new FormControl(null, []),
+      category: new FormControl(null, [Validators.required]),
       level: new FormControl(null, [Validators.required]),
       options: new FormArray(this.getOptionsFormGroup()),
     });

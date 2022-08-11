@@ -96,7 +96,7 @@ export class QuizListComponent extends ListBase<Question> {
       const row: any = {};
       row._id = question._id;
       row.questionText = question.questionText;
-      row.categoryTitle = question.categoryTitle;
+      row.categoryTitle = question.category.title;
       row.level = question.level;
       let index = 1;
       question.options.forEach((option: QuestionOption) => {

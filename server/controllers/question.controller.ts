@@ -1,6 +1,6 @@
-import { NextFunction, Request, Response } from 'express';
-import { CategoryModel } from '../models/category.model';
-import { QuestionModel } from '../models/question.model';
+import { NextFunction, Request, Response } from "express";
+import { CategoryModel } from "../models/category.model";
+import { QuestionModel } from "../models/question.model";
 
 export class QuestionController {
   constructor() {}
@@ -13,8 +13,6 @@ export class QuestionController {
 
   async createQuestion(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await CategoryModel.findById(req.body.categoryId)
-      req.body.categoryTitle = category?.title
       const newQuestion = new QuestionModel(req.body);
       await newQuestion.save();
       res.status(200).send(newQuestion);
@@ -41,7 +39,7 @@ export class QuestionController {
 
   async getQuestions(req: Request, res: Response, next: NextFunction) {
     try {
-      const allQuestions = await QuestionModel.find({});
+      const allQuestions = await QuestionModel.find({}).populate("category");
       res.status(200).send(allQuestions);
     } catch (error: any) {
       res.status(400).send(error.message);
@@ -65,7 +63,7 @@ export class QuestionController {
     try {
       const id = req.params.id;
       await QuestionModel.findOneAndRemove({ _id: id });
-      res.status(200).send({ message: 'successfully deleted' });
+      res.status(200).send({ message: "successfully deleted" });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
