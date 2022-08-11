@@ -46,7 +46,7 @@ export class UserComponent extends FormBase<User> {
     const validation = !!this.getSubControl('password').value;
 
     if (!validation) {
-      alert('messages.passwordIsReq');
+      this.showMessage('messages.passwordIsReq');
     }
 
     return validation;

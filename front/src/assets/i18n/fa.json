@@ -29,7 +29,8 @@
     "address": "آدرس",
     "category": "دسته بندی",
     "categoryList": "لیست دسته بندی",
-    "level": "سطح"
+    "level": "سطح",
+    "Ok":"باشه"
   },
   "messages": {
     "selectItem": "لطفا یکی از آیتم ها را انتخاب کنید.",
@@ -37,7 +38,8 @@
     "thereAreNoRows": "هیچ ردیفی وجود ندارد.",
     "loading": "در حال بارگزاری...",
     "welcome": "کاربر گرامی {{user}} خوش آمدید.",
-    "cannotEditOtherUserInformation": "نمیتوانید اطلاعات کاربر دیگری را ویرایش کنید."
+    "cannotEditOtherUserInformation": "نمیتوانید اطلاعات کاربر دیگری را ویرایش کنید.",
+    "passwordIsReq": "رمز ورود اجباری میباشد."
   },
   "enums": {
     "male": "مرد",

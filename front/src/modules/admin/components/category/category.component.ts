@@ -1,5 +1,5 @@
-import { Component, Injector, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { Component, Injector } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Category } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
 
@@ -18,7 +18,7 @@ export class CategoryComponent extends FormBase<Category> {
   protected getFormGroup(): FormGroup<any> {
     return new FormGroup({
       _id: new FormControl(null, []),
-      title: new FormControl(null, []),
+      title: new FormControl(null, [Validators.required]),
     });
   }
 

@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
-import { DialogComponent } from 'src/modules/shared/components/dialog/dialog.component';
 import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 
 @Component({
@@ -71,15 +70,13 @@ export class UsersListComponent extends ListBase<User> {
   private doEdit() {
     const userInfo = this.getUserInfo();
     if (!this.currentRow) {
-      alert('messages.selectItem');
+      this.showMessage('messages.selectItem');
       return;
     } else if (
       userInfo.role === 'admin' &&
       this.currentRow._id !== userInfo._id
     ) {
-      this.dialog.open(DialogComponent, {
-        data: { headerTitle: 'messages.cannotEditOtherUserInformation' },
-      });
+      this.showMessage('messages.cannotEditOtherUserInformation')
       return;
     }
     this.router.navigate(['admin/user', this.currentRow._id]);

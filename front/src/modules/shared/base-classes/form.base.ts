@@ -3,6 +3,7 @@ import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { DialogComponent } from '../components/dialog/dialog.component';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
 @Component({ template: '' })
@@ -81,6 +82,15 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     }
   }
 
+  public showMessage(message: string) {
+    this.dialog.open(DialogComponent, {
+      data: {
+        message: message,
+        buttons: ['ok'],
+      },
+    });
+  }
+
   //#region lifeCycle hooks
 
   ngOnInit(): void {
@@ -109,7 +119,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
   protected virtualNgOnDestroy() {}
 
   protected validateFormBeforeSave(): boolean {
-    return true;
+    return this.formGroup.valid;
   }
 
   protected virtualAfterSave() {}

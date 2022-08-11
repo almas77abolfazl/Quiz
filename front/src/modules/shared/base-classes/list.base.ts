@@ -12,6 +12,7 @@ import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Command } from 'src/models/models';
+import { DialogComponent } from '../components/dialog/dialog.component';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
 @Component({ template: '' })
@@ -67,10 +68,19 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
 
   public validateBeforeDoOperationOnCurrentRow(): boolean {
     if (!this.currentRow) {
-      alert('messages.selectItem');
+      this.showMessage('messages.selectItem');
       return false;
     }
     return true;
+  }
+
+  public showMessage(message: string) {
+    this.dialog.open(DialogComponent, {
+      data: {
+        message: message,
+        buttons: ['ok'],
+      },
+    });
   }
 
   //#endregion
