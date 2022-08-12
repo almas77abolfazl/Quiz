@@ -32,12 +32,10 @@ export class CategoryController {
           $set: req.body,
         }
       );
-      res
-        .status(200)
-        .send({
-          entity: updatedCategory,
-          message: "messages.updatedSuccessfully",
-        });
+      res.status(200).send({
+        entity: updatedCategory,
+        message: "messages.updatedSuccessfully",
+      });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
@@ -45,7 +43,16 @@ export class CategoryController {
 
   async getCategories(req: Request, res: Response, next: NextFunction) {
     try {
-      const allCategories = await CategoryModel.find({});
+      const allCategories = await CategoryModel.find({}).populate([
+        "creator",
+        "editor",
+      ]);
+      allCategories.forEach((c) => {
+        c.creator.password = "";
+        if (c.editor) {
+          c.editor.password = "";
+        }
+      });
       res.status(200).send(allCategories);
     } catch (error: any) {
       res.status(400).send(error.message);
@@ -65,7 +72,17 @@ export class CategoryController {
   async getCategoryById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
-      const data = await CategoryModel.findOne({ _id: id });
+      const data = await CategoryModel.findOne({ _id: id }).populate([
+        "creator",
+        "editor",
+      ]);
+      if (data) {
+        data.creator.password = "";
+        if (data.editor) {
+          data.editor.password = "";
+        }
+      }
+
       res.status(200).send({ data });
     } catch (error: any) {
       res.status(400).send(error.message);

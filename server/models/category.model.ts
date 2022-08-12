@@ -1,7 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { IUser } from "./user.model";
 
 export interface ICategory extends Document {
   title: string;
+  creator: IUser;
+  editor?: IUser;
 }
 
 const CategorySchema: Schema = new Schema(
@@ -12,6 +15,15 @@ const CategorySchema: Schema = new Schema(
       minlength: 1,
       trim: true,
       unique: true,
+    },
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    editor: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
     },
   },
   {

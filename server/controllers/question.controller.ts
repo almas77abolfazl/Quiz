@@ -43,7 +43,26 @@ export class QuestionController {
 
   async getQuestions(req: Request, res: Response, next: NextFunction) {
     try {
-      const allQuestions = await QuestionModel.find({}).populate("category");
+      const allQuestions = await QuestionModel.find({})
+        .populate(["creator", "editor"])
+        .populate({
+          path: "category",
+          populate: {
+            path: "creator",
+          },
+        })
+        .populate({
+          path: "category",
+          populate: {
+            path: "editor",
+          },
+        });
+      allQuestions.forEach((q) => {
+        q.creator.password = "";
+        if (q.editor) {
+          q.editor.password = "";
+        }
+      });
       res.status(200).send(allQuestions);
     } catch (error: any) {
       res.status(400).send(error.message);
@@ -76,9 +95,26 @@ export class QuestionController {
   async getQuestionById(req: Request, res: Response, next: NextFunction) {
     try {
       const id = req.params.id;
-      const data = await QuestionModel.findOne({ _id: id }).populate(
-        "category"
-      );
+      const data = await QuestionModel.findOne({ _id: id })
+        .populate(["creator", "editor"])
+        .populate({
+          path: "category",
+          populate: {
+            path: "creator",
+          },
+        })
+        .populate({
+          path: "category",
+          populate: {
+            path: "editor",
+          },
+        });
+      if (data) {
+        data.creator.password = "";
+        if (data.editor) {
+          data.editor.password = "";
+        }
+      }
       res.status(200).send({ data });
     } catch (error: any) {
       res.status(400).send(error.message);

@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { ICategory } from "./category.model";
+import { IUser } from "./user.model";
 
 interface Option {
   optionText: string;
@@ -18,6 +19,8 @@ export interface IQuestion extends Document {
   options: Option[];
   category: ICategory;
   level: string;
+  creator: IUser;
+  editor?: IUser;
 }
 
 const QuestionSchema: Schema = new Schema(
@@ -52,6 +55,15 @@ const QuestionSchema: Schema = new Schema(
       type: String,
       enum: Object.values(Levels),
       default: Levels.easy,
+    },
+    creator: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    editor: {
+      type: Schema.Types.ObjectId,
+      ref: "User"
     },
   },
   {
