@@ -1,12 +1,12 @@
-import { NextFunction, Request, Response } from 'express';
-import * as jwt from 'jsonwebtoken';
-import * as crypto from 'crypto';
-import * as bcrypt from 'bcryptjs';
+import { NextFunction, Request, Response } from "express";
+import * as jwt from "jsonwebtoken";
+import * as crypto from "crypto";
+import * as bcrypt from "bcryptjs";
 
-import { IUser, Roles, Session, UserModel } from '../models/user.model';
+import { IUser, Roles, Session, UserModel } from "../models/user.model";
 
 // JWT Secret
-const jwtSecret = '51778657246321226641fsdklafjasdkljfsklfjd7148924065';
+const jwtSecret = "51778657246321226641fsdklafjasdkljfsklfjd7148924065";
 
 export class UserController {
   constructor() {}
@@ -16,14 +16,14 @@ export class UserController {
       if (superAdmin.length === 0) {
         try {
           const newUser = new UserModel({
-            username: 'admin',
-            email: 'default@email.com',
-            password: '123',
+            username: "admin",
+            email: "default@email.com",
+            password: "123",
             role: Roles.sa,
           });
           await this.hashPassWord(newUser);
           await newUser.save();
-          console.log('default admin successfully added.');
+          console.log("default admin successfully added.");
         } catch (error: any) {
           console.log(error);
         }
@@ -35,7 +35,7 @@ export class UserController {
     try {
       const allUsers = await UserModel.find({});
       allUsers.forEach((user) => {
-        user.password = '';
+        user.password = "";
       });
       res.status(200).send(allUsers);
     } catch (error: any) {
@@ -48,7 +48,7 @@ export class UserController {
       const id = req.params.id;
       const data = await UserModel.findOne({ _id: id });
       if (data) {
-        data.password = '';
+        data.password = "";
       }
       res.status(200).send({ data });
     } catch (error: any) {
@@ -71,7 +71,7 @@ export class UserController {
       await newUser.save();
       await this.createSession(newUser);
       const accessToken = this.generateAccessAuthToken(newUser);
-      newUser.password = 'null';
+      newUser.password = "null";
       const ResponseData = {
         user: newUser,
         accessToken,
@@ -95,9 +95,12 @@ export class UserController {
         }
       );
       if (updatedUser) {
-        updatedUser.password = 'null';
+        updatedUser.password = "null";
       }
-      res.status(200).send(updatedUser);
+      res.status(200).send({
+        entity: updatedUser,
+        message: "messages.updatedSuccessfully",
+      });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
@@ -110,7 +113,7 @@ export class UserController {
       const user = await this.findByCredentials(username, password);
       await this.createSession(user);
       const accessToken = this.generateAccessAuthToken(user);
-      user.password = '';
+      user.password = "";
       const ResponseData = {
         user,
         accessToken,
@@ -127,7 +130,7 @@ export class UserController {
     next: NextFunction
   ) {
     try {
-      let _id = req.header('_id') as string;
+      let _id = req.header("_id") as string;
       const user = (await this.findUserById(_id)) as IUser;
       const accessToken = this.generateAccessAuthToken(user);
       res.send({ accessToken });
@@ -139,22 +142,15 @@ export class UserController {
   public async verifySession(req: Request, res: Response, next: NextFunction) {
     try {
       // grab the _id from the request header
-      let _id = req.header('_id') as string;
+      let _id = req.header("_id") as string;
 
       const user = await this.findUserById(_id);
       if (!user) {
         // user couldn't be found
-        throw 'User not found. Make sure that the refresh token and user id are correct';
+        throw "User not found. Make sure that the refresh token and user id are correct";
       }
 
       let refreshToken = user.sessions[user.sessions.length - 1].token;
-
-      // if the code reaches here - the user was found
-      // therefore the refresh token exists in the database - but we still have to check if it has expired or not
-
-      // req.user_id = user._id;
-      // req.userObject = user;
-      // req.refreshToken = refreshToken;
 
       let isSessionValid = false;
 
@@ -173,7 +169,7 @@ export class UserController {
         next();
       } else {
         // the session is not valid
-        throw 'Refresh token has expired or the session is invalid';
+        throw "Refresh token has expired or the session is invalid";
       }
     } catch (error) {
       res.status(401).send(error);
@@ -181,7 +177,7 @@ export class UserController {
   }
 
   public authenticate(req: Request, res: Response, next: NextFunction) {
-    let token = req.header('x-access-token') as string;
+    let token = req.header("x-access-token") as string;
 
     // verify the JWT
     jwt.verify(token, jwtSecret, (err, decoded) => {
@@ -201,7 +197,7 @@ export class UserController {
     return new Promise((resolve, reject) => {
       let costFactor = 10;
 
-      if (user.isModified('password')) {
+      if (user.isModified("password")) {
         // if the password field has been edited/changed then run this code.
 
         // Generate salt and hash password
@@ -237,7 +233,7 @@ export class UserController {
     // Create the JSON Web Token and return that
     try {
       const token = jwt.sign({ _id: user._id.toHexString() }, jwtSecret, {
-        expiresIn: '1m',
+        expiresIn: "1m",
       });
       return token;
     } catch (error) {
@@ -251,7 +247,7 @@ export class UserController {
       crypto.randomBytes(64, (err, buf) => {
         if (!err) {
           // no error
-          let token = buf.toString('hex');
+          let token = buf.toString("hex");
 
           return resolve(token);
         }
@@ -292,14 +288,14 @@ export class UserController {
     password: string
   ): Promise<IUser> {
     const user = await UserModel.findOne({ username });
-    if (!user) throw 'user not find';
+    if (!user) throw "messages.userNotFind";
 
     return new Promise((resolve, reject) => {
       bcrypt.compare(password, user.password, (err, res) => {
         if (res) {
           return resolve(user);
         } else {
-          return reject('passwordNotMatched');
+          return reject("messages.passwordNotMatched");
         }
       });
     });

@@ -68,7 +68,7 @@ export class QuizComponent extends FormBase<Question> {
       (option: QuestionOption) => option.isAnswer
     );
     if (isAnswersValues.length === 0) {
-      this.showMessage('messages.setOneOfTheOptionsAsAnswer');
+      this.dialogService.showMessage('messages.setOneOfTheOptionsAsAnswer');
       return false;
     }
     return this.formGroup.valid;

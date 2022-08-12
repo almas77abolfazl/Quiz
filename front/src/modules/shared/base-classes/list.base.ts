@@ -5,14 +5,13 @@ import {
   OnDestroy,
   OnInit,
 } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Command } from 'src/models/models';
-import { DialogComponent } from '../components/dialog/dialog.component';
+import { DialogService } from '../services/dialog/dialog.service';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
 @Component({ template: '' })
@@ -33,14 +32,14 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
 
   public webRequestService: WebRequestService;
   public translateService: TranslateService;
-  public dialog: MatDialog;
   public router: Router;
+  public dialogService: DialogService;
 
   constructor(injector: Injector) {
     this.webRequestService = injector.get(WebRequestService);
     this.translateService = injector.get(TranslateService);
-    this.dialog = injector.get(MatDialog);
     this.router = injector.get(Router);
+    this.dialogService = injector.get(DialogService);
   }
 
   //#region public
@@ -59,6 +58,9 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
       .delete(`${this.entityName}/${id}`)
       .subscribe((res) => {
         if (res) {
+          if (res.message) {
+            this.dialogService.showMessage(res.message);
+          }
           this.getData();
           this.gridApi.hideOverlay();
           this.currentRow = null;
@@ -68,19 +70,10 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
 
   public validateBeforeDoOperationOnCurrentRow(): boolean {
     if (!this.currentRow) {
-      this.showMessage('messages.selectItem');
+      this.dialogService.showMessage('messages.selectItem');
       return false;
     }
     return true;
-  }
-
-  public showMessage(message: string) {
-    this.dialog.open(DialogComponent, {
-      data: {
-        message: message,
-        buttons: ['ok'],
-      },
-    });
   }
 
   //#endregion

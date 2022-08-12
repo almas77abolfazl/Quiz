@@ -5,12 +5,11 @@ import {
   HttpInterceptor,
   HttpErrorResponse,
 } from '@angular/common/http';
-import { Observable, of, Subject, Subscriber } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 import { NgxSpinnerService } from 'ngx-spinner';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogComponent } from 'src/modules/shared/components/dialog/dialog.component';
+import { DialogService } from 'src/modules/shared/services/dialog/dialog.service';
 
 @Injectable()
 export class BasicAuthInterceptor implements HttpInterceptor {
@@ -19,7 +18,7 @@ export class BasicAuthInterceptor implements HttpInterceptor {
   constructor(
     private authenticationService: AuthenticationService,
     private spinner: NgxSpinnerService,
-    private matDialog: MatDialog
+    private dialogService: DialogService
   ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<any> {
@@ -54,10 +53,8 @@ export class BasicAuthInterceptor implements HttpInterceptor {
             return of(error);
           }
         }
+        this.dialogService.showMessage(error.error);
 
-        this.matDialog.open(DialogComponent, {
-          data: { message: error.error },
-        });
         return of(error);
       })
     );

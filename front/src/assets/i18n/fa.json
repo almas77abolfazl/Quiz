@@ -2,7 +2,7 @@
   "labels": {
     "password": "گذرواژه",
     "username": "نام کاربری",
-    "forgotPassword": "کلمه عبور خود را فراموش کرده اید؟",
+    "forgotPassword": "گذرواژه خود را فراموش کرده اید؟",
     "logIn": "ورود به سیستم",
     "signUp": "ثبت نام",
     "email": "ایمیل",
@@ -30,7 +30,7 @@
     "category": "دسته بندی",
     "categoryList": "لیست دسته بندی",
     "level": "سطح",
-    "Ok":"باشه"
+    "Ok": "باشه"
   },
   "messages": {
     "selectItem": "لطفا یکی از آیتم ها را انتخاب کنید.",
@@ -39,7 +39,12 @@
     "loading": "در حال بارگزاری...",
     "welcome": "کاربر گرامی {{user}} خوش آمدید.",
     "cannotEditOtherUserInformation": "نمیتوانید اطلاعات کاربر دیگری را ویرایش کنید.",
-    "passwordIsReq": "رمز ورود اجباری میباشد."
+    "passwordIsReq": "گذرواژه اجباری میباشد.",
+    "userNotFind": "این کاربری وجود ندارد.",
+    "passwordNotMatched": "گذرواژه نادرست است.",
+    "deletedSuccessfully": "با موفقیت حذف شد.",
+    "savedSuccessfully": "با موفقیت ذخیره شد.",
+    "updatedSuccessfully": "با موفقیت به روز رسانی شد."
   },
   "enums": {
     "male": "مرد",

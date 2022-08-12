@@ -14,7 +14,9 @@ export class CategoryController {
     try {
       const newCategory = new CategoryModel(req.body);
       await newCategory.save();
-      res.status(200).send(newCategory);
+      res
+        .status(200)
+        .send({ entity: newCategory, message: "messages.savedSuccessfully" });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
@@ -30,7 +32,12 @@ export class CategoryController {
           $set: req.body,
         }
       );
-      res.status(200).send(updatedCategory);
+      res
+        .status(200)
+        .send({
+          entity: updatedCategory,
+          message: "messages.updatedSuccessfully",
+        });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
@@ -49,7 +56,7 @@ export class CategoryController {
     try {
       const id = req.params.id;
       await CategoryModel.findOneAndRemove({ _id: id });
-      res.status(200).send({ message: "successfully deleted" });
+      res.status(200).send({ message: "messages.deletedSuccessfully" });
     } catch (error: any) {
       res.status(400).send(error.message);
     }

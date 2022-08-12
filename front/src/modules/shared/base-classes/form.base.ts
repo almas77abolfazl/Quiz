@@ -1,9 +1,8 @@
 import { Component, Injector, OnDestroy, OnInit } from '@angular/core';
 import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DialogComponent } from '../components/dialog/dialog.component';
+import { DialogService } from '../services/dialog/dialog.service';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
 @Component({ template: '' })
@@ -16,15 +15,15 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
   abstract entityName: string;
 
   public webRequestService: WebRequestService;
-  public dialog: MatDialog;
   public router: Router;
   public route: ActivatedRoute;
+  public dialogService: DialogService;
 
   constructor(injector: Injector) {
     this.route = injector.get(ActivatedRoute);
     this.webRequestService = injector.get(WebRequestService);
-    this.dialog = injector.get(MatDialog);
     this.router = injector.get(Router);
+    this.dialogService = injector.get(DialogService);
   }
 
   public removeNullProperties(obj: any): any {
@@ -75,6 +74,9 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
           .saveEntity(this.entityName, this.removeNullProperties(sData))
           .subscribe((res) => {
             if (res) {
+              if (res.body?.message) {
+                this.dialogService.showMessage(res.body.message)
+              }
               this.virtualAfterSave();
             }
           })
@@ -82,15 +84,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     }
   }
 
-  public showMessage(message: string) {
-    this.dialog.open(DialogComponent, {
-      data: {
-        message: message,
-        buttons: ['ok'],
-      },
-      direction: 'rtl',
-    });
-  }
+
 
   //#region lifeCycle hooks
 

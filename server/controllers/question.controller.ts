@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { CategoryModel } from "../models/category.model";
 import { QuestionModel } from "../models/question.model";
 
 export class QuestionController {
@@ -15,7 +14,9 @@ export class QuestionController {
     try {
       const newQuestion = new QuestionModel(req.body);
       await newQuestion.save();
-      res.status(200).send(newQuestion);
+      res
+        .status(200)
+        .send({ entity: newQuestion, message: "messages.savedSuccessfully" });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
@@ -31,7 +32,10 @@ export class QuestionController {
           $set: req.body,
         }
       );
-      res.status(200).send(updatedQuestion);
+      res.status(200).send({
+        entity: updatedQuestion,
+        message: "messages.updatedSuccessfully",
+      });
     } catch (error: any) {
       res.status(400).send(error.message);
     }
@@ -63,7 +67,7 @@ export class QuestionController {
     try {
       const id = req.params.id;
       await QuestionModel.findOneAndRemove({ _id: id });
-      res.status(200).send({ message: "successfully deleted" });
+      res.status(200).send({ message: "messages.deletedSuccessfully" });
     } catch (error: any) {
       res.status(400).send(error.message);
     }

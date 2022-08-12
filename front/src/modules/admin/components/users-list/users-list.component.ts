@@ -70,13 +70,13 @@ export class UsersListComponent extends ListBase<User> {
   private doEdit() {
     const userInfo = this.getUserInfo();
     if (!this.currentRow) {
-      this.showMessage('messages.selectItem');
+      this.dialogService.showMessage('messages.selectItem');
       return;
     } else if (
       userInfo.role === 'admin' &&
       this.currentRow._id !== userInfo._id
     ) {
-      this.showMessage('messages.cannotEditOtherUserInformation')
+      this.dialogService.showMessage('messages.cannotEditOtherUserInformation')
       return;
     }
     this.router.navigate(['admin/user', this.currentRow._id]);
