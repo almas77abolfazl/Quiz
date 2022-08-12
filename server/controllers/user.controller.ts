@@ -78,7 +78,15 @@ export class UserController {
       };
       res.status(200).send(ResponseData);
     } catch (error: any) {
-      res.status(404).send(error);
+      let message = "";
+      if (error?.code === 11000) {
+        for (const key in error.keyValue) {
+          if (Object.prototype.hasOwnProperty.call(error.keyValue, key)) {
+            message = `messages.${key}IsDuplicate`;
+          }
+        }
+      }
+      res.status(404).send(message);
     }
   }
 

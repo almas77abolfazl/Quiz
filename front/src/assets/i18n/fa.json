@@ -43,11 +43,14 @@
     "cannotEditOtherUserInformation": "نمیتوانید اطلاعات کاربر دیگری را ویرایش کنید.",
     "passwordIsReq": "گذرواژه اجباری میباشد.",
     "userNotFind": "این کاربری وجود ندارد.",
-    "passwordNotMatched": "گذرواژه نادرست است.",
+    "passwordNotMatched": "نام کاربری یا گذرواژه نادرست است.",
     "deletedSuccessfully": "با موفقیت حذف شد.",
     "savedSuccessfully": "با موفقیت ذخیره شد.",
     "updatedSuccessfully": "با موفقیت به روز رسانی شد.",
-    "pleaseCompleteYourProfileInformation": "لطفا اطلاعات پروفایل خود را کامل کنید."
+    "pleaseCompleteYourProfileInformation": "لطفا اطلاعات پروفایل خود را کامل کنید.",
+    "usernameIsDuplicate": "نام کاربری تکراری میباشد.",
+    "emailIsDuplicate": "ایمیل تکراری میباشد.",
+    "tryAgain": "مشکلی پیش آمده است، لطفا دوباره تلاش کنید."
   },
   "enums": {
     "male": "مرد",

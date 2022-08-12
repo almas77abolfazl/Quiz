@@ -53,7 +53,10 @@ export class BasicAuthInterceptor implements HttpInterceptor {
             return of(error);
           }
         }
-        this.dialogService.showMessage(error.error);
+
+        if (error.status === 0) {
+          this.dialogService.showMessage('messages.tryAgain');
+        } else this.dialogService.showMessage(error.error);
 
         return of(error);
       })
