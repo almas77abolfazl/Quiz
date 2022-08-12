@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
-import { AuthenticationService } from 'src/modules/shared/services/authentication/authentication.service';
 
 @Component({
   selector: 'app-users-list',
@@ -15,8 +14,7 @@ export class UsersListComponent extends ListBase<User> {
   entityName = 'users';
 
   constructor(
-    injector: Injector,
-    private authenticationService: AuthenticationService
+    injector: Injector
   ) {
     super(injector);
   }

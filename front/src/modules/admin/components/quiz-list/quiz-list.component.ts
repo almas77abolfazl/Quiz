@@ -68,6 +68,14 @@ export class QuizListComponent extends ListBase<Question> {
         field: 'option4',
         cellStyle: (params: any) => this.setCellStyles(params.value),
       },
+      {
+        headerName: 'labels.creator',
+        field: 'creator.username'
+      },
+      {
+        headerName: 'labels.editor',
+        field: 'editor.username'
+      },
     ];
     return columns;
   }
@@ -95,6 +103,8 @@ export class QuizListComponent extends ListBase<Question> {
     questions.forEach((question: Question) => {
       const row: any = {};
       row._id = question._id;
+      row.creator = question.creator;
+      row.editor = question.editor;
       row.questionText = question.questionText;
       row.category = question.category;
       row.level = question.level;

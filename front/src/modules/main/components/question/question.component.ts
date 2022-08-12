@@ -27,6 +27,7 @@ export class QuestionComponent {
         options: data.options,
         category: data.category,
         level: data.level,
+        creator: data.creator,
         // answerId: data.answerId,
       };
       this.setCountDown();

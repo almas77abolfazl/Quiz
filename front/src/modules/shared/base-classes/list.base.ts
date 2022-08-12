@@ -11,6 +11,7 @@ import { ColDef, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { Command } from 'src/models/models';
+import { AuthenticationService } from '../services/authentication/authentication.service';
 import { DialogService } from '../services/dialog/dialog.service';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
@@ -34,12 +35,14 @@ export abstract class ListBase<T> implements OnInit, OnDestroy, AfterViewInit {
   public translateService: TranslateService;
   public router: Router;
   public dialogService: DialogService;
+  public authenticationService: AuthenticationService;
 
   constructor(injector: Injector) {
     this.webRequestService = injector.get(WebRequestService);
     this.translateService = injector.get(TranslateService);
     this.router = injector.get(Router);
     this.dialogService = injector.get(DialogService);
+    this.authenticationService = injector.get(AuthenticationService);
   }
 
   //#region public

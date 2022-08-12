@@ -19,6 +19,8 @@ export class CategoryComponent extends FormBase<Category> {
     return new FormGroup({
       _id: new FormControl(null, []),
       title: new FormControl(null, [Validators.required]),
+      creator: this.getUserGroup(),
+      editor: this.getUserGroup(),
     });
   }
 

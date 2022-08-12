@@ -1,7 +1,13 @@
 import { Component, Injector, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormControl,
+  FormGroup,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { AuthenticationService } from '../services/authentication/authentication.service';
 import { DialogService } from '../services/dialog/dialog.service';
 import { WebRequestService } from '../services/web-request/web-request.service';
 
@@ -18,12 +24,14 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
   public router: Router;
   public route: ActivatedRoute;
   public dialogService: DialogService;
+  public authenticationService: AuthenticationService;
 
   constructor(injector: Injector) {
     this.route = injector.get(ActivatedRoute);
     this.webRequestService = injector.get(WebRequestService);
     this.router = injector.get(Router);
     this.dialogService = injector.get(DialogService);
+    this.authenticationService = injector.get(AuthenticationService);
   }
 
   public removeNullProperties(obj: any): any {
@@ -35,7 +43,14 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
           this.removeNullProperties(obj2);
         });
       } else if (typeof obj[propName] === 'object') {
-        this.removeNullProperties(obj[propName]);
+        if (Object.keys(obj[propName]).length === 0) {
+          delete obj[propName]; // The object had no properties, so delete that property
+        } else {
+          this.removeNullProperties(obj[propName]);
+          if (Object.keys(obj[propName]).length === 0) {
+            delete obj[propName]; // The object had no properties, so delete that property
+          }
+        }
       }
     }
     return obj;
@@ -69,13 +84,18 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     const canSave = this.validateFormBeforeSave();
     if (canSave) {
       const sData = this.removeNullProperties(this.formGroup.value);
+      if (!sData.creator) {
+        sData.creator = this.authenticationService.currentUserValue?.user;
+      } else {
+        sData.editor = this.authenticationService.currentUserValue?.user;
+      }
       this.subscriptions.add(
         this.webRequestService
-          .saveEntity(this.entityName, this.removeNullProperties(sData))
+          .saveEntity(this.entityName, sData)
           .subscribe((res) => {
             if (res) {
               if (res.body?.message) {
-                this.dialogService.showMessage(res.body.message)
+                this.dialogService.showMessage(res.body.message);
               }
               this.virtualAfterSave();
             }
@@ -84,7 +104,23 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
     }
   }
 
-
+  public getUserGroup() {
+    return new FormGroup({
+      _id: new FormControl(null, []),
+      __v: new FormControl(null, []),
+      createdAt: new FormControl(null, []),
+      updatedAt: new FormControl(null, []),
+      username: new FormControl(null, []),
+      email: new FormControl(null, []),
+      role: new FormControl(null, []),
+      password: new FormControl(null, []),
+      firstName: new FormControl(null, []),
+      lastName: new FormControl(null, []),
+      gender: new FormControl(null, []),
+      sessions: new FormControl(null, []),
+      address: new FormControl(null, []),
+    });
+  }
 
   //#region lifeCycle hooks
 

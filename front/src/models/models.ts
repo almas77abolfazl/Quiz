@@ -4,6 +4,8 @@ export interface Question {
   options: QuestionOption[];
   level: Levels;
   category: Category;
+  creator: User;
+  editor?: User;
 }
 
 export interface QuestionOption {
@@ -37,6 +39,8 @@ export interface Command {
 export interface Category {
   _id: string;
   title: string;
+  creator: User;
+  editor?: User;
 }
 
 enum Levels {
