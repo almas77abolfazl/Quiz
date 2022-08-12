@@ -27,7 +27,7 @@
     </div>
     <div class="form-item">
       <select id="level" name="level" formControlName="level">
-        <option value="easy">
+        <option [value]="'easy'">
           {{ "enums.easy" | translate }}
         </option>
         <option value="medium">

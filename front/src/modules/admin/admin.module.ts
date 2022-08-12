@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import { SharedModule } from '../shared/shared.module';
 
 import { AdminRoutes } from './admin.routing';
-import { AdminService } from './services/admin/admin.service';
 
 import { AdminComponent } from './admin.component';
 import { QuizComponent } from './components/quiz/quiz.component';
@@ -24,6 +23,6 @@ import { CategoryListComponent } from './components/category-list/category-list.
     CategoryComponent,
     CategoryListComponent,
   ],
-  providers: [AdminService],
+  providers: [],
 })
 export class AdminModule {}

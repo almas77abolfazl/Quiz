@@ -12,8 +12,7 @@ import { WebRequestService } from '../web-request/web-request.service';
   providedIn: 'root',
 })
 export class AuthenticationService {
-  public currentUser: Observable<{ user: User } | null>;
-  private currentUserSubject: BehaviorSubject<{ user: User } | null>;
+  public currentUserSubject: BehaviorSubject<{ user: User } | null>;
 
   public get currentUserValue(): { user: User } | null {
     return this.currentUserSubject.value;
@@ -27,7 +26,6 @@ export class AuthenticationService {
     this.currentUserSubject = new BehaviorSubject<{ user: User } | null>(
       JSON.parse(localStorage.getItem('currentUser') as string)
     );
-    this.currentUser = this.currentUserSubject.asObservable();
   }
 
   public login(userData: Partial<User>): Observable<User> {

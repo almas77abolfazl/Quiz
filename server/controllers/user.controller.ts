@@ -86,7 +86,7 @@ export class UserController {
     try {
       const newUser = new UserModel(req.body);
       await this.hashPassWord(newUser);
-      const updatedUser = await UserModel.findOneAndUpdate(
+      await UserModel.findOneAndUpdate(
         {
           _id: req.body._id,
         },
@@ -94,11 +94,11 @@ export class UserController {
           $set: newUser,
         }
       );
-      if (updatedUser) {
-        updatedUser.password = "null";
-      }
+
+      newUser.password = "null";
+
       res.status(200).send({
-        entity: updatedUser,
+        entity: newUser,
         message: "messages.updatedSuccessfully",
       });
     } catch (error: any) {

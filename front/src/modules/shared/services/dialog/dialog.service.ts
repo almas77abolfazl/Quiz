@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { DialogComponent } from '../../components/dialog/dialog.component';
 
 @Injectable({
@@ -8,13 +8,18 @@ import { DialogComponent } from '../../components/dialog/dialog.component';
 export class DialogService {
   constructor(private dialog: MatDialog) {}
 
-  showMessage(message: string) {
+  showMessage(message: string, callback?: Function) {
     this.dialog.open(DialogComponent, {
       data: {
         message: message,
         buttons: ['ok'],
+        onClose: () => (callback ? callback() : () => {}),
       },
       direction: 'rtl',
     });
+  }
+
+  showComponent(component: any, config: MatDialogConfig) {
+    this.dialog.open(component, config);
   }
 }

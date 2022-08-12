@@ -5,6 +5,7 @@ export interface DialogData {
   headerTitle?: string;
   message?: string;
   buttons?: string[];
+  onClose: Function;
 }
 
 @Component({
@@ -18,7 +19,8 @@ export class DialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: DialogData
   ) {}
 
-  onNoClick(): void {
+  onOkClick(): void {
+    this.data.onClose();
     this.dialogRef.close();
   }
 

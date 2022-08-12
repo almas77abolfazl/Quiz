@@ -46,7 +46,8 @@
     "passwordNotMatched": "گذرواژه نادرست است.",
     "deletedSuccessfully": "با موفقیت حذف شد.",
     "savedSuccessfully": "با موفقیت ذخیره شد.",
-    "updatedSuccessfully": "با موفقیت به روز رسانی شد."
+    "updatedSuccessfully": "با موفقیت به روز رسانی شد.",
+    "pleaseCompleteYourProfileInformation": "لطفا اطلاعات پروفایل خود را کامل کنید."
   },
   "enums": {
     "male": "مرد",

@@ -1,7 +1,9 @@
 import { Component, Injector } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { User } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
+import { DialogComponent } from 'src/modules/shared/components/dialog/dialog.component';
 
 @Component({
   selector: 'app-user',
@@ -11,7 +13,10 @@ import { FormBase } from 'src/modules/shared/base-classes/form.base';
 export class UserComponent extends FormBase<User> {
   entityName = 'users';
 
-  constructor(injector: Injector) {
+  constructor(
+    injector: Injector,
+    public dialogRef: MatDialogRef<UserComponent>
+  ) {
     super(injector);
   }
 
@@ -37,9 +42,13 @@ export class UserComponent extends FormBase<User> {
     });
   }
 
-  protected virtualAfterSave(): void {
-    // this.dialog.open();
-    this.router.navigate(['admin/users-list']);
+  protected virtualAfterSave(entity: User): void {
+    if (entity._id === this.authenticationService.currentUserValue?.user._id) {
+      this.authenticationService.currentUserSubject.next({ user: entity });
+    }
+    if (!this.navigatedData.id) {
+      this.router.navigate(['admin/users-list']);
+    } else this.dialogRef.close();
   }
 
   protected validateFormBeforeSave(): boolean {

@@ -1,12 +1,14 @@
-import { Component, Injector, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
   FormControl,
   FormGroup,
 } from '@angular/forms';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { DialogData } from '../components/dialog/dialog.component';
 import { AuthenticationService } from '../services/authentication/authentication.service';
 import { DialogService } from '../services/dialog/dialog.service';
 import { WebRequestService } from '../services/web-request/web-request.service';
@@ -20,18 +22,20 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   abstract entityName: string;
 
-  public webRequestService: WebRequestService;
-  public router: Router;
   public route: ActivatedRoute;
-  public dialogService: DialogService;
+  public router: Router;
+  public webRequestService: WebRequestService;
   public authenticationService: AuthenticationService;
+  public dialogService: DialogService;
+  public navigatedData: { id: string };
 
   constructor(injector: Injector) {
     this.route = injector.get(ActivatedRoute);
-    this.webRequestService = injector.get(WebRequestService);
     this.router = injector.get(Router);
-    this.dialogService = injector.get(DialogService);
+    this.webRequestService = injector.get(WebRequestService);
     this.authenticationService = injector.get(AuthenticationService);
+    this.dialogService = injector.get(DialogService);
+    this.navigatedData = inject(MAT_DIALOG_DATA);
   }
 
   public removeNullProperties(obj: any): any {
@@ -81,8 +85,9 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
   }
 
   public save(): void {
-    const canSave = this.validateFormBeforeSave();
-    if (canSave) {
+    const validationFromScope = this.validateFormBeforeSave();
+
+    if (validationFromScope && this.validationUserBeforeSave()) {
       const sData = this.removeNullProperties(this.formGroup.value);
       if (!sData.creator) {
         sData.creator = this.authenticationService.currentUserValue?.user;
@@ -97,7 +102,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
               if (res.body?.message) {
                 this.dialogService.showMessage(res.body.message);
               }
-              this.virtualAfterSave();
+              this.virtualAfterSave(res.body.entity);
             }
           })
       );
@@ -145,22 +150,23 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   //#region protected methods
 
-  protected virtualNgOnInit() {}
+  protected virtualNgOnInit(): void {}
 
-  protected virtualNgOnDestroy() {}
+  protected virtualNgOnDestroy(): void {}
 
   protected validateFormBeforeSave(): boolean {
     return this.formGroup.valid;
   }
 
-  protected virtualAfterSave() {}
+  protected virtualAfterSave(entity: T): void {}
 
   //#endregion
 
   //#region private methods
 
   private loadFormOnNavigation(): void {
-    const navigatedId = this.route.snapshot.paramMap.get('id');
+    const navigatedId =
+      this.route.snapshot.paramMap.get('id') || this.navigatedData.id;
     if (navigatedId) {
       this.isNew = false;
       this.subscriptions.add(
@@ -186,5 +192,32 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
       }
     }
   }
+
+  private validationUserBeforeSave(): boolean {
+    if (this.entityName === 'users') return true;
+    const user = this.authenticationService.currentUserValue?.user;
+    const userHasFullName = !!user?.firstName && !!user.lastName;
+    if (!userHasFullName) {
+      this.dialogService.showMessage(
+        'messages.pleaseCompleteYourProfileInformation',
+        () => {
+          import('src/modules/admin/components/user/user.component').then(
+            (x) => {
+              this.dialogService.showComponent(x.UserComponent, {
+                data: {
+                  id: this.authenticationService.currentUserValue?.user._id,
+                },
+                height: '90%',
+                width: '500px',
+                maxHeight: '500px',
+              });
+            }
+          );
+        }
+      );
+    }
+    return userHasFullName;
+  }
+
   //#endregion
 }

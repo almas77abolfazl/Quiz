@@ -6,7 +6,11 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GridComponent } from './components/grid/grid.component';
 import { ToolbarComponent } from './components/toolbar/toolbar.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialogModule,
+  MatDialogRef,
+  MAT_DIALOG_DATA,
+} from '@angular/material/dialog';
 import { DialogComponent } from './components/dialog/dialog.component';
 
 @NgModule({
@@ -29,6 +33,10 @@ import { DialogComponent } from './components/dialog/dialog.component';
     ToolbarComponent,
     TranslateModule,
     DialogComponent,
+  ],
+  providers: [
+    { provide: MAT_DIALOG_DATA, useValue: {} },
+    { provide: MatDialogRef, useValue: {} },
   ],
 })
 export class SharedModule {}
