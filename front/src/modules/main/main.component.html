@@ -1,6 +1,9 @@
-<div class="main-page center">
-  <div class="white-bg">
-    <router-outlet></router-outlet>
+<nav class="main-nav flex end">
+  <div class="">
+    <button (click)="logout()">{{ "labels.logOut" | translate }}</button>
   </div>
-  <button (click)="logout()">خروج</button>
+</nav>
+
+<div class="white-bg flex">
+  <router-outlet></router-outlet>
 </div>

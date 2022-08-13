@@ -1,16 +1,35 @@
-{{ questionNumber }} <br />
-
-<p>{{ question?.questionText }}</p>
-
-<form [formGroup]="formGroup">
-  <input type="hidden" [formControlName]="'questionId'" />
-  <div *ngFor="let a of question?.options; let i = index">
-    <div style="margin-bottom: 10px">
-      <input type="radio" formControlName="answer" [value]="a._id" />
-      {{ a.optionText }}<br /><br />
-    </div>
+<div class="question-container">
+  <div class="question-header">
+    <span class="question-number">{{ questionNumber + "-" }}</span>
+    <p class="question-text">{{ question ? question.questionText : "" }}</p>
   </div>
-</form>
 
-<button (click)="onSubmitClick()">ثبت</button><br /><br />
-{{ timeNum }}
+  <div class="question-options">
+    <form [formGroup]="formGroup">
+      <input type="hidden" [formControlName]="'questionId'" />
+      <div
+        *ngFor="let o of question?.options; let i = index"
+        class="question-option"
+      >
+        <input
+          type="radio"
+          id="answer{{ o._id }}"
+          formControlName="answer"
+          [value]="o._id"
+          class="hidden"
+        />
+
+        <label class="question-label" for="answer{{ o._id }}">{{
+          o.optionText
+        }}</label>
+      </div>
+    </form>
+  </div>
+  <div class="question-submit">
+    <button (click)="onSubmitClick()">ثبت</button><br /><br />
+  </div>
+
+  <div class="question-time">
+    {{ timeNum }}
+  </div>
+</div>

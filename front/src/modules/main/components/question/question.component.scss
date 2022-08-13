@@ -1,0 +1,49 @@
+.question-container {
+  padding-top: 2rem;
+
+  .question-header {
+    margin: 0 2rem;
+    padding: 1rem;
+    border: 2px solid #3f51b5;
+
+    p {
+      display: unset;
+    }
+  }
+  .question-options {
+    margin: 0 2rem;
+    padding: 1rem 0;
+
+    form {
+      border: 2px solid #3f51b5;
+
+      .question-option {
+        border-bottom: 2px solid #3f51b5;
+
+        .hidden {
+          display: none;
+        }
+        input:checked ~ label {
+          background-color: rgb(197 212 217);
+        }
+      }
+      .question-label {
+        display: block;
+        cursor: pointer;
+        padding: 1rem;
+      }
+    }
+  }
+  .question-submit {
+    padding: 1rem;
+    margin: 1rem;
+    button {
+      padding: 1rem;
+      width: 100%;
+    }
+  }
+
+  .question-time {
+    text-align: center;
+  }
+}
