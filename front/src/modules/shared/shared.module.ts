@@ -11,7 +11,9 @@ import {
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { DialogComponent } from './components/dialog/dialog.component';
+import { SideNavComponent } from './components/side-nav/side-nav.component';
 
 @NgModule({
   imports: [
@@ -22,8 +24,14 @@ import { DialogComponent } from './components/dialog/dialog.component';
     AgGridModule,
     TranslateModule,
     MatDialogModule,
+    MatSidenavModule,
   ],
-  declarations: [GridComponent, ToolbarComponent, DialogComponent],
+  declarations: [
+    GridComponent,
+    ToolbarComponent,
+    DialogComponent,
+    SideNavComponent,
+  ],
   exports: [
     GridComponent,
     CommonModule,
@@ -33,6 +41,7 @@ import { DialogComponent } from './components/dialog/dialog.component';
     ToolbarComponent,
     TranslateModule,
     DialogComponent,
+    SideNavComponent
   ],
   providers: [
     { provide: MAT_DIALOG_DATA, useValue: {} },
