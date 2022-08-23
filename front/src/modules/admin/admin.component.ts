@@ -14,7 +14,11 @@ export class AdminComponent implements OnInit {
       displayName: 'labels.userManagement',
       iconName: '',
       children: [
-        { displayName: 'labels.usersList', iconName: '', route: 'admin/users-list' },
+        {
+          displayName: 'labels.usersList',
+          iconName: '',
+          route: 'admin/users-list',
+        },
       ],
     },
     {
@@ -26,8 +30,16 @@ export class AdminComponent implements OnInit {
           iconName: 'description',
           route: 'admin/quiz',
         },
-        { displayName: 'labels.quizList', iconName: '', route: 'admin/quiz-list' },
-        { displayName: 'labels.category', iconName: '', route: 'admin/category' },
+        {
+          displayName: 'labels.quizList',
+          iconName: '',
+          route: 'admin/quiz-list',
+        },
+        {
+          displayName: 'labels.category',
+          iconName: '',
+          route: 'admin/category',
+        },
         {
           displayName: 'labels.categoryList',
           iconName: '',
@@ -36,8 +48,6 @@ export class AdminComponent implements OnInit {
       ],
     },
   ];
-
-  color: ThemePalette = 'accent';
 
   public currentUserName = this.getCurrentUserFullName();
 

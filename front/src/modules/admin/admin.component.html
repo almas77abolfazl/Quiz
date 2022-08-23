@@ -1,17 +1,20 @@
 <div class="admin-container flex column">
   <nav class="admin-nav flex space-between">
-    <div class="flex">
+    <div class="flex flex-center">
       <button mat-icon-button (click)="nav.toggle()">
-        <mat-icon [color]="color">menu</mat-icon>
+        <mat-icon [color]="'primary'">menu</mat-icon>
       </button>
       <p>{{ "messages.welcome" | translate: { user: currentUserName } }}</p>
     </div>
 
     <div>
-      <button [routerLink]="['/main']">
+      <button mat-button color="primary" [routerLink]="['/main']">
         {{ "labels.goToQuizPage" | translate }}
       </button>
-      <button (click)="logout()">{{ "labels.logOut" | translate }}</button>
+
+      <button mat-button color="warn" (click)="logout()">
+        {{ "labels.logOut" | translate }}
+      </button>
     </div>
   </nav>
 

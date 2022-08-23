@@ -34,6 +34,7 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     MatDividerModule,
     MatListModule,
     MatExpansionModule,
+    MatButtonModule,
   ],
   declarations: [
     GridComponent,
@@ -52,7 +53,7 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     DialogComponent,
     SideNavComponent,
     MatIconModule,
-    MatButtonModule
+    MatButtonModule,
   ],
   providers: [
     { provide: MAT_DIALOG_DATA, useValue: {} },
