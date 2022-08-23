@@ -12,6 +12,11 @@ import {
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
 import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatListModule } from '@angular/material/list';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { DialogComponent } from './components/dialog/dialog.component';
 import { SideNavComponent } from './components/side-nav/side-nav.component';
 
@@ -25,6 +30,10 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     TranslateModule,
     MatDialogModule,
     MatSidenavModule,
+    MatIconModule,
+    MatDividerModule,
+    MatListModule,
+    MatExpansionModule,
   ],
   declarations: [
     GridComponent,
@@ -41,7 +50,9 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     ToolbarComponent,
     TranslateModule,
     DialogComponent,
-    SideNavComponent
+    SideNavComponent,
+    MatIconModule,
+    MatButtonModule
   ],
   providers: [
     { provide: MAT_DIALOG_DATA, useValue: {} },

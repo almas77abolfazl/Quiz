@@ -49,3 +49,12 @@ enum Levels {
   hard = 'hard',
   veryHard = 'veryHard',
 }
+
+
+export interface Menu {
+  displayName: string;
+  iconName: string;
+  disabled?: boolean;
+  route?: string;
+  children?: Menu[];
+}

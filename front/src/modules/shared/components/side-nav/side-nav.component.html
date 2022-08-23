@@ -1,15 +1,38 @@
-<mat-sidenav-container class="example-container">
-  <mat-sidenav #sidenav mode="side" [(opened)]="opened" (opened)="events.push('open!')"
-               (closed)="events.push('close!')">
-    Sidenav content
-  </mat-sidenav>
-
-  <mat-sidenav-content>
-    <p><mat-checkbox [(ngModel)]="opened">sidenav.opened</mat-checkbox></p>
-    <p><button mat-button (click)="sidenav.toggle()">sidenav.toggle()</button></p>
-    <p>Events:</p>
-    <div class="example-events">
-      <div *ngFor="let e of events">{{e}}</div>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+<mat-drawer-container class="example-container" autosize>
+  <mat-drawer #drawer class="example-sidenav" mode="side">
+    <mat-nav-list>
+      <span *ngFor="let item of menu">
+        <span *ngIf="item.children && item.children.length > 0">
+          <mat-accordion>
+            <mat-expansion-panel>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div fxLayout="row" fxLayoutAlign="space-between center">
+                    <mat-icon>{{ item.iconName }}</mat-icon>
+                    {{ item.displayName | translate}}
+                  </div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <span *ngFor="let child of item.children">
+                <mat-list-item routerLink="[child.route]">
+                  <div fxLayout="row" fxLayoutAlign="space-between center">
+                    <mat-icon>{{ child.iconName }}</mat-icon>
+                    {{ child.displayName| translate }}
+                  </div>
+                </mat-list-item>
+              </span>
+            </mat-expansion-panel>
+          </mat-accordion>
+        </span>
+        <span *ngIf="!item.children || item.children.length === 0">
+          <mat-list-item routerLink="[item.route]">
+            <div fxLayout="row" fxLayoutAlign="space-between center">
+              <mat-icon>{{ item.iconName }}</mat-icon>
+              {{ item.displayName| translate }}
+            </div>
+          </mat-list-item>
+        </span>
+      </span>
+    </mat-nav-list>
+  </mat-drawer>
+</mat-drawer-container>

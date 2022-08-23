@@ -1,6 +1,11 @@
 <div class="admin-container flex column">
   <nav class="admin-nav flex space-between">
-    <p>{{ "messages.welcome" | translate: { user: currentUserName } }}</p>
+    <div class="flex">
+      <button mat-icon-button (click)="nav.toggle()">
+        <mat-icon [color]="color">menu</mat-icon>
+      </button>
+      <p>{{ "messages.welcome" | translate: { user: currentUserName } }}</p>
+    </div>
 
     <div>
       <button [routerLink]="['/main']">
@@ -12,11 +17,7 @@
 
   <div class="flex flex-fill row">
     <div class="admin-menu flex column">
-      <a [routerLink]="['users-list']">{{ "labels.usersList" | translate }}</a>
-      <a [routerLink]="['quiz']">{{ "labels.addQuiz" | translate }}</a>
-      <a [routerLink]="['quiz-list']">{{ "labels.quizList" | translate }}</a>
-      <a [routerLink]="['category']">{{ "labels.category" | translate }}</a>
-      <a [routerLink]="['category-list']">{{ "labels.categoryList" | translate }}</a>
+      <app-side-nav #nav [menu]="menu"> </app-side-nav>
     </div>
     <div class="admin-form">
       <router-outlet></router-outlet>

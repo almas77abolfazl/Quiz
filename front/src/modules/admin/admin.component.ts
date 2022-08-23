@@ -1,4 +1,6 @@
 import { Component, OnInit } from '@angular/core';
+import { ThemePalette } from '@angular/material/core';
+import { Menu } from 'src/models/models';
 import { AuthenticationService } from '../shared/services/authentication/authentication.service';
 
 @Component({
@@ -7,6 +9,36 @@ import { AuthenticationService } from '../shared/services/authentication/authent
   styleUrls: ['./admin.component.scss'],
 })
 export class AdminComponent implements OnInit {
+  public menu: Menu[] = [
+    {
+      displayName: 'labels.userManagement',
+      iconName: '',
+      children: [
+        { displayName: 'labels.usersList', iconName: '', route: 'users-list' },
+      ],
+    },
+    {
+      displayName: 'labels.QuestionManagement',
+      iconName: '',
+      children: [
+        {
+          displayName: 'labels.addQuiz',
+          iconName: 'description',
+          route: 'quiz',
+        },
+        { displayName: 'labels.quizList', iconName: '', route: 'quiz-list' },
+        { displayName: 'labels.category', iconName: '', route: 'category' },
+        {
+          displayName: 'labels.categoryList',
+          iconName: '',
+          route: 'category-list',
+        },
+      ],
+    },
+  ];
+
+  color: ThemePalette = 'accent';
+
   public currentUserName = this.getCurrentUserFullName();
 
   constructor(private authenticationService: AuthenticationService) {}
