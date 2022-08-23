@@ -27,6 +27,7 @@
     "@ngx-translate/http-loader": "^7.0.0",
     "ag-grid-angular": "^28.0.0",
     "ag-grid-community": "^28.0.2",
+    "material-design-icons": "^3.0.1",
     "ngx-spinner": "^14.0.0",
     "rxjs": "~6.6.0",
     "tslib": "^2.1.0",

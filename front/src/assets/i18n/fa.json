@@ -31,8 +31,10 @@
     "categoryList": "لیست دسته بندی",
     "level": "سطح",
     "Ok": "باشه",
-    "creator":"ایجاد کننده",
-    "editor":"آخرین ویرایش کننده"
+    "creator": "ایجاد کننده",
+    "editor": "آخرین ویرایش کننده",
+    "userManagement": "مدیریت کاربران",
+    "QuestionManagement": "مدیریت سوالات"
   },
   "messages": {
     "selectItem": "لطفا یکی از آیتم ها را انتخاب کنید.",

@@ -32,8 +32,10 @@
             "assets": ["src/favicon.ico", "src/assets"],
             "styles": [
               "src/styles.scss",
+              "node_modules/material-design-icons/iconfont/material-icons.css",
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
-              "node_modules/ngx-spinner/animations/ball-spin-clockwise.css"
+              "node_modules/ngx-spinner/animations/ball-spin-clockwise.css",
+              "src/theme.scss"
             ],
             "scripts": []
           },
