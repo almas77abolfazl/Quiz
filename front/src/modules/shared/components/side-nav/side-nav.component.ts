@@ -1,7 +1,6 @@
 import {
   ChangeDetectorRef,
   Component,
-  ElementRef,
   Input,
   OnInit,
   ViewChild,
@@ -9,6 +8,7 @@ import {
 import { MediaMatcher } from '@angular/cdk/layout';
 import { Menu } from 'src/models/models';
 import { MatSidenav } from '@angular/material/sidenav';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-side-nav',
@@ -20,19 +20,17 @@ export class SideNavComponent implements OnInit {
 
   @ViewChild('drawer') drawer!: MatSidenav;
 
-  mobileQuery: MediaQueryList;
-
-  private _mobileQueryListener: () => void;
-
-  constructor(changeDetectorRef: ChangeDetectorRef, media: MediaMatcher) {
-    this.mobileQuery = media.matchMedia('(max-width: 600px)');
-    this._mobileQueryListener = () => changeDetectorRef.detectChanges();
-    this.mobileQuery.addListener(this._mobileQueryListener);
-  }
+  constructor(private router: Router) {}
 
   ngOnInit() {}
 
   toggle() {
-    this.drawer.toggle()
+    this.drawer.toggle();
+  }
+
+  navigateTo(route: string | undefined) {
+    if (route) {
+      this.router.navigate([route]);
+    }
   }
 }

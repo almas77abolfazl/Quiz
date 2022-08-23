@@ -14,7 +14,7 @@ export class AdminComponent implements OnInit {
       displayName: 'labels.userManagement',
       iconName: '',
       children: [
-        { displayName: 'labels.usersList', iconName: '', route: 'users-list' },
+        { displayName: 'labels.usersList', iconName: '', route: 'admin/users-list' },
       ],
     },
     {
@@ -24,14 +24,14 @@ export class AdminComponent implements OnInit {
         {
           displayName: 'labels.addQuiz',
           iconName: 'description',
-          route: 'quiz',
+          route: 'admin/quiz',
         },
-        { displayName: 'labels.quizList', iconName: '', route: 'quiz-list' },
-        { displayName: 'labels.category', iconName: '', route: 'category' },
+        { displayName: 'labels.quizList', iconName: '', route: 'admin/quiz-list' },
+        { displayName: 'labels.category', iconName: '', route: 'admin/category' },
         {
           displayName: 'labels.categoryList',
           iconName: '',
-          route: 'category-list',
+          route: 'admin/category-list',
         },
       ],
     },
