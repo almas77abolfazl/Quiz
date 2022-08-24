@@ -1,10 +1,12 @@
 <div class="admin-container flex column">
   <nav class="admin-nav flex space-between">
-    <div class="flex flex-center">
+    <div>
       <button mat-icon-button (click)="nav.toggle()">
         <mat-icon [color]="'primary'">menu</mat-icon>
       </button>
-      <p>{{ "messages.welcome" | translate: { user: currentUserName } }}</p>
+      <span>{{
+        "messages.welcome" | translate: { user: currentUserName }
+      }}</span>
     </div>
 
     <div>
