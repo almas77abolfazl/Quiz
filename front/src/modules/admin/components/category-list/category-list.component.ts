@@ -40,16 +40,16 @@ export class CategoryListComponent extends ListBase<Category> {
   protected getCommands(): Command[] {
     const commands: Command[] = [
       {
-        commandName: 'new',
-        label: 'labels.new',
+        commandName: 'delete',
+        label: 'labels.delete',
       },
       {
         commandName: 'edit',
         label: 'labels.edit',
       },
       {
-        commandName: 'delete',
-        label: 'labels.delete',
+        commandName: 'new',
+        label: 'labels.new',
       },
     ];
     return commands;
