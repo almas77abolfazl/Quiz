@@ -12,18 +12,18 @@ export class AdminComponent implements OnInit {
   public menu: Menu[] = [
     {
       displayName: 'labels.userManagement',
-      iconName: '',
+      iconName: 'folder',
       children: [
         {
           displayName: 'labels.usersList',
-          iconName: '',
+          iconName: 'person',
           route: 'admin/users-list',
         },
       ],
     },
     {
       displayName: 'labels.QuestionManagement',
-      iconName: '',
+      iconName: 'folder',
       children: [
         {
           displayName: 'labels.addQuiz',
@@ -32,17 +32,17 @@ export class AdminComponent implements OnInit {
         },
         {
           displayName: 'labels.quizList',
-          iconName: '',
+          iconName: 'list',
           route: 'admin/quiz-list',
         },
         {
           displayName: 'labels.category',
-          iconName: '',
+          iconName: 'description',
           route: 'admin/category',
         },
         {
           displayName: 'labels.categoryList',
-          iconName: '',
+          iconName: 'list',
           route: 'admin/category-list',
         },
       ],

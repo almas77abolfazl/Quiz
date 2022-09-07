@@ -17,6 +17,9 @@ import { MatListModule } from '@angular/material/list';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { FlexLayoutModule } from '@angular/flex-layout';
+import { MatToolbarModule } from '@angular/material/toolbar';
+
 import { DialogComponent } from './components/dialog/dialog.component';
 import { SideNavComponent } from './components/side-nav/side-nav.component';
 
@@ -35,6 +38,8 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     MatListModule,
     MatExpansionModule,
     MatButtonModule,
+    FlexLayoutModule,
+    MatToolbarModule,
   ],
   declarations: [
     GridComponent,
@@ -54,6 +59,7 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     SideNavComponent,
     MatIconModule,
     MatButtonModule,
+    FlexLayoutModule,
   ],
   providers: [
     { provide: MAT_DIALOG_DATA, useValue: {} },

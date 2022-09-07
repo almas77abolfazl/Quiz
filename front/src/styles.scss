@@ -57,7 +57,7 @@ body {
   justify-content: space-between;
 }
 
-.flex-center{
+.flex-center {
   align-items: center;
 }
 
@@ -79,7 +79,11 @@ body {
   font-size: 14px;
 }
 
-
 mat-drawer {
   width: 300px;
+}
+
+//override
+.mat-list-base {
+  padding-top: unset !important;
 }

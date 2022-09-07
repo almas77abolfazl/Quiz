@@ -1,7 +1,24 @@
-<div class="toolbar-container flex end">
-  <div *ngFor="let command of commands">
-    <button mat-button color="primary" (click)="onProcessCommand(command)">
-      {{ command.label || "" | translate }}
-    </button>
+<mat-toolbar [dir]="'ltr'">
+  <div *ngFor="let command of commands; let last = last">
+    <ng-container *ngIf="last; else elseTemplate">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onProcessCommand(command)"
+        [style.margin.px]="2"
+      >
+        {{ command.label || "" | translate }}
+      </button>
+    </ng-container>
+    <ng-template #elseTemplate>
+      <button
+        mat-raised-button
+        color="accent"
+        (click)="onProcessCommand(command)"
+        [style.margin.px]="2"
+      >
+        {{ command.label || "" | translate }}
+      </button>
+    </ng-template>
   </div>
-</div>
+</mat-toolbar>
