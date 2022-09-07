@@ -1,6 +1,16 @@
 .nav-container {
   height: calc(100vh - 35px);
+
+  mat-drawer {
+    background-color: #90caf9;
+  }
+
+  mat-expansion-panel{
+    border-radius: 0;
+  }
+
+  mat-icon{
+    color: #3f51b5;
+    margin: 0px 10px;
+  }
 }
-
-
-

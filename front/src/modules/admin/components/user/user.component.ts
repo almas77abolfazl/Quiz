@@ -3,7 +3,6 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { User } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
-import { DialogComponent } from 'src/modules/shared/components/dialog/dialog.component';
 
 @Component({
   selector: 'app-user',
