@@ -52,12 +52,10 @@ export class QuizComponent extends FormBase<Question> {
         updatedAt: new FormControl(null, []),
         title: new FormControl(null, [Validators.required]),
         creator: this.getUserGroup(),
-        editor: this.getUserGroup(),
       }),
       level: new FormControl(null, [Validators.required]),
       options: new FormArray(this.getOptionsFormGroup()),
       creator: this.getUserGroup(),
-      editor: this.getUserGroup(),
     });
   }
 

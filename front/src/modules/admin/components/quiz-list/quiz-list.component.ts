@@ -30,7 +30,7 @@ export class QuizListComponent extends ListBase<Question> {
   }
 
   protected getColumns(): ColDef[] {
-    const columns = [
+    const columns:ColDef[] = [
       {
         headerName: 'labels.category',
         field: 'category.title',
@@ -45,7 +45,7 @@ export class QuizListComponent extends ListBase<Question> {
         headerName: 'labels.questionText',
         field: 'questionText',
         cellStyle: { color: 'black', backgroundColor: '#b6b0b0' },
-        width: 300,
+        minWidth: 300,
       },
       {
         headerName: 'labels.firstOption',
