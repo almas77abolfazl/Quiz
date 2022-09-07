@@ -7,8 +7,14 @@
   src: url(assets/Lalezar-Regular.ttf);
 }
 
+@font-face {
+  font-family: "iransans";
+  src: url(assets/FontsFree-Net-ir_sans.ttf);
+}
+
 * {
-  font-family: "baseFont";
+  font-family: "iransans";
+  font-size: 13px;
 }
 
 body {
