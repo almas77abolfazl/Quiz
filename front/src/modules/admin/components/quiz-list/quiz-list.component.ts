@@ -1,6 +1,5 @@
 import { Component, Injector } from '@angular/core';
 import { CellStyle, ColDef } from 'ag-grid-community';
-import { Observable } from 'rxjs';
 import { Command, Question, QuestionOption } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
 
@@ -70,11 +69,11 @@ export class QuizListComponent extends ListBase<Question> {
       },
       {
         headerName: 'labels.creator',
-        field: 'creator.username'
+        field: 'creator.username',
       },
       {
         headerName: 'labels.editor',
-        field: 'editor.username'
+        field: 'editor.username',
       },
     ];
     return columns;
@@ -107,7 +106,7 @@ export class QuizListComponent extends ListBase<Question> {
       row.editor = question.editor;
       row.questionText = question.questionText;
       row.category = question.category;
-      row.level = question.level;
+      row.level = this.translateService.instant('enums.' + question.level);
       let index = 1;
       question.options.forEach((option: QuestionOption) => {
         row['option' + index] = option.optionText;
@@ -119,24 +118,6 @@ export class QuizListComponent extends ListBase<Question> {
       rows.push(row);
     });
     return rows;
-  }
-
-  protected virtualChangeStructureOfDataAsync(
-    data: Question[]
-  ): Observable<Question[]> {
-    return new Observable((subscriber) => {
-      data.forEach((x, idx, array) => {
-        this.translateService
-          .get(('enums.' + x.level) as string)
-          .subscribe((level) => {
-            x.level = level;
-            if (idx === array.length - 1) {
-              subscriber.next(data);
-              subscriber.complete();
-            }
-          });
-      });
-    });
   }
 
   private setCellStyles(value: string): CellStyle {

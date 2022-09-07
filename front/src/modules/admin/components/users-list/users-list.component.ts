@@ -1,6 +1,5 @@
 import { Component, Injector } from '@angular/core';
 import { ColDef } from 'ag-grid-community';
-import { Observable } from 'rxjs';
 
 import { Command, User } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
@@ -13,9 +12,7 @@ import { ListBase } from 'src/modules/shared/base-classes/list.base';
 export class UsersListComponent extends ListBase<User> {
   entityName = 'users';
 
-  constructor(
-    injector: Injector
-  ) {
+  constructor(injector: Injector) {
     super(injector);
   }
 
@@ -47,22 +44,11 @@ export class UsersListComponent extends ListBase<User> {
     return commands;
   }
 
-  protected virtualChangeStructureOfDataAsync(
-    data: User[]
-  ): Observable<User[]> {
-    return new Observable((subscriber) => {
-      data.forEach((x, idx, array) => {
-        this.translateService
-          .get(('enums.' + x.role) as string)
-          .subscribe((r) => {
-            x.role = r;
-            if (idx === array.length - 1) {
-              subscriber.next(data);
-              subscriber.complete();
-            }
-          });
-      });
+  protected virtualChangeStructureOfData(data: User[]): User[] {
+    data.forEach((x) => {
+      x.role = this.translateService.instant('enums.' + x.role);
     });
+    return data;
   }
 
   private doEdit() {
@@ -74,7 +60,7 @@ export class UsersListComponent extends ListBase<User> {
       userInfo.role === 'admin' &&
       this.currentRow._id !== userInfo._id
     ) {
-      this.dialogService.showMessage('messages.cannotEditOtherUserInformation')
+      this.dialogService.showMessage('messages.cannotEditOtherUserInformation');
       return;
     }
     this.router.navigate(['admin/user', this.currentRow._id]);

@@ -51,9 +51,7 @@ export class GridComponent implements OnInit, OnChanges {
   ngOnInit() {
     this.addSelectCheckBox();
     this.columnDefs.forEach((col) => {
-      this.translateService.get(col.headerName || '').subscribe((x) => {
-        col.headerName = x;
-      });
+      col.headerName = this.translateService.instant(col.headerName || '');
     });
   }
 
@@ -78,7 +76,7 @@ export class GridComponent implements OnInit, OnChanges {
         field: '',
         pinned: 'right',
         lockPinned: true,
-        width: 70,
+        width: 80,
         minWidth: 50,
         flex: 0,
         checkboxSelection: true,
