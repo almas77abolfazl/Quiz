@@ -25,6 +25,13 @@ const setUserRoutes = (app: Application) => {
 
   router.route("/login").post(controller.login.bind(controller));
 
+  router
+    .route("/validateToken")
+    .get(
+      controller.authenticate.bind(controller),
+      controller.validateToken.bind(controller)
+    );
+
   router.route("/me/access-token").get(
     controller.verifySession.bind(controller), //middleWare
     controller.generateNewAccessToken.bind(controller)
@@ -104,8 +111,6 @@ const setCategoryRoutes = (app: Application) => {
       userController.authenticate.bind(userController),
       controller.saveCategory.bind(controller)
     );
-
-  
 
   router
     .route("/:id")

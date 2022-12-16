@@ -5,7 +5,7 @@ import { interval, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { Question, UserAnswers } from 'src/models/models';
 
-const timeNum = 1000;
+const timeNum = 30;
 @Component({
   selector: 'app-question',
   templateUrl: './question.component.html',

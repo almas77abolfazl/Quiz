@@ -64,6 +64,15 @@ export class AuthenticationService {
     this.router.navigate(['/login']);
   }
 
+  public validateToken(): Observable<boolean> {
+    return this.webRequestService.get('users/validateToken').pipe(
+      map((res) => {
+        if (res.isValid) return true;
+        else return false;
+      })
+    );
+  }
+
   public getAccessToken(): string {
     return localStorage.getItem('x-access-token') || '';
   }

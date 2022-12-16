@@ -201,6 +201,10 @@ export class UserController {
     });
   }
 
+  validateToken(req: Request, res: Response, next: NextFunction) {
+    res.send({ isValid: true });
+  }
+
   private hashPassWord(user: IUser) {
     return new Promise((resolve, reject) => {
       let costFactor = 10;
@@ -241,7 +245,7 @@ export class UserController {
     // Create the JSON Web Token and return that
     try {
       const token = jwt.sign({ _id: user._id.toHexString() }, jwtSecret, {
-        expiresIn: "1m",
+        expiresIn: "30m",
       });
       return token;
     } catch (error) {
