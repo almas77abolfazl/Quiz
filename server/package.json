@@ -3,8 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "nodemon --exec npx ts-node ./server/app.ts",
-    "dev": "concurrently --kill-others \"ng s\" \"node --inspect=0.0.0.0:9229 --require ts-node/register server/app.ts\"",
+    "start": "node --inspect=0.0.0.0:9229 --require ts-node/register server/app.ts",
     "start-debug": "node --inspect=0.0.0.0:9229 --require ts-node/register app.ts",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
