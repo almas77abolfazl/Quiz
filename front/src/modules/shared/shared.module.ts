@@ -22,6 +22,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 
 import { DialogComponent } from './components/dialog/dialog.component';
 import { SideNavComponent } from './components/side-nav/side-nav.component';
+import { FormComponent } from './components/form/form.component';
 
 @NgModule({
   imports: [
@@ -46,6 +47,7 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     ToolbarComponent,
     DialogComponent,
     SideNavComponent,
+    FormComponent
   ],
   exports: [
     GridComponent,
@@ -60,6 +62,7 @@ import { SideNavComponent } from './components/side-nav/side-nav.component';
     MatIconModule,
     MatButtonModule,
     FlexLayoutModule,
+    FormComponent
   ],
   providers: [
     { provide: MAT_DIALOG_DATA, useValue: {} },

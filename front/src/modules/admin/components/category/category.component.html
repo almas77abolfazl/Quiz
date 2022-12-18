@@ -1,28 +1,6 @@
-<div class="form-container">
-  <ul class="toolbar cf">
-    <li (click)="save()">
-      <a><i class="far fa-save"></i></a>
-    </li>
-    <li>
-      <a><i class="icon-heart-empty"></i></a>
-    </li>
-    <li>
-      <a><i class="icon-comments-alt"></i></a>
-    </li>
-    <li>
-      <a><i class="icon-cloud"></i></a>
-    </li>
-  </ul>
-
-  <form [formGroup]="formGroup">
-    <div class="form-item">
-      <input
-        type="text"
-        id="title"
-        autocomplete="off"
-        formControlName="title"
-      />
-      <label [for]="'title'">{{ "labels.category" | translate }}</label>
-    </div>
-  </form>
-</div>
+<app-form [formGroup]="formGroup" (onSaveClicked)="save()">
+  <div class="form-item">
+    <input type="text" id="title" autocomplete="off" formControlName="title" />
+    <label [for]="'title'">{{ "labels.category" | translate }}</label>
+  </div>
+</app-form>
