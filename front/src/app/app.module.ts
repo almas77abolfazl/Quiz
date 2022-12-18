@@ -1,7 +1,11 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpClientModule,
+  HTTP_INTERCEPTORS,
+} from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxSpinnerModule } from 'ngx-spinner';
 
@@ -14,6 +18,7 @@ import { RegisterComponent } from './components/register/register.component';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { SharedModule } from 'src/modules/shared/shared.module';
+import { NotFoundComponent } from './components/not-found/not-found.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +26,7 @@ import { SharedModule } from 'src/modules/shared/shared.module';
     ContainerComponent,
     RegisterComponent,
     LoginComponent,
+    NotFoundComponent,
   ],
   imports: [
     SharedModule,
@@ -33,12 +39,12 @@ import { SharedModule } from 'src/modules/shared/shared.module';
     NgxSpinnerModule.forRoot({ type: 'ball-spin-clockwise' }),
     TranslateModule.forRoot({
       loader: {
-          provide: TranslateLoader,
-          useFactory: (createTranslateLoader),
-          deps: [HttpClient]
+        provide: TranslateLoader,
+        useFactory: createTranslateLoader,
+        deps: [HttpClient],
       },
-      defaultLanguage: 'fa'
-  })
+      defaultLanguage: 'fa',
+    }),
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: BasicAuthInterceptor, multi: true },
@@ -46,7 +52,6 @@ import { SharedModule } from 'src/modules/shared/shared.module';
   bootstrap: [AppComponent],
 })
 export class AppModule {}
-
 
 export function createTranslateLoader(http: HttpClient) {
   return new TranslateHttpLoader(http, './assets/i18n/', '.json');
