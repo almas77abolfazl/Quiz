@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from 'src/quards/auth.guard';
 import { ValidateTokenGuard } from 'src/quards/validateToken.guard';
 import { ContainerComponent } from './components/container/container.component';
+import { NotFoundComponent } from './components/not-found/not-found.component';
 
 const routes: Routes = [
   {
@@ -18,6 +19,8 @@ const routes: Routes = [
     canActivate: [AuthGuard, ValidateTokenGuard],
   },
   { path: 'login', component: ContainerComponent },
+  { path: 'not-found', component: NotFoundComponent },
+  { path: '**', redirectTo: '/not-found' },
 ];
 
 @NgModule({
