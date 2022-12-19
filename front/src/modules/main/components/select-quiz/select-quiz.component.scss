@@ -1,7 +1,10 @@
 .quiz-categories-container {
   display: flex;
   justify-content: space-around;
+  align-content: space-around;
   flex-wrap: wrap;
+  overflow: auto;
+  height: 90vh;
 
   button {
     height: 150px;
@@ -11,10 +14,12 @@
     border: 0;
     border-radius: 20px;
     cursor: pointer;
+    margin: 10px;
 
     &:hover {
       animation: shake 0.7s ease-out;
       background-color: aquamarine;
+      box-shadow: 1px 1px 6px 0px #9f9f9f;
     }
   }
 }
