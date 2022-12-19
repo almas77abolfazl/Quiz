@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { ThemePalette } from '@angular/material/core';
+import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
 import { Menu } from 'src/models/models';
 import { AuthenticationService } from '../shared/services/authentication/authentication.service';
 
@@ -8,7 +7,9 @@ import { AuthenticationService } from '../shared/services/authentication/authent
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss'],
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent implements OnInit, AfterViewInit {
+  @ViewChild('nav') nav: any = null;
+
   public menu: Menu[] = [
     {
       displayName: 'labels.userManagement',
@@ -54,6 +55,10 @@ export class AdminComponent implements OnInit {
   constructor(private authenticationService: AuthenticationService) {}
 
   ngOnInit() {}
+
+  ngAfterViewInit(): void {
+    this.nav?.toggle();
+  }
 
   logout() {
     this.authenticationService.logout();

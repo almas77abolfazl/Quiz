@@ -19,4 +19,8 @@ export class MainComponent implements OnInit {
     this.authenticationService.logout();
     this.router.navigateByUrl('login');
   }
+
+  goToAdminPage() {
+    this.router.navigate(['/admin']);
+  }
 }
