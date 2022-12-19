@@ -66,6 +66,12 @@ export class QuestionComponent {
     }
   }
 
+  public quizEnded(): void {
+    this.router.navigate(['main/quiz-result'], {
+      state: { userAnswers: this.userAnswers },
+    });
+  }
+
   private setCountDown() {
     this.questionNumber += 1;
 
@@ -82,11 +88,5 @@ export class QuestionComponent {
     this.timeNum = timeNum;
     this.requestForNextQuestion.emit(true);
     this.sub.unsubscribe();
-  }
-
-  private quizEnded(): void {
-    this.router.navigate(['main/quiz-result'], {
-      state: { userAnswers: this.userAnswers },
-    });
   }
 }

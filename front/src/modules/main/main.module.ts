@@ -7,6 +7,7 @@ import { QuizResultComponent } from './components/quiz-result/quiz-result.compon
 import { StartQuizComponent } from './components/start-quiz/start-quiz.component';
 import { QuizService } from './services/quiz/quiz.service';
 import { SharedModule } from '../shared/shared.module';
+import { SelectQuizComponent } from './components/select-quiz/select-quiz.component';
 
 @NgModule({
   imports: [SharedModule, MainRoutes],
@@ -16,6 +17,7 @@ import { SharedModule } from '../shared/shared.module';
     QuizPageComponent,
     QuizResultComponent,
     StartQuizComponent,
+    SelectQuizComponent,
   ],
   providers: [QuizService],
 })
