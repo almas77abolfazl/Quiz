@@ -1,3 +1,4 @@
+import { NoopScrollStrategy } from '@angular/cdk/overlay';
 import { Injectable } from '@angular/core';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { DialogComponent } from '../../components/dialog/dialog.component';
@@ -16,6 +17,7 @@ export class DialogService {
         onClose: () => (callback ? callback() : () => {}),
       },
       direction: 'rtl',
+      scrollStrategy: new NoopScrollStrategy()
     });
   }
 

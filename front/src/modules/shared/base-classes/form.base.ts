@@ -1,3 +1,4 @@
+import { NoopScrollStrategy } from '@angular/cdk/overlay';
 import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
@@ -210,6 +211,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
                 height: '90%',
                 width: '500px',
                 maxHeight: '500px',
+                scrollStrategy: new NoopScrollStrategy(),
               });
             }
           );
