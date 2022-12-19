@@ -1,0 +1,35 @@
+.quiz-categories-container {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+
+  button {
+    height: 150px;
+    width: 150px;
+    background: indianred;
+    outline: 0;
+    border: 0;
+    border-radius: 20px;
+    cursor: pointer;
+
+    &:hover {
+      animation: shake 0.7s ease-out;
+      background-color: aquamarine;
+    }
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0) translateY(0);
+  }
+  25% {
+    transform: translateX(-5px) translateY(0);
+  }
+  75% {
+    transform: translateX(4px) translateY(0);
+  }
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+}
