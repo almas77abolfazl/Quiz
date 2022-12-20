@@ -18,19 +18,19 @@ import { Router } from '@angular/router';
 export class SideNavComponent implements OnInit {
   @Input() menu!: Menu[];
 
-  @ViewChild('drawer') drawer!: MatSidenav;
+  @ViewChild('drawer', { static: true }) drawer!: MatSidenav;
 
   constructor(private router: Router) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.toggle();
+  }
 
   toggle() {
     this.drawer.toggle();
   }
 
   navigateTo(route: string | undefined) {
-    if (route) {
-      this.router.navigate([route]);
-    }
+    if (route) this.router.navigate([route]);
   }
 }
