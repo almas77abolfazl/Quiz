@@ -7,9 +7,7 @@ import { AuthenticationService } from '../shared/services/authentication/authent
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss'],
 })
-export class AdminComponent implements OnInit, AfterViewInit {
-  @ViewChild('nav') nav: any = null;
-
+export class AdminComponent {
   public menu: Menu[] = [
     {
       displayName: 'labels.userManagement',
@@ -54,13 +52,7 @@ export class AdminComponent implements OnInit, AfterViewInit {
 
   constructor(private authenticationService: AuthenticationService) {}
 
-  ngOnInit() {}
-
-  ngAfterViewInit(): void {
-    this.nav?.toggle();
-  }
-
-  logout() {
+  public logout(): void {
     this.authenticationService.logout();
   }
 
