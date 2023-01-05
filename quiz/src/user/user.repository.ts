@@ -14,7 +14,7 @@ export enum Roles {
 }
 
 @Entity('users')
-export class UserEntity {
+export class UserRepository {
   @ObjectIdColumn()
   id: number;
 
@@ -43,7 +43,7 @@ export class UserEntity {
   address: string;
 
   @Column()
-  sessions: string;
+  sessions: any[];
 
   @BeforeUpdate()
   @BeforeInsert()
