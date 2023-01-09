@@ -4,6 +4,7 @@ import { WebRequestService } from 'src/modules/shared/services/web-request/web-r
 @Injectable()
 export class QuizService {
   categories$ = this.webRequestService.get('category')
+  levels$ = this.webRequestService.get('levels')
 
   constructor(private webRequestService: WebRequestService) {}
 
