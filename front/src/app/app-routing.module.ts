@@ -10,13 +10,13 @@ const routes: Routes = [
     path: '',
     loadChildren: () =>
       import('../modules/main/main.module').then((m) => m.MainModule),
-    canActivate: [AuthGuard, ValidateTokenGuard],
+    // canActivate: [AuthGuard, ValidateTokenGuard],
   },
   {
     path: 'admin',
     loadChildren: () =>
       import('../modules/admin/admin.module').then((m) => m.AdminModule),
-    canActivate: [AuthGuard, ValidateTokenGuard],
+    // canActivate: [AuthGuard, ValidateTokenGuard],
   },
   { path: 'login', component: ContainerComponent },
   { path: 'not-found', component: NotFoundComponent },

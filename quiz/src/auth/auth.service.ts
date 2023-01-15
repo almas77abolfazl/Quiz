@@ -52,7 +52,13 @@ export class AuthService {
   public signIn(user: SignInDto): Observable<string> {
     return this.validateUser(user.username, user.password).pipe(
       switchMap((user: Partial<UserRepository>) => {
-        if (user) return this.generateJWT(user).pipe(map((jwt: string) => jwt));
+        if (user) {
+          return this.createSession(user).pipe(
+            switchMap((_refreshToken) => {
+              return this.generateJWT(user);
+            }),
+          );
+        }
       }),
     );
   }
@@ -103,9 +109,7 @@ export class AuthService {
     // Save session to database
     const expiresAt = this.generateRefreshTokenExpiryTime();
     user.sessions.push({ token: refreshToken, expiresAt });
-    return from(this.userRepository.save(user.sessions)).pipe(
-      map(() => refreshToken),
-    );
+    return from(this.userRepository.save([user])).pipe(map(() => refreshToken));
   }
 
   private generateRefreshTokenExpiryTime(): number {
@@ -121,7 +125,7 @@ export class AuthService {
     return from(
       this.userRepository.findOne({
         where: { username },
-        select: ['password', 'role'],
+        select: ['password', 'role', 'sessions'],
       }),
     ).pipe(
       switchMap((user: Partial<UserRepository>) => {

@@ -19,18 +19,18 @@ export class AuthController {
   @Post('signUp')
   signUp(@Body() body: SignupDto): Observable<any> {
     return this.authService.signUp(body).pipe(
-      map((token: string) => {
-        return { token };
+      map((accessToken: string) => {
+        return { accessToken };
       }),
       catchError((err) => of(err)),
     );
   }
 
   @Post('signIn')
-  signIn(@Body() body: SignInDto): Observable<any> {
+  signIn(@Body() body: SignInDto): Observable<string> {
     return this.authService.signIn(body).pipe(
-      map((token: string) => {
-        return { token };
+      map((accessToken: string) => {
+        return accessToken;
       }),
       catchError((err) => of(err)),
     );

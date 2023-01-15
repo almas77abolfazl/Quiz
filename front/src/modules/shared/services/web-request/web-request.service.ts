@@ -11,7 +11,7 @@ export class WebRequestService {
   readonly ROOT_URL;
 
   constructor(private http: HttpClient) {
-    this.ROOT_URL = 'http://localhost:5000';
+    this.ROOT_URL = 'http://localhost:3000';
   }
 
   public get(uri: string): Observable<any> {
@@ -31,7 +31,7 @@ export class WebRequestService {
   }
 
   public login(useData: Partial<User>): Observable<any> {
-    return this.http.post(`${this.ROOT_URL}/users/login`, useData, {
+    return this.http.post(`${this.ROOT_URL}/auth/signIn`, useData, {
       observe: 'response',
     });
   }
