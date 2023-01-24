@@ -37,7 +37,7 @@ export class WebRequestService {
   }
 
   public signup(useData: Partial<User>): Observable<any> {
-    return this.http.post(`${this.ROOT_URL}/users`, useData, {
+    return this.http.post(`${this.ROOT_URL}/auth/signUp`, useData, {
       observe: 'response',
     });
   }

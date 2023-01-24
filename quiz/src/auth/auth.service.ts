@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { forkJoin, from, map, mergeMap, Observable, switchMap } from 'rxjs';
+import { from, map, mergeMap, Observable, of } from 'rxjs';
 import { UserRepository } from 'src/user/user.repository';
 import { MongoRepository } from 'typeorm';
 import { SignupDto } from './dto/signup.dto';
@@ -17,99 +17,115 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  public signUp(body: SignupDto): Observable<string> {
-    return from(this.doesUserExist(body.email, body.username)).pipe(
-      switchMap((doesUserExist) => {
-        if (doesUserExist)
-          throw new HttpException(
-            'A user has already been created with this email or username address',
-            HttpStatus.FORBIDDEN,
-          );
-        return this.hashPassword(body.password).pipe(
-          switchMap((passwordHash: string) => {
-            const newUser = new UserRepository();
-            newUser.username = body.username;
-            newUser.email = body.email;
-            newUser.password = passwordHash;
-            const observables = {
-              refreshToken: this.createSession(newUser),
-              user: from(this.userRepository.save(newUser)),
-            };
-            return forkJoin(observables).pipe(
-              switchMap((res) => {
-                if (res.user) {
-                  const { password, ...result } = res.user;
-                  return this.generateJWT(result);
-                }
-              }),
-            );
-          }),
+  public async signUp(body: SignupDto): Promise<{
+    accessToken: string;
+    user: Partial<UserRepository>;
+  }> {
+    const doesUserExist = await this.doesUserExist(body.email, body.username);
+    if (doesUserExist) {
+      throw new HttpException(
+        'A user has already been created with this email or username address',
+        HttpStatus.FORBIDDEN,
+      );
+    } else {
+      const hashedPassword = await this.hashPassword(body.password);
+      const newUser = new UserRepository();
+      newUser.username = body.username;
+      newUser.email = body.email;
+      newUser.password = hashedPassword;
+      newUser.sessions = [];
+      const sessionIsCreated = await this.createSession(newUser);
+      if (sessionIsCreated) {
+        const { password, sessions, ...user } = newUser;
+        const accessToken = this.generateJWT(user);
+        return { accessToken, user };
+      } else {
+        throw new HttpException(
+          'something is wrong',
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
-      }),
-    );
+      }
+    }
   }
 
-  public signIn(user: SignInDto): Observable<string> {
-    return this.validateUser(user.username, user.password).pipe(
-      switchMap((user: Partial<UserRepository>) => {
-        if (user) {
-          return this.createSession(user).pipe(
-            switchMap((_refreshToken) => {
-              return this.generateJWT(user);
-            }),
-          );
+  public async signIn(
+    user: SignInDto,
+  ): Promise<{ accessToken: string; user: Partial<UserRepository> }> {
+    const validUser = await this.validateUser(user.username, user.password);
+    if (validUser) {
+      const sessionIsCreated = this.createSession(validUser);
+      if (sessionIsCreated) {
+        const accessToken = this.generateJWT(validUser);
+        return { accessToken, user: validUser };
+      }
+    }
+  }
+
+  private async doesUserExist(
+    email: string,
+    username: string,
+  ): Promise<boolean> {
+    const user = await this.userRepository.findOne({
+      where: {
+        email,
+        username,
+      },
+    });
+    return !!user;
+  }
+
+  private hashPassword(password: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // Generate salt and hash password
+      const costFactor = 10;
+      bcrypt.genSalt(costFactor, (err, salt) => {
+        if (err) {
+          reject(err);
+        } else {
+          bcrypt.hash(password, salt, (err, hash) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(hash);
+            }
+          });
         }
-      }),
-    );
-  }
-
-  private doesUserExist(email: string, username: string): Observable<boolean> {
-    return from(
-      this.userRepository.findOne({
-        where: [{ email }, { username }],
-      }),
-    ).pipe(map((user: UserRepository) => !!user));
-  }
-
-  private hashPassword(password: string): Observable<string> {
-    return from<string>(bcrypt.genSalt(12)).pipe(
-      mergeMap((salt) => {
-        return from<string>(bcrypt.hash(password, salt));
-      }),
-    );
-  }
-
-  private generateJWT(user: Partial<UserRepository>): Observable<string> {
-    return from(this.jwtService.signAsync(user, { expiresIn: '15m' }));
-  }
-
-  private createSession(user: Partial<UserRepository>): Observable<string> {
-    return this.generateRefreshAuthToken().pipe(
-      switchMap((refreshToken) => {
-        return this.saveSessionToDatabase(user, refreshToken);
-      }),
-    );
-  }
-
-  private generateRefreshAuthToken(): Observable<string> {
-    return new Observable((subscriber) => {
-      crypto.randomBytes(64, (err, buf) => {
-        if (!err) {
-          const token = buf.toString('hex');
-          return subscriber.next(token);
-        } else subscriber.error(''); //TODO
       });
     });
   }
 
-  private saveSessionToDatabase(
+  private generateJWT(user: Partial<UserRepository>): string {
+    return this.jwtService.sign(user, { expiresIn: '15m' });
+  }
+
+  private async createSession(user: Partial<UserRepository>): Promise<boolean> {
+    const refreshToken = await this.generateRefreshAuthToken();
+    const sessionIsCreated = await this.saveSessionToDatabase(
+      user,
+      refreshToken,
+    );
+    return sessionIsCreated;
+  }
+
+  private generateRefreshAuthToken(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      crypto.randomBytes(64, (err, buf) => {
+        if (!err) {
+          const token = buf.toString('hex');
+          return resolve(token);
+        } else reject(''); //TODO
+      });
+    });
+  }
+
+  private async saveSessionToDatabase(
     user: Partial<UserRepository>,
     refreshToken: string,
-  ): Observable<string> {
-    // Save session to database
+  ): Promise<boolean> {
     const expiresAt = this.generateRefreshTokenExpiryTime();
     user.sessions.push({ token: refreshToken, expiresAt });
-    return from(this.userRepository.save([user])).pipe(map(() => refreshToken));
+    const savedUser = await this.userRepository.save([user]);
+    return !!savedUser;
   }
 
   private generateRefreshTokenExpiryTime(): number {
@@ -118,36 +134,40 @@ export class AuthService {
     return Date.now() / 1000 + secondsUntilExpire;
   }
 
-  private validateUser(
+  private async validateUser(
     username: string,
-    password: string,
-  ): Observable<Partial<UserRepository>> {
-    return from(
-      this.userRepository.findOne({
-        where: { username },
-        select: ['password', 'role', 'sessions'],
-      }),
-    ).pipe(
-      switchMap((user: Partial<UserRepository>) => {
-        return this.comparePasswords(password, user.password).pipe(
-          map((match: boolean) => {
-            if (!match)
-              throw new HttpException(
-                'Incorrect username or password',
-                HttpStatus.FORBIDDEN,
-              );
-            const { password, ...result } = user;
-            return result;
-          }),
+    pass: string,
+  ): Promise<Partial<UserRepository>> {
+    const user = await this.userRepository.findOne({
+      where: { username },
+      select: ['password', 'role', 'sessions'],
+    });
+    if (user) {
+      const passwordIsMatch = await this.comparePasswords(pass, user.password);
+      if (!passwordIsMatch) {
+        throw new HttpException(
+          'messages.passwordNotMatched',
+          HttpStatus.FORBIDDEN,
         );
-      }),
-    );
+      }
+      const { password, ...result } = user;
+      return result;
+    } else
+      throw new HttpException(
+        'messages.passwordNotMatched',
+        HttpStatus.FORBIDDEN,
+      );
   }
 
   private comparePasswords(
     newPassword: string,
     passwordHash: string,
-  ): Observable<any> {
-    return from(bcrypt.compare(newPassword, passwordHash));
+  ): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      bcrypt.compare(newPassword, passwordHash, (err, res) => {
+        if (res) return resolve(true);
+        else reject(false);
+      });
+    });
   }
 }

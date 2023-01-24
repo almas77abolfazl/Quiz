@@ -13,7 +13,7 @@ import { CategoryModule } from './category/category.module';
     CategoryModule,
     TypeOrmModule.forRoot({
       type: 'mongodb',
-      url: 'mongodb://localhost:27017',
+      url: 'mongodb://127.0.0.1:27017',
       database: 'Quiz',
       entities: [__dirname + '/**/*.repository{.ts,.js}'],
       ssl: false,
