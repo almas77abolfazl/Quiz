@@ -1,4 +1,11 @@
-import { Entity, Column, BeforeInsert, BeforeUpdate } from 'typeorm';
+import {
+  Entity,
+  Column,
+  BeforeInsert,
+  BeforeUpdate,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { ObjectIdColumn } from 'typeorm/decorator/columns/ObjectIdColumn';
 
 export enum Gender {
@@ -44,6 +51,12 @@ export class UserRepository {
 
   @Column()
   sessions: any[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @BeforeUpdate()
   @BeforeInsert()
