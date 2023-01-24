@@ -74,7 +74,7 @@ export class AuthService {
     return !!user;
   }
 
-  private hashPassword(password: string): Promise<string> {
+  public hashPassword(password: string): Promise<string> {
     return new Promise((resolve, reject) => {
       // Generate salt and hash password
       const costFactor = 10;
