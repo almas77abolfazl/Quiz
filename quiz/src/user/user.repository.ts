@@ -5,6 +5,7 @@ import {
   BeforeUpdate,
   CreateDateColumn,
   UpdateDateColumn,
+  ObjectID,
 } from 'typeorm';
 import { ObjectIdColumn } from 'typeorm/decorator/columns/ObjectIdColumn';
 
@@ -23,7 +24,7 @@ export enum Roles {
 @Entity('users')
 export class UserRepository {
   @ObjectIdColumn()
-  id: number;
+  id: ObjectID;
 
   @Column({ unique: true })
   email: string;
