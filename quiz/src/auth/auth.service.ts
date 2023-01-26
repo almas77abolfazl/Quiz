@@ -138,7 +138,7 @@ export class AuthService {
   ): Promise<Partial<UserRepository>> {
     const user = await this.userRepository.findOne({
       where: { username },
-      select: ['email', 'id', 'username', 'password', 'sessions'],
+      select: ['email', '_id', 'username', 'password', 'sessions'],
     });
     if (user) {
       const passwordIsMatch = await this.comparePasswords(pass, user.password);
