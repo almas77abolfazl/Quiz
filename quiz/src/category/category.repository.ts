@@ -5,15 +5,17 @@ import {
   BeforeUpdate,
   CreateDateColumn,
   UpdateDateColumn,
+  ObjectID,
+  PrimaryColumn,
 } from 'typeorm';
 import { ObjectIdColumn } from 'typeorm/decorator/columns/ObjectIdColumn';
 
-@Entity('users')
+@Entity('category')
 export class CategoryRepository {
   @ObjectIdColumn()
-  id: number;
+  id: ObjectID;
 
-  @Column({ unique: true })
+  @Column()
   title: string;
 
   @CreateDateColumn()

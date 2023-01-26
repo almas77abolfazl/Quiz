@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { from, map, mergeMap, Observable, of } from 'rxjs';
@@ -23,9 +28,8 @@ export class AuthService {
   }> {
     const doesUserExist = await this.doesUserExist(body.email, body.username);
     if (doesUserExist) {
-      throw new HttpException(
+      throw new UnprocessableEntityException(
         'A user has already been created with this email or username address',
-        HttpStatus.FORBIDDEN,
       );
     } else {
       const hashedPassword = await this.hashPassword(body.password);
@@ -34,17 +38,10 @@ export class AuthService {
       newUser.email = body.email;
       newUser.password = hashedPassword;
       newUser.sessions = [];
-      const sessionIsCreated = await this.createSession(newUser);
-      if (sessionIsCreated) {
-        const { password, sessions, ...user } = newUser;
-        const accessToken = this.generateJWT(user);
-        return { accessToken, user };
-      } else {
-        throw new HttpException(
-          'something is wrong',
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
+      await this.createSession(newUser);
+      const { password, sessions, ...user } = newUser;
+      const accessToken = this.generateJWT(user);
+      return { accessToken, user };
     }
   }
 
@@ -55,8 +52,9 @@ export class AuthService {
     if (validUser) {
       const sessionIsCreated = this.createSession(validUser);
       if (sessionIsCreated) {
-        const accessToken = this.generateJWT(validUser);
-        return { accessToken, user: validUser };
+        const { password, sessions, ...user } = validUser;
+        const accessToken = this.generateJWT(user);
+        return { accessToken, user };
       }
     }
   }
@@ -140,7 +138,7 @@ export class AuthService {
   ): Promise<Partial<UserRepository>> {
     const user = await this.userRepository.findOne({
       where: { username },
-      select: ['password', 'role', 'sessions'],
+      select: ['email', 'id', 'username', 'password', 'sessions'],
     });
     if (user) {
       const passwordIsMatch = await this.comparePasswords(pass, user.password);
@@ -150,8 +148,7 @@ export class AuthService {
           HttpStatus.FORBIDDEN,
         );
       }
-      const { password, ...result } = user;
-      return result;
+      return user;
     } else
       throw new HttpException(
         'messages.passwordNotMatched',
