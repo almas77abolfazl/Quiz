@@ -1,28 +1,21 @@
 {
   "compilerOptions": {
-    "allowJs": false,
-    "outDir": "../dist",
     "module": "commonjs",
-    "baseUrl": "",
-    "types": ["node"],
-    "target": "es2015",
-    "moduleResolution": "node",
-    "lib": ["es2015"],
-    "sourceMap": true,
+    "declaration": true,
+    "removeComments": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "strict": true,
-    "typeRoots": ["node_modules/@types"]
-  },
-  "files": [
-    "app.ts",
-    "routes.ts",
-    "db.ts",
-    "controllers/question.controller.ts",
-    "controllers/user.controller.ts",
-    "controllers/category.controller.ts",
-    "models/question.model.ts",
-    "models/user.model.ts",
-    "models/category.model.ts",
-  ]
+    "allowSyntheticDefaultImports": true,
+    "target": "es2017",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false
+  }
 }
