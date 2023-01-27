@@ -24,7 +24,7 @@ export enum Roles {
 @Entity('users')
 export class UserRepository {
   @ObjectIdColumn()
-  id: ObjectID;
+  _id: ObjectID;
 
   @Column({ unique: true })
   email: string;

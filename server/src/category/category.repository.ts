@@ -13,7 +13,7 @@ import { ObjectIdColumn } from 'typeorm/decorator/columns/ObjectIdColumn';
 @Entity('category')
 export class CategoryRepository {
   @ObjectIdColumn()
-  id: ObjectID;
+  _id: ObjectID;
 
   @Column()
   title: string;

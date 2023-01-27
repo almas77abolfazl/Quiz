@@ -25,6 +25,7 @@ export class UserService implements OnApplicationBootstrap {
       saUser.email = 'default@email.com';
       saUser.password = hashPassword;
       saUser.role = Roles.sa;
+      saUser.sessions = [];
       await this.userRepository.save([saUser]);
       console.log('default admin successfully added.');
     }
