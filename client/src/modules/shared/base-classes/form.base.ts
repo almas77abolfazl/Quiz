@@ -1,15 +1,9 @@
 import { NoopScrollStrategy } from '@angular/cdk/overlay';
 import { Component, inject, Injector, OnDestroy, OnInit } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormControl,
-  FormGroup,
-} from '@angular/forms';
+import { AbstractControl, FormArray, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { DialogData } from '../components/dialog/dialog.component';
 import { AuthenticationService } from '../services/authentication/authentication.service';
 import { DialogService } from '../services/dialog/dialog.service';
 import { WebRequestService } from '../services/web-request/web-request.service';
@@ -90,11 +84,6 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
     if (validationFromScope && this.validationUserBeforeSave()) {
       const sData = this.removeNullProperties(this.formGroup.value);
-      if (!sData.creator) {
-        sData.creator = this.authenticationService.currentUserValue?.user;
-      } else {
-        sData.editor = this.authenticationService.currentUserValue?.user;
-      }
       this.subscriptions.add(
         this.webRequestService
           .saveEntity(this.entityName, sData)
@@ -108,24 +97,6 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
           })
       );
     }
-  }
-
-  public getUserGroup() {
-    return new FormGroup({
-      _id: new FormControl(null, []),
-      __v: new FormControl(null, []),
-      createdAt: new FormControl(null, []),
-      updatedAt: new FormControl(null, []),
-      username: new FormControl(null, []),
-      email: new FormControl(null, []),
-      role: new FormControl(null, []),
-      password: new FormControl(null, []),
-      firstName: new FormControl(null, []),
-      lastName: new FormControl(null, []),
-      gender: new FormControl(null, []),
-      sessions: new FormControl(null, []),
-      address: new FormControl(null, []),
-    });
   }
 
   //#region lifeCycle hooks

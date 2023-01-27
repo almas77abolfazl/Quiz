@@ -30,11 +30,7 @@ export class CategoryListComponent extends ListBase<Category> {
   }
 
   protected getColumns(): ColDef<any>[] {
-    return [
-      { field: 'title', headerName: 'labels.category' },
-      { field: 'creator.username', headerName: 'labels.creator' },
-      { field: 'editor.username', headerName: 'labels.editor' },
-    ];
+    return [{ field: 'title', headerName: 'labels.category' }];
   }
 
   protected getCommands(): Command[] {

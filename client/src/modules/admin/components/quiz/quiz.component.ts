@@ -45,10 +45,9 @@ export class QuizComponent extends FormBase<Question> {
       createdAt: new FormControl(null, []),
       updatedAt: new FormControl(null, []),
       questionText: new FormControl(null, [Validators.required]),
-      category:  new FormControl(null, [Validators.required]),
+      category: new FormControl(null, [Validators.required]),
       level: new FormControl(null, [Validators.required]),
       options: new FormArray(this.getOptionsFormGroup()),
-      creator: this.getUserGroup(),
     });
   }
 
@@ -81,7 +80,6 @@ export class QuizComponent extends FormBase<Question> {
     const controls: AbstractControl[] = [];
     for (let index = 0; index < 4; index++) {
       const optionsGroup = new FormGroup({
-        _id: new FormControl(null, []),
         optionText: new FormControl(null, [Validators.required]),
         isAnswer: new FormControl(false),
       });

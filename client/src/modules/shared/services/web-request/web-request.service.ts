@@ -56,8 +56,17 @@ export class WebRequestService {
   }
 
   saveEntity(entityName: string, entity: any): Observable<any> {
-    return this.http.post(`${this.ROOT_URL}/${entityName}`, entity, {
-      observe: 'response',
-    });
+    if (entity._id) {
+      return this.http.put(
+        `${this.ROOT_URL}/${entityName}/${entity._id}`,
+        entity,
+        {
+          observe: 'response',
+        }
+      );
+    } else
+      return this.http.post(`${this.ROOT_URL}/${entityName}`, entity, {
+        observe: 'response',
+      });
   }
 }

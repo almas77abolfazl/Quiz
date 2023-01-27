@@ -17,6 +17,11 @@ enum Levels {
   veryHard = 'veryHard',
 }
 
+export interface Option {
+  optionText: string;
+  isAnswer: boolean;
+}
+
 @Entity('question')
 export class QuestionRepository {
   @ObjectIdColumn()
@@ -29,7 +34,7 @@ export class QuestionRepository {
   questionText: string;
 
   @Column()
-  options: any[];
+  options: Option[];
 
   @Column({ type: 'enum', enum: Levels, default: Levels.easy })
   level: string;
