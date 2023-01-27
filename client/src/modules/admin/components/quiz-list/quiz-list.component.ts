@@ -9,7 +9,7 @@ import { ListBase } from 'src/modules/shared/base-classes/list.base';
   styleUrls: ['./quiz-list.component.scss'],
 })
 export class QuizListComponent extends ListBase<Question> {
-  entityName = 'questions';
+  entityName = 'question';
 
   constructor(injector: Injector) {
     super(injector);

@@ -21,7 +21,7 @@ export enum Roles {
   sa = 'sa',
 }
 
-@Entity('users')
+@Entity('user')
 export class UserRepository {
   @ObjectIdColumn()
   _id: ObjectID;
@@ -36,7 +36,7 @@ export class UserRepository {
   password: string;
 
   @Column()
-  firstName: Date;
+  firstName: string;
 
   @Column()
   lastName: string;

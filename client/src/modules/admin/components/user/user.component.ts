@@ -10,7 +10,7 @@ import { FormBase } from 'src/modules/shared/base-classes/form.base';
   styleUrls: ['./user.component.scss'],
 })
 export class UserComponent extends FormBase<User> {
-  entityName = 'users';
+  entityName = 'user';
 
   constructor(
     injector: Injector,
