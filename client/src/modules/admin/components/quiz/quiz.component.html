@@ -1,6 +1,6 @@
 <app-form [formGroup]="formGroup" (onSaveClicked)="save()">
-  <div class="form-item" [formGroup]="getSubFormGroup('category')">
-    <select id="category" name="category" formControlName="_id">
+  <div class="form-item">
+    <select id="category" name="category" formControlName="category">
       <ng-container *ngFor="let category of categories$ | async">
         <option [value]="category._id">
           {{ category.title }}

@@ -195,7 +195,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
   }
 
   private validationUserBeforeSave(): boolean {
-    if (this.entityName === 'users') return true;
+    if (this.entityName === 'user') return true;
     const user = this.authenticationService.currentUserValue?.user;
     const userHasFullName = !!user?.firstName && !!user.lastName;
     if (!userHasFullName) {

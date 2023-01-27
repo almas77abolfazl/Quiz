@@ -18,7 +18,7 @@ import { FormBase } from 'src/modules/shared/base-classes/form.base';
 export class QuizComponent extends FormBase<Question> {
   //#region public variables
 
-  entityName = 'questions';
+  entityName = 'question';
 
   optionGroups: FormGroup[] = [];
 
@@ -45,14 +45,7 @@ export class QuizComponent extends FormBase<Question> {
       createdAt: new FormControl(null, []),
       updatedAt: new FormControl(null, []),
       questionText: new FormControl(null, [Validators.required]),
-      category: new FormGroup({
-        _id: new FormControl(null, [Validators.required]),
-        __v: new FormControl(null, []),
-        createdAt: new FormControl(null, []),
-        updatedAt: new FormControl(null, []),
-        title: new FormControl(null, [Validators.required]),
-        creator: this.getUserGroup(),
-      }),
+      category:  new FormControl(null, [Validators.required]),
       level: new FormControl(null, [Validators.required]),
       options: new FormArray(this.getOptionsFormGroup()),
       creator: this.getUserGroup(),

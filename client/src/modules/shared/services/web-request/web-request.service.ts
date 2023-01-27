@@ -52,7 +52,7 @@ export class WebRequestService {
 
   getEntity(entityName: string, id: string): Observable<any> {
     const url = `${entityName}/${id}`;
-    return this.get(url).pipe(map((x) => x.data));
+    return this.get(url);
   }
 
   saveEntity(entityName: string, entity: any): Observable<any> {

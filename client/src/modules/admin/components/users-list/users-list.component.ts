@@ -10,7 +10,7 @@ import { ListBase } from 'src/modules/shared/base-classes/list.base';
   styleUrls: ['./users-list.component.scss'],
 })
 export class UsersListComponent extends ListBase<User> {
-  entityName = 'users';
+  entityName = 'user';
 
   constructor(injector: Injector) {
     super(injector);
