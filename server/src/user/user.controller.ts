@@ -29,7 +29,8 @@ export class UserController {
   }
 
   @Get(':id')
-  async getQuestionById(@Param('id') id: string): Promise<User> {
-    return await this.service.getById(id);
+  async getQuestionById(@Param('id') id: string): Promise<Partial<User>> {
+    const { password, ...user } = await this.service.getById(id);
+    return user;
   }
 }

@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { SchemaTypes, Types } from 'mongoose';
 
 enum Levels {
   easy = 'easy',
@@ -14,25 +15,19 @@ export interface Option {
 
 export type QuestionDocument = Question & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class Question {
-  @Prop()
-  category: string;
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Category', required: true })
+  category: Types.ObjectId;
 
-  @Prop()
+  @Prop({ required: true })
   questionText: string;
 
-  @Prop()
+  @Prop({ required: true })
   options: Option[];
 
-  @Prop({ type: String, enum: Levels, default: Levels.easy })
+  @Prop({ type: String, enum: Levels, default: Levels.easy, required: true })
   level: string;
-
-  @Prop()
-  createdAt: Date;
-
-  @Prop()
-  updatedAt: Date;
 
   @Prop()
   deletedAt?: Date;

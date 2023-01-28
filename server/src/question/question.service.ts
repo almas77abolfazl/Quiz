@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose/dist';
 import { Model } from 'mongoose';
 
 import { CreateQuestionDto } from './dto/create-question.dto';
+import { UpdateQuestionDto } from './dto/update-question.dto';
 import { Question, QuestionDocument } from './question.schema';
 
 @Injectable()
@@ -28,7 +29,7 @@ export class QuestionService {
 
   public async update(
     id: string,
-    questionText: string,
+    updateQuestionDto: UpdateQuestionDto,
   ): Promise<{ updated: boolean; message: string }> {
     const question = await this.getById(id);
     if (!question) {
@@ -37,14 +38,14 @@ export class QuestionService {
         HttpStatus.NOT_FOUND,
       );
     } else {
-      question.questionText = questionText;
+      Object.assign(question, updateQuestionDto);
       await this.model.findByIdAndUpdate(id, question).exec();
       return { updated: true, message: 'messages.savedSuccessfully' };
     }
   }
 
   public async getAll(): Promise<Question[]> {
-    return await this.model.find().exec();
+    return await this.model.find().populate('category').exec();
   }
 
   public async getById(id?: string): Promise<Question> {

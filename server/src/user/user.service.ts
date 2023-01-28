@@ -22,16 +22,13 @@ export class UserService implements OnApplicationBootstrap {
       saUser.password = hashPassword;
       saUser.role = Roles.sa;
       saUser.sessions = [];
-      await new this.model({
-        ...saUser,
-        createdAt: new Date(),
-      }).save();
+      await new this.model(saUser).save();
       console.log('default admin successfully added.');
     }
   }
 
   public async getAll(): Promise<User[]> {
-    return await this.model.find().exec();
+    return await this.model.find().select(['username', 'email', 'role']).exec();
   }
 
   public async updateUser(
@@ -39,15 +36,17 @@ export class UserService implements OnApplicationBootstrap {
     body: UpdateUserDto,
   ): Promise<Partial<User>> {
     const user = await this.getById(id);
+    const hashPassword = await this.authService.hashPassword(body.password);
+    body.password = hashPassword;
     Object.assign(user, body);
     const { password, ...otherInfo } = await this.model
-      .findByIdAndUpdate(id, body)
+      .findByIdAndUpdate(id, user)
       .exec();
     return otherInfo;
   }
 
   public async getById(id?: string): Promise<User> {
-    return await this.model.findById(id).exec();
+    return await this.model.findById(id).lean();
   }
 
   public async deleteById(id: string): Promise<User> {

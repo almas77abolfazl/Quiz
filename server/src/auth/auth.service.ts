@@ -31,12 +31,12 @@ export class AuthService {
       );
     } else {
       const hashedPassword = await this.hashPassword(body.password);
-      const newUser = {} as User;
+      let newUser = {} as User;
       newUser.username = body.username;
       newUser.email = body.email;
       newUser.password = hashedPassword;
       newUser.sessions = [];
-      newUser.createdAt = new Date();
+      newUser = await new this.model(newUser).save();
       await this.createSession(newUser);
       const { password, sessions, ...user } = newUser;
       const accessToken = this.generateJWT(user);
@@ -118,7 +118,7 @@ export class AuthService {
   ): Promise<boolean> {
     const expiresAt = this.generateRefreshTokenExpiryTime();
     user.sessions.push({ token: refreshToken, expiresAt });
-    const savedUser = await new this.model(user).save();
+    const savedUser = await this.model.findByIdAndUpdate(user['_id'], user);
     return !!savedUser;
   }
 
@@ -155,8 +155,7 @@ export class AuthService {
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
       bcrypt.compare(newPassword, passwordHash, (err: any, res: any) => {
-        if (res) return resolve(true);
-        else reject(false);
+        resolve(res);
       });
     });
   }
