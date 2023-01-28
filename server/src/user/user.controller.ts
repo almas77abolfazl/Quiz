@@ -20,9 +20,12 @@ export class UserController {
     return await this.service.getAll();
   }
 
-  @Post()
-  async updateUser(@Body() body: UpdateUserDto): Promise<UserRepository[]> {
-    return await this.service.updateUser(body);
+  @Put(':id')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() body: UpdateUserDto,
+  ): Promise<Partial<UserRepository>> {
+    return await this.service.updateUser(id, body);
   }
 
   @Get(':id')
