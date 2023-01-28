@@ -1,5 +1,4 @@
 import { IsNotEmpty, IsString } from 'class-validator';
-import { ObjectID } from 'typeorm';
 
 export class CreateQuestionDto {
   @IsString()
@@ -11,7 +10,7 @@ export class CreateQuestionDto {
 
   @IsString()
   @IsNotEmpty()
-  category: ObjectID;
+  category: string;
 
   @IsString()
   @IsNotEmpty()

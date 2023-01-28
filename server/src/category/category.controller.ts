@@ -7,8 +7,7 @@ import {
   Put,
   Delete,
 } from '@nestjs/common';
-import { catchError, map, Observable, of } from 'rxjs';
-import { CategoryRepository } from './category.repository';
+import { Category } from './category.schema';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
@@ -33,12 +32,12 @@ export class CategoryController {
   }
 
   @Get()
-  async getAllCategories(): Promise<CategoryRepository[]> {
+  async getAllCategories(): Promise<Category[]> {
     return await this.categoryService.getAll();
   }
 
   @Get(':id')
-  async getCategoryById(@Param('id') id: string): Promise<CategoryRepository> {
+  async getCategoryById(@Param('id') id: string): Promise<Category> {
     return await this.categoryService.getById(id);
   }
 

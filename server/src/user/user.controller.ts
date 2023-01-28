@@ -8,7 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserRepository } from './user.repository';
+import { User } from './user.schema';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -16,7 +16,7 @@ export class UserController {
   constructor(private service: UserService) {}
 
   @Get()
-  async getUser(): Promise<UserRepository[]> {
+  async getUser(): Promise<User[]> {
     return await this.service.getAll();
   }
 
@@ -24,12 +24,12 @@ export class UserController {
   async updateUser(
     @Param('id') id: string,
     @Body() body: UpdateUserDto,
-  ): Promise<Partial<UserRepository>> {
+  ): Promise<Partial<User>> {
     return await this.service.updateUser(id, body);
   }
 
   @Get(':id')
-  async getQuestionById(@Param('id') id: string): Promise<UserRepository> {
+  async getQuestionById(@Param('id') id: string): Promise<User> {
     return await this.service.getById(id);
   }
 }

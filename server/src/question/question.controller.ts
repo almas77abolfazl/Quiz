@@ -7,10 +7,9 @@ import {
   Put,
   Delete,
 } from '@nestjs/common';
-import { catchError, map, Observable, of } from 'rxjs';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { QuestionRepository } from './question.repository';
+import { Question } from './question.schema';
 import { QuestionService } from './question.service';
 
 @Controller('question')
@@ -20,7 +19,7 @@ export class QuestionController {
   @Post()
   async createQuestion(
     @Body() body: CreateQuestionDto,
-  ): Promise<{ updated?: boolean; created?: boolean; message: string }> {
+  ): Promise<{ created: boolean; message: string }> {
     return await this.service.create(body);
   }
 
@@ -28,22 +27,22 @@ export class QuestionController {
   async updateQuestion(
     @Param('id') id: string,
     @Body() body: UpdateQuestionDto,
-  ) {
+  ): Promise<{ updated: boolean; message: string }> {
     return this.service.update(id, body.questionText);
   }
 
   @Get()
-  async getAllCategories(): Promise<QuestionRepository[]> {
+  async getAllCategories(): Promise<Question[]> {
     return await this.service.getAll();
   }
 
   @Get(':id')
-  async getQuestionById(@Param('id') id: string): Promise<QuestionRepository> {
+  async getQuestionById(@Param('id') id: string): Promise<Question> {
     return await this.service.getById(id);
   }
 
   @Delete(':id')
-  async deleteQuestionById(@Param('id') id: string) {
+  async deleteQuestionById(@Param('id') id: string): Promise<Question> {
     return await this.service.deleteById(id);
   }
 }
