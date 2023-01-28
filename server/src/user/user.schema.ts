@@ -16,15 +16,15 @@ export enum Roles {
 
 export type UserDocument = User & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class User {
   @Prop({ required: true })
   email: string;
 
-  @Prop({ unique: true })
+  @Prop({ unique: true, required: true })
   username: string;
 
-  @Prop()
+  @Prop({ required: true })
   password: string;
 
   @Prop()
@@ -36,7 +36,7 @@ export class User {
   @Prop({ type: String, enum: Gender, default: Gender.undisclosed })
   gender: string;
 
-  @Prop({ type: String, enum: Roles, default: Roles.normal })
+  @Prop({ type: String, enum: Roles, default: Roles.normal, required: true })
   role: string;
 
   @Prop()
@@ -44,12 +44,6 @@ export class User {
 
   @Prop()
   sessions: any[];
-
-  @Prop()
-  createdAt: Date;
-
-  @Prop()
-  updatedAt: Date;
 
   @Prop()
   deletedAt?: Date;

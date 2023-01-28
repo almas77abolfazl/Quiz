@@ -1,4 +1,5 @@
 import { IsOptional, IsString } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class UpdateQuestionDto {
   @IsString()
@@ -10,7 +11,7 @@ export class UpdateQuestionDto {
 
   @IsString()
   @IsOptional()
-  category: string;
+  category: Types.ObjectId;
 
   @IsString()
   @IsOptional()

@@ -28,7 +28,7 @@ export class QuestionController {
     @Param('id') id: string,
     @Body() body: UpdateQuestionDto,
   ): Promise<{ updated: boolean; message: string }> {
-    return this.service.update(id, body.questionText);
+    return this.service.update(id, body);
   }
 
   @Get()

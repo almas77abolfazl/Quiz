@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString } from 'class-validator';
+import { Types } from 'mongoose';
 
 export class CreateQuestionDto {
   @IsString()
@@ -10,7 +11,7 @@ export class CreateQuestionDto {
 
   @IsString()
   @IsNotEmpty()
-  category: string;
+  category: Types.ObjectId;
 
   @IsString()
   @IsNotEmpty()
