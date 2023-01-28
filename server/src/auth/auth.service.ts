@@ -4,27 +4,25 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { from, map, mergeMap, Observable, of } from 'rxjs';
-import { UserRepository } from 'src/user/user.repository';
-import { MongoRepository } from 'typeorm';
 import { SignupDto } from './dto/signup.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { SignInDto } from './dto/signin.dto';
+import { User, UserDocument } from 'src/user/user.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(UserRepository)
-    public readonly userRepository: MongoRepository<UserRepository>,
+    @InjectModel(User.name) private readonly model: Model<UserDocument>,
     private readonly jwtService: JwtService,
   ) {}
 
   public async signUp(body: SignupDto): Promise<{
     accessToken: string;
-    user: Partial<UserRepository>;
+    user: Partial<User>;
   }> {
     const doesUserExist = await this.doesUserExist(body.email, body.username);
     if (doesUserExist) {
@@ -33,11 +31,12 @@ export class AuthService {
       );
     } else {
       const hashedPassword = await this.hashPassword(body.password);
-      const newUser = new UserRepository();
+      const newUser = {} as User;
       newUser.username = body.username;
       newUser.email = body.email;
       newUser.password = hashedPassword;
       newUser.sessions = [];
+      newUser.createdAt = new Date();
       await this.createSession(newUser);
       const { password, sessions, ...user } = newUser;
       const accessToken = this.generateJWT(user);
@@ -46,9 +45,12 @@ export class AuthService {
   }
 
   public async signIn(
-    user: SignInDto,
-  ): Promise<{ accessToken: string; user: Partial<UserRepository> }> {
-    const validUser = await this.validateUser(user.username, user.password);
+    signInDto: SignInDto,
+  ): Promise<{ accessToken: string; user: Partial<User> }> {
+    const validUser = await this.validateUser(
+      signInDto.username,
+      signInDto.password,
+    );
     if (validUser) {
       const sessionIsCreated = this.createSession(validUser);
       if (sessionIsCreated) {
@@ -63,24 +65,18 @@ export class AuthService {
     email: string,
     username: string,
   ): Promise<boolean> {
-    const user = await this.userRepository.findOne({
-      where: {
-        email,
-        username,
-      },
-    });
+    const user = await this.model.findOne({ email, username });
     return !!user;
   }
 
   public hashPassword(password: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      // Generate salt and hash password
       const costFactor = 10;
-      bcrypt.genSalt(costFactor, (err, salt) => {
+      bcrypt.genSalt(costFactor, (err: any, salt: any) => {
         if (err) {
           reject(err);
         } else {
-          bcrypt.hash(password, salt, (err, hash) => {
+          bcrypt.hash(password, salt, (err: any, hash: string) => {
             if (err) {
               reject(err);
             } else {
@@ -92,11 +88,11 @@ export class AuthService {
     });
   }
 
-  private generateJWT(user: Partial<UserRepository>): string {
+  private generateJWT(user: Partial<User>): string {
     return this.jwtService.sign(user, { expiresIn: '15m' });
   }
 
-  private async createSession(user: Partial<UserRepository>): Promise<boolean> {
+  private async createSession(user: Partial<User>): Promise<boolean> {
     const refreshToken = await this.generateRefreshAuthToken();
     const sessionIsCreated = await this.saveSessionToDatabase(
       user,
@@ -117,12 +113,12 @@ export class AuthService {
   }
 
   private async saveSessionToDatabase(
-    user: Partial<UserRepository>,
+    user: Partial<User>,
     refreshToken: string,
   ): Promise<boolean> {
     const expiresAt = this.generateRefreshTokenExpiryTime();
     user.sessions.push({ token: refreshToken, expiresAt });
-    const savedUser = await this.userRepository.save([user]);
+    const savedUser = await new this.model(user).save();
     return !!savedUser;
   }
 
@@ -135,10 +131,8 @@ export class AuthService {
   private async validateUser(
     username: string,
     pass: string,
-  ): Promise<Partial<UserRepository>> {
-    const user = await this.userRepository.findOne({
-      where: { username },
-    });
+  ): Promise<Partial<User>> {
+    const user = await this.model.findOne({ username }).lean();
     if (user) {
       const passwordIsMatch = await this.comparePasswords(pass, user.password);
       if (!passwordIsMatch) {
@@ -160,7 +154,7 @@ export class AuthService {
     passwordHash: string,
   ): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      bcrypt.compare(newPassword, passwordHash, (err, res) => {
+      bcrypt.compare(newPassword, passwordHash, (err: any, res: any) => {
         if (res) return resolve(true);
         else reject(false);
       });

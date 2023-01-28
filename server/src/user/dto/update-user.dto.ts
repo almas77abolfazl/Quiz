@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsEmail, IsString, IsOptional } from 'class-validator';
-import { Gender, Roles } from '../user.repository';
+import { Gender, Roles } from '../user.schema';
 
 export class UpdateUserDto {
   @IsString()

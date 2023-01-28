@@ -1,5 +1,4 @@
 import { IsOptional, IsString } from 'class-validator';
-import { ObjectID } from 'typeorm';
 
 export class UpdateQuestionDto {
   @IsString()
@@ -11,7 +10,7 @@ export class UpdateQuestionDto {
 
   @IsString()
   @IsOptional()
-  category: ObjectID;
+  category: string;
 
   @IsString()
   @IsOptional()

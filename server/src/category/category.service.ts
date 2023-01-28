@@ -4,17 +4,14 @@ import {
   Injectable,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { MongoRepository } from 'typeorm';
-import { CategoryRepository } from './category.repository';
-import { CreateCategoryDto } from './dto/create-category.dto';
-import { UpdateCategoryDto } from './dto/update-category.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Category, CategoryDocument } from './category.schema';
 
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectRepository(CategoryRepository)
-    public readonly categoryRepository: MongoRepository<CategoryRepository>,
+    @InjectModel(Category.name) private readonly model: Model<CategoryDocument>,
   ) {}
 
   public async create(
@@ -22,9 +19,12 @@ export class CategoryService {
   ): Promise<{ created: boolean; message: string }> {
     const category = await this.getByTitle(title);
     if (!category) {
-      const newCategory = new CategoryRepository();
+      const newCategory = {} as Category;
       newCategory.title = title;
-      await this.categoryRepository.save([newCategory]);
+      await new this.model({
+        ...newCategory,
+        createdAt: new Date(),
+      }).save();
       return { created: true, message: 'messages.savedSuccessfully' };
     } else {
       throw new UnprocessableEntityException(
@@ -45,28 +45,24 @@ export class CategoryService {
       );
     } else {
       category.title = title;
-      await this.categoryRepository.save([category]);
+      await this.model.findByIdAndUpdate(id, category).exec();
       return { updated: true, message: 'messages.savedSuccessfully' };
     }
   }
 
-  public async getAll(): Promise<CategoryRepository[]> {
-    return await this.categoryRepository.find({});
+  public async getAll(): Promise<Category[]> {
+    return await this.model.find().exec();
   }
 
-  public async getById(id?: string): Promise<CategoryRepository> {
-    const category = await this.categoryRepository.findOneById(id);
-    return category;
+  public async getById(id?: string): Promise<Category> {
+    return await this.model.findById(id).exec();
   }
 
-  public async deleteById(id?: string) {
-    return await this.categoryRepository.delete(id);
+  public async deleteById(id?: string): Promise<Category> {
+    return await this.model.findByIdAndDelete(id).exec();
   }
 
-  private async getByTitle(title: string): Promise<CategoryRepository> {
-    const category = await this.categoryRepository.findOne({
-      where: { title },
-    });
-    return category;
+  private async getByTitle(title: string): Promise<Category> {
+    return await this.model.findOne({ title });
   }
 }

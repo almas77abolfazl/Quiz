@@ -1,30 +1,28 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { MongoRepository } from 'typeorm';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose/dist';
+import { Model } from 'mongoose';
+
 import { CreateQuestionDto } from './dto/create-question.dto';
-import { QuestionRepository } from './question.repository';
+import { Question, QuestionDocument } from './question.schema';
 
 @Injectable()
 export class QuestionService {
   constructor(
-    @InjectRepository(QuestionRepository)
-    public readonly repository: MongoRepository<QuestionRepository>,
+    @InjectModel(Question.name) private readonly model: Model<QuestionDocument>,
   ) {}
 
   public async create(
     body: CreateQuestionDto,
   ): Promise<{ created: boolean; message: string }> {
-    const newQuestion = new QuestionRepository();
+    const newQuestion = {} as Question;
     newQuestion.questionText = body.questionText;
     newQuestion.category = body.category;
     newQuestion.level = body.level;
     newQuestion.options = body.options;
-    await this.repository.save([newQuestion]);
+    await new this.model({
+      ...newQuestion,
+      createdAt: new Date(),
+    }).save();
     return { created: true, message: 'messages.savedSuccessfully' };
   }
 
@@ -40,28 +38,24 @@ export class QuestionService {
       );
     } else {
       question.questionText = questionText;
-      await this.repository.save([question]);
+      await this.model.findByIdAndUpdate(id, question).exec();
       return { updated: true, message: 'messages.savedSuccessfully' };
     }
   }
 
-  public async getAll(): Promise<QuestionRepository[]> {
-    return await this.repository.find({});
+  public async getAll(): Promise<Question[]> {
+    return await this.model.find().exec();
   }
 
-  public async getById(id?: string): Promise<QuestionRepository> {
-    const question = await this.repository.findOneById(id);
-    return question;
+  public async getById(id?: string): Promise<Question> {
+    return await this.model.findById(id).exec();
   }
 
-  public async deleteById(id?: string) {
-    return await this.repository.delete(id);
+  public async deleteById(id?: string): Promise<Question> {
+    return await this.model.findByIdAndDelete(id).exec();
   }
 
-  private async getByTitle(questionText: string): Promise<QuestionRepository> {
-    const question = await this.repository.findOne({
-      where: { questionText },
-    });
-    return question;
+  private async getByTitle(questionText: string): Promise<Question> {
+    return await this.model.findOne({ questionText });
   }
 }
