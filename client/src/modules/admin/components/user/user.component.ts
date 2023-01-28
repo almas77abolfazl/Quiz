@@ -26,7 +26,6 @@ export class UserComponent extends FormBase<User> {
   protected getFormGroup(): FormGroup<any> {
     return new FormGroup({
       _id: new FormControl(null, []),
-      __v: new FormControl(null, []),
       createdAt: new FormControl(null, []),
       updatedAt: new FormControl(null, []),
       username: new FormControl(null, [Validators.required]),

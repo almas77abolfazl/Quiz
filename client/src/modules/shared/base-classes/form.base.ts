@@ -92,7 +92,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
               if (res.body?.message) {
                 this.dialogService.showMessage(res.body.message);
               }
-              this.virtualAfterSave(res.body.entity);
+              this.virtualAfterSave(res.body);
             }
           })
       );

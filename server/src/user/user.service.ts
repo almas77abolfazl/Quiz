@@ -36,16 +36,14 @@ export class UserService implements OnApplicationBootstrap {
     return await this.repository.find({});
   }
 
-  public async updateUser(body: UpdateUserDto): Promise<UserRepository[]> {
-    const user = await this.getById(body.id);
-    user.address = body.address;
-    user.email = body.email;
-    user.firstName = body.firstName;
-    user.lastName = body.lastName;
-    user.password = body.password;
-    user.role = body.role;
-    user.username = body.username;
-    return await this.repository.save([user]);
+  public async updateUser(
+    id: string,
+    body: UpdateUserDto,
+  ): Promise<Partial<UserRepository>> {
+    const user = await this.getById(id);
+    Object.assign(user, body);
+    const [{ password, ...otherInfo }] = await this.repository.save([user]);
+    return otherInfo;
   }
 
   public async getById(id?: string): Promise<UserRepository> {
