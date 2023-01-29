@@ -1,13 +1,13 @@
 <div class="center flex column">
   <select id="level" name="level" #level>
-    <ng-container *ngFor="let level of levels$ | async">
-      <option [value]="level._id">
-        {{ level.title | translate }}
+    <ng-container *ngFor="let level of levels">
+      <option [value]="level">
+        {{ level | translate }}
       </option>
     </ng-container>
   </select>
 
-  <button class="start-button" [routerLink]="['/main/quiz-page', level.value]">
+  <button class="start-button" (click)="goToQuizPage(level.value)">
     شروع آزمون
   </button>
 </div>

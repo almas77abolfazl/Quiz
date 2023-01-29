@@ -45,4 +45,12 @@ export class QuestionController {
   async deleteQuestionById(@Param('id') id: string): Promise<Question> {
     return await this.service.deleteById(id);
   }
+
+  @Get('getQuestion/:level/:categoryId')
+  async getQuestion(
+    @Param('level') level: string,
+    @Param('categoryId') categoryId: string,
+  ): Promise<Question> {
+    return await this.service.getQuestion(level, categoryId);
+  }
 }

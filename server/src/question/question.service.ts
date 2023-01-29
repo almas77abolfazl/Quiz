@@ -56,6 +56,20 @@ export class QuestionService {
     return await this.model.findByIdAndDelete(id).exec();
   }
 
+  public async getQuestion(level: string, categoryId: string): Promise<any> {
+    const questionsLength = await this.model.count({
+      category: categoryId,
+      level,
+    });
+    const random = Math.floor(Math.random() * questionsLength);
+    const question = await this.model
+      .find({ category: categoryId, level })
+      .skip(random)
+      .lean()
+      .exec();
+    return question[0];
+  }
+
   private async getByTitle(questionText: string): Promise<Question> {
     return await this.model.findOne({ questionText });
   }
