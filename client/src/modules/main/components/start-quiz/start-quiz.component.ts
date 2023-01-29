@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { QuizService } from '../../services/quiz/quiz.service';
 
 @Component({
@@ -7,8 +8,12 @@ import { QuizService } from '../../services/quiz/quiz.service';
   styleUrls: ['./start-quiz.component.scss'],
 })
 export class StartQuizComponent implements OnInit {
-  levels$ = this.quizService.levels$;
-  constructor(private quizService: QuizService) {}
+  levels = this.quizService.levels;
+  constructor(private quizService: QuizService, private router: Router) {}
 
   ngOnInit(): void {}
+
+  goToQuizPage(level: string) {
+    this.router.navigate(['/main/quiz-page' , level])
+  }
 }

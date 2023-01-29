@@ -1,17 +1,27 @@
 import { Injectable } from '@angular/core';
+import { Category } from 'src/models/models';
 import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
-
+enum Levels {
+  'easy',
+  'medium',
+  'hard',
+  'veryHard',
+}
 @Injectable()
 export class QuizService {
-  categories$ = this.webRequestService.get('category')
-  levels$ = this.webRequestService.get('levels')
+  categories$ = this.webRequestService.get('category');
+  levels = ['easy', 'medium', 'hard', 'veryHard'];
+  currentCategory!: Category;
+  currentLevel!: Levels;
 
   constructor(private webRequestService: WebRequestService) {}
 
-  getRandomQuestion() {
+  getQuestion() {
     const options = {
       observe: 'response',
     };
-    return this.webRequestService.getRandomQuestion(options);
+    return this.webRequestService.get(
+      `question/getQuestion/${this.currentLevel}/${this.currentCategory._id}`
+    );
   }
 }

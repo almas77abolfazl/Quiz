@@ -21,6 +21,7 @@ export class QuizPageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.quizService.currentLevel = this.route.snapshot.params.level;
     this.findNextQuestion();
   }
 
@@ -30,8 +31,8 @@ export class QuizPageComponent implements OnInit, OnDestroy {
 
   public findNextQuestion(): void {
     this.subscriptions.add(
-      this.quizService.getRandomQuestion().subscribe((res: any) => {
-        this.question = res.body[0];
+      this.quizService.getQuestion().subscribe((res: any) => {
+        this.question = res;
       })
     );
   }

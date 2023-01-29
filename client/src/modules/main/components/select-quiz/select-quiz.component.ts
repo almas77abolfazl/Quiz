@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { Category } from 'src/models/models';
 import { QuizService } from '../../services/quiz/quiz.service';
 
 @Component({
@@ -13,7 +14,8 @@ export class SelectQuizComponent implements OnInit {
 
   ngOnInit() {}
 
-  goToStartPage() {
+  goToStartPage(category: Category) {
+    this.quizService.currentCategory = category;
     this.router.navigate(['main/start-quiz']);
   }
 }
