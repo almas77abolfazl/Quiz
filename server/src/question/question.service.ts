@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist';
 import { Model } from 'mongoose';
@@ -20,6 +21,9 @@ export class QuestionService {
     newQuestion.category = body.category;
     newQuestion.level = body.level;
     newQuestion.options = body.options;
+    newQuestion.options.forEach((o) => {
+      o['_id'] = crypto.randomUUID();
+    });
     await new this.model({
       ...newQuestion,
       createdAt: new Date(),
@@ -56,14 +60,14 @@ export class QuestionService {
     return await this.model.findByIdAndDelete(id).exec();
   }
 
-  public async getQuestion(level: string, categoryId: string): Promise<any> {
+  public async getQuestion(level: string, category: string): Promise<any> {
     const questionsLength = await this.model.count({
-      category: categoryId,
+      category,
       level,
     });
     const random = Math.floor(Math.random() * questionsLength);
     const question = await this.model
-      .find({ category: categoryId, level })
+      .find({ category, level })
       .skip(random)
       .lean()
       .exec();

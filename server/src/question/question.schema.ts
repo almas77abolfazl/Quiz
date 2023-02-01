@@ -9,6 +9,7 @@ enum Levels {
 }
 
 export interface Option {
+  _id: string;
   optionText: string;
   isAnswer: boolean;
 }
