@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { SchemaTypes, Types } from 'mongoose';
 
-enum Levels {
+export enum Levels {
   easy = 'easy',
   medium = 'medium',
   hard = 'hard',

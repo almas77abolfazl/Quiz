@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Type } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose/dist';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
@@ -60,7 +60,10 @@ export class QuestionService {
     return await this.model.findByIdAndDelete(id).exec();
   }
 
-  public async getQuestion(level: string, category: string): Promise<any> {
+  public async getQuestion(
+    level: string,
+    category: string | Types.ObjectId,
+  ): Promise<any> {
     const questionsLength = await this.model.count({
       category,
       level,
