@@ -32,7 +32,7 @@ export class QuestionController {
   }
 
   @Get()
-  async getAllCategories(): Promise<Question[]> {
+  async getAllQuestions(): Promise<Question[]> {
     return await this.service.getAll();
   }
 
@@ -44,13 +44,5 @@ export class QuestionController {
   @Delete(':id')
   async deleteQuestionById(@Param('id') id: string): Promise<Question> {
     return await this.service.deleteById(id);
-  }
-
-  @Get('getQuestion/:level/:categoryId')
-  async getQuestion(
-    @Param('level') level: string,
-    @Param('categoryId') categoryId: string,
-  ): Promise<Question> {
-    return await this.service.getQuestion(level, categoryId);
   }
 }

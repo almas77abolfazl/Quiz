@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsEmail, IsString, IsOptional } from 'class-validator';
+import { IsEmail, IsString, IsOptional } from 'class-validator';
 import { Gender, Roles } from '../user.schema';
 
 export class UpdateUserDto {

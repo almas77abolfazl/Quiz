@@ -1,5 +1,6 @@
 import { IsOptional, IsString } from 'class-validator';
 import { Types } from 'mongoose';
+import { Option } from '../question.schema';
 
 export class UpdateQuestionDto {
   @IsString()
@@ -7,7 +8,7 @@ export class UpdateQuestionDto {
   questionText: string;
 
   @IsOptional()
-  options: any[];
+  options: Option[];
 
   @IsString()
   @IsOptional()

@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 import { Types } from 'mongoose';
+import { Option } from '../question.schema';
 
 export class CreateQuestionDto {
   @IsString()
@@ -7,7 +8,7 @@ export class CreateQuestionDto {
   questionText: string;
 
   @IsNotEmpty()
-  options: any[];
+  options: Option[];
 
   @IsString()
   @IsNotEmpty()

@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
-import { UserModule } from './user/user.module';
-import { AuthModule } from './auth/auth.module';
-import { QuestionModule } from './question/question.module';
-import { CategoryModule } from './category/category.module';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CategoryModule } from './admin/category/category.module';
+import { QuestionModule } from './admin/question/question.module';
+import { AuthModule } from './core/auth/auth.module';
+import { UserModule } from './core/user/user.module';
+import { ChatModule } from './main/chat/chat.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { MongooseModule } from '@nestjs/mongoose';
     AuthModule,
     QuestionModule,
     CategoryModule,
+    ChatModule,
     MongooseModule.forRoot('mongodb://127.0.0.1/Quiz'),
   ],
   controllers: [],

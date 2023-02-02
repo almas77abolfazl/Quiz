@@ -9,9 +9,9 @@ import { SignupDto } from './dto/signup.dto';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { SignInDto } from './dto/signin.dto';
-import { User, UserDocument } from 'src/user/user.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
+import { User, UserDocument } from '../user/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -86,6 +86,13 @@ export class AuthService {
         }
       });
     });
+  }
+
+  public async getUserFromAuthenticationToken(token: string) {
+    const { _id } = this.jwtService.verify(token, {
+      secret: 'secretKey',
+    });
+    if (_id) return await this.model.findOne({ _id });
   }
 
   private generateJWT(user: Partial<User>): string {
