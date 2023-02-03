@@ -7,7 +7,7 @@ export class NextQuestionDto {
 
   @IsString()
   @IsNotEmpty()
-  lastQuestion: string;
+  lastQuestionId: string;
 
   @IsString()
   @IsNotEmpty()

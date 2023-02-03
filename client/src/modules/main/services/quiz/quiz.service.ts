@@ -9,12 +9,17 @@ enum Levels {
 }
 @Injectable()
 export class QuizService {
+
   categories$ = this.webRequestService.get('category');
   levels = ['easy', 'medium', 'hard', 'veryHard'];
   currentCategory!: Category;
   currentLevel!: Levels;
 
   constructor(private webRequestService: WebRequestService) {}
+
+  createQuiz() {
+    throw new Error('Method not implemented.');
+  }
 
   getQuestion() {
     const options = {
