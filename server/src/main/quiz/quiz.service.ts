@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, QueryOptions } from 'mongoose';
 import { Socket } from 'socket.io';
 import { parse } from 'cookie';
 import { WsException } from '@nestjs/websockets';
@@ -63,19 +63,29 @@ export class QuizService {
     return await this.model.find().exec();
   }
 
-  public async updateQuizResult(
+  public async getById(id: string, options?: QueryOptions): Promise<Quiz> {
+    return await this.model.findById(id, null, options).exec();
+  }
+
+  public checkCorrectnessOfAnswer(
     lastQuestion: Question,
-    nextQuestionDto: NextQuestionDto,
-  ) {
-    const { quizId, lastAnswer } = nextQuestionDto;
-    const { result } = await this.model.findById(quizId, null, {
-      populate: 'result',
-    });
-    (result as QuizResult).answers.push({
+    lastAnswer: string,
+  ): boolean {
+    const selectedOption = lastQuestion.options.find(
+      (x) => x._id === lastAnswer,
+    );
+    return selectedOption.isAnswer;
+  }
+
+  public async updateQuizResult(
+    result: QuizResult,
+    lastQuestion: Question,
+    lastAnswer: string,
+  ): Promise<QuizResult> {
+    result.answers.push({
       questionId: lastQuestion['_id'],
       answer: lastAnswer,
     });
-
-    return result as QuizResult;
+    return result;
   }
 }

@@ -63,14 +63,15 @@ export class QuestionService {
   public async getQuestion(
     level: string,
     category: string | Types.ObjectId,
-  ): Promise<any> {
+    repetitiousIds: string[] = [],
+  ): Promise<Question> {
     const questionsLength = await this.model.count({
       category,
       level,
     });
     const random = Math.floor(Math.random() * questionsLength);
     const question = await this.model
-      .find({ category, level })
+      .find({ category, level, _id: { $ne: repetitiousIds } })
       .skip(random)
       .lean()
       .exec();

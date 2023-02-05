@@ -22,7 +22,7 @@ export class QuizPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.quizService.currentLevel = this.route.snapshot.params.level;
-    this.findNextQuestion();
+    this.quizService.createQuiz()
   }
 
   ngOnDestroy(): void {
