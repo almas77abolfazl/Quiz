@@ -1,6 +1,6 @@
 import { Component, Injector } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { User } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
 
