@@ -5,6 +5,7 @@ import { QuestionModule } from './admin/question/question.module';
 import { AuthModule } from './core/auth/auth.module';
 import { UserModule } from './core/user/user.module';
 import { ChatModule } from './main/chat/chat.module';
+import { QuizModule } from './main/quiz/quiz.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { ChatModule } from './main/chat/chat.module';
     QuestionModule,
     CategoryModule,
     ChatModule,
+    QuizModule,
     MongooseModule.forRoot('mongodb://127.0.0.1/Quiz'),
   ],
   controllers: [],

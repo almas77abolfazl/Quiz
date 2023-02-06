@@ -14,7 +14,7 @@ import { NextQuestionDto } from './dto/next-question.dto';
 import { QuizService } from './quiz.service';
 import { QuizResult } from './schema/quiz-result.schema';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class QuizGateway implements OnGatewayConnection {
   @WebSocketServer()
   server: Server;
