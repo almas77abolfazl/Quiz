@@ -47,11 +47,10 @@ export class QuizGateway implements OnGatewayConnection {
       question,
       socket.id,
     );
-    // socket.send(question);
-    return { question, _id };
+    this.server.to(socket.id).emit('next_question', { question, quizId: _id });
   }
 
-  @SubscribeMessage('next-question')
+  @SubscribeMessage('next_question')
   async listenForGetQuestion(
     @MessageBody() body: NextQuestionDto,
     @ConnectedSocket() socket: Socket,
@@ -75,6 +74,8 @@ export class QuizGateway implements OnGatewayConnection {
       currentQuiz.category as Types.ObjectId,
       (currentQuiz.result as QuizResult).questions.map((x) => x['_id']),
     );
-    return { answerWasCorrect, question };
+    this.server
+      .to(socket.id)
+      .emit('next_question', { answerWasCorrect, question });
   }
 }

@@ -12,7 +12,7 @@ const timeNum = 30;
   styleUrls: ['./question.component.scss'],
 })
 export class QuestionComponent {
-  @Output() requestForNextQuestion = new EventEmitter<boolean>();
+  @Output() requestForNextQuestion = new EventEmitter<string>();
 
   _question!: Question;
   @Input() set question(data: Question) {
@@ -28,7 +28,6 @@ export class QuestionComponent {
         category: data.category,
         level: data.level,
         creator: data.creator,
-        // answerId: data.answerId,
       };
       this.setCountDown();
     }
@@ -61,8 +60,8 @@ export class QuestionComponent {
         question: this.question,
         userAnswerId: answerControl.value,
       });
+      this.goNextQuestion(answerControl.value);
       answerControl.reset();
-      this.goNextQuestion();
     }
   }
 
@@ -79,14 +78,14 @@ export class QuestionComponent {
     this.sub = countDown$.subscribe((val: any) => {
       this.timeNum = timeNum - (val + 1);
       if (this.timeNum === 0) {
-        this.goNextQuestion();
+        this.goNextQuestion('');
       }
     });
   }
 
-  private goNextQuestion(): void {
+  private goNextQuestion(userAnswerId: string): void {
     this.timeNum = timeNum;
-    this.requestForNextQuestion.emit(true);
+    this.requestForNextQuestion.emit(userAnswerId);
     this.sub.unsubscribe();
   }
 }

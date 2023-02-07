@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
-import { QuizService } from '../../services/quiz/quiz.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-start-quiz',
@@ -8,12 +7,21 @@ import { QuizService } from '../../services/quiz/quiz.service';
   styleUrls: ['./start-quiz.component.scss'],
 })
 export class StartQuizComponent implements OnInit {
-  levels = this.quizService.levels;
-  constructor(private quizService: QuizService, private router: Router) {}
+  levels = ['easy', 'medium', 'hard', 'veryHard'];
+  categoryId!: string;
 
-  ngOnInit(): void {}
+  constructor(private router: Router, private route: ActivatedRoute) {}
+
+  ngOnInit(): void {
+    this.categoryId = this.route.snapshot.queryParams.categoryId;
+  }
 
   goToQuizPage(level: string) {
-    this.router.navigate(['/main/quiz-page' , level])
+    this.router.navigate(['/main/quiz-page'], {
+      queryParams: {
+        level,
+        categoryId: this.categoryId,
+      },
+    });
   }
 }

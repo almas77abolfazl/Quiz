@@ -18,7 +18,7 @@ const routes: Routes = [
       { path: '', redirectTo: 'select-quiz', pathMatch: 'full' },
       { path: 'select-quiz', component: SelectQuizComponent },
       { path: 'start-quiz', component: StartQuizComponent },
-      { path: 'quiz-page/:level', component: QuizPageComponent },
+      { path: 'quiz-page', component: QuizPageComponent },
       { path: 'quiz-result', component: QuizResultComponent },
     ],
   },

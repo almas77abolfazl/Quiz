@@ -71,7 +71,11 @@ export class QuestionService {
     });
     const random = Math.floor(Math.random() * questionsLength);
     const question = await this.model
-      .find({ category, level, _id: { $ne: repetitiousIds } })
+      .find({
+        category,
+        level,
+        //  _id: { $ne: repetitiousIds }
+      })
       .skip(random)
       .lean()
       .exec();
