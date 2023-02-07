@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, ViewChild } from '@angular/core';
+import { Component } from '@angular/core';
 import { Menu } from 'src/models/models';
 import { AuthenticationService } from '../shared/services/authentication/authentication.service';
 

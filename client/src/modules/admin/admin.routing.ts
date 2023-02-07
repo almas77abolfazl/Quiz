@@ -1,7 +1,7 @@
 import { Routes, RouterModule } from '@angular/router';
-import { QuizComponent } from './components/quiz/quiz.component';
+import { QuestionComponent } from './components/question/question.component';
 import { AdminComponent } from './admin.component';
-import { QuizListComponent } from './components/quiz-list/quiz-list.component';
+import { QuestionListComponent } from './components/question-list/question-list.component';
 import { UsersListComponent } from './components/users-list/users-list.component';
 import { UserComponent } from './components/user/user.component';
 import { CategoryComponent } from './components/category/category.component';
@@ -12,9 +12,9 @@ const routes: Routes = [
     path: '',
     component: AdminComponent,
     children: [
-      { path: 'quiz', component: QuizComponent },
-      { path: 'quiz/:id', component: QuizComponent },
-      { path: 'quiz-list', component: QuizListComponent },
+      { path: 'quiz', component: QuestionComponent },
+      { path: 'quiz/:id', component: QuestionComponent },
+      { path: 'quiz-list', component: QuestionListComponent },
       { path: 'user/:id', component: UserComponent },
       { path: 'users-list', component: UsersListComponent },
       { path: 'category', component: CategoryComponent },
