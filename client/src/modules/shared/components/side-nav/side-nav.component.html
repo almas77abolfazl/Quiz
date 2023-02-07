@@ -7,7 +7,7 @@
             <mat-expansion-panel>
               <mat-expansion-panel-header>
                 <mat-panel-title>
-                  <div fxLayout="row" fxLayoutAlign="space-between center">
+                  <div fxLayout="row" fxLayoutAlign="flex-start center">
                     <mat-icon>{{ item.iconName }}</mat-icon>
                     {{ item.displayName | translate }}
                   </div>
@@ -15,7 +15,7 @@
               </mat-expansion-panel-header>
               <span *ngFor="let child of item.children">
                 <mat-list-item (click)="navigateTo(child.route)">
-                  <div fxLayout="row" fxLayoutAlign="space-between center">
+                  <div fxLayout="row" fxLayoutAlign="flex-start center">
                     <mat-icon>{{ child.iconName }}</mat-icon>
                     {{ child.displayName | translate }}
                   </div>
@@ -26,7 +26,7 @@
         </span>
         <span *ngIf="!item.children || item.children.length === 0">
           <mat-list-item (click)="navigateTo(item.route)">
-            <div fxLayout="row" fxLayoutAlign="space-between center">
+            <div fxLayout="row" fxLayoutAlign="flex-start center">
               <mat-icon>{{ item.iconName }}</mat-icon>
               {{ item.displayName | translate }}
             </div>
