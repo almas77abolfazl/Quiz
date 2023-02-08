@@ -11,7 +11,7 @@ import { QuizService } from './quiz.service';
 import { Quiz } from './schema/quiz.schema';
 
 @Controller('quiz')
-export class UserController {
+export class QuizController {
   constructor(private service: QuizService) {}
 
   @Get()

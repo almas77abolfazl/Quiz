@@ -1,6 +1,7 @@
-import { Injectable } from '@angular/core';
-import { Category } from 'src/models/models';
-import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
+import { Injectable, Injector } from '@angular/core';
+import { Observable, Subscription } from 'rxjs';
+import { Question } from 'src/models/models';
+import { CustomSocket } from '../../sockets/custom-socket';
 enum Levels {
   'easy',
   'medium',
@@ -9,24 +10,38 @@ enum Levels {
 }
 @Injectable()
 export class QuizService {
+  randomId: number[] = [];
+  categoryId!: string;
+  level!: Levels;
+  quizId: string = '';
+  socket!: CustomSocket;
+  subscriptions = new Subscription();
 
-  categories$ = this.webRequestService.get('category');
-  levels = ['easy', 'medium', 'hard', 'veryHard'];
-  currentCategory!: Category;
-  currentLevel!: Levels;
+  constructor(private injector: Injector) {}
 
-  constructor(private webRequestService: WebRequestService) {}
-
-  createQuiz() {
-    throw new Error('Method not implemented.');
+  public createQuiz() {
+    this.socket = this.injector.get(CustomSocket);
+    this.socket.emit('create_quiz', {
+      category: this.categoryId,
+      level: this.level,
+    });
   }
 
-  getQuestion() {
-    const options = {
-      observe: 'response',
-    };
-    return this.webRequestService.get(
-      `question/getQuestion/${this.currentLevel}/${this.currentCategory._id}`
-    );
+  public listenToMessages(): Observable<NextQuestion> {
+    return this.socket.fromEvent('next_question');
   }
+
+  public getNextQuestion(lastQuestionId: string, lastAnswer: string) {
+    this.socket.emit('next_question', {
+      quizId: this.quizId,
+      lastQuestionId,
+      lastAnswer,
+    });
+  }
+}
+
+export interface NextQuestion {
+  quizId: string;
+  question: Question;
+  answerWasCorrect?: boolean;
 }

@@ -30,7 +30,7 @@ export class QuizService {
     const newQuizResult = {} as QuizResult;
     newQuizResult.questions = [question];
     newQuizResult.answers = [];
-    const quizRes = await new this.model(newQuizResult).save();
+    const quizRes = await new this.quizResultModel(newQuizResult).save();
     const newQuiz = {} as Quiz;
     newQuiz.user = user;
     newQuiz.level = body.level;
@@ -47,12 +47,9 @@ export class QuizService {
   }
 
   async getUserFromSocket(socket: Socket) {
-    const cookie = socket.handshake.headers.cookie;
-    const { Authentication: authenticationToken } = parse(cookie);
+    const token = socket.handshake.headers.authorization;
     const user =
-      await this.authenticationService.getUserFromAuthenticationToken(
-        authenticationToken,
-      );
+      await this.authenticationService.getUserFromAuthenticationToken(token);
     if (!user) {
       throw new WsException('Invalid credentials.');
     }

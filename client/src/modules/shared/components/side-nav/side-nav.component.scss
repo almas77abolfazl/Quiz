@@ -5,12 +5,16 @@
     background-color: #90caf9;
   }
 
-  mat-expansion-panel{
+  mat-expansion-panel {
     border-radius: 0;
   }
 
-  mat-icon{
+  mat-icon {
     color: #3f51b5;
     margin: 0px 10px;
+  }
+
+  .mdc-list {
+    padding: 0;
   }
 }

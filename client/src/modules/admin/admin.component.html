@@ -1,6 +1,6 @@
 <div class="admin-container flex column">
   <nav class="admin-nav flex space-between">
-    <div>
+    <div class="flex flex-center">
       <button mat-icon-button (click)="nav.toggle()">
         <mat-icon [color]="'primary'">menu</mat-icon>
       </button>
@@ -9,7 +9,7 @@
       }}</span>
     </div>
 
-    <div>
+    <div class="flex flex-center">
       <button mat-button color="primary" [routerLink]="['/main']">
         {{ "labels.goToQuizPage" | translate }}
       </button>

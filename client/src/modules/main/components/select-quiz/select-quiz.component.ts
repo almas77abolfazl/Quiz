@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Category } from 'src/models/models';
-import { QuizService } from '../../services/quiz/quiz.service';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-select-quiz',
@@ -9,13 +9,18 @@ import { QuizService } from '../../services/quiz/quiz.service';
   styleUrls: ['./select-quiz.component.scss'],
 })
 export class SelectQuizComponent implements OnInit {
-  categories$ = this.quizService.categories$;
-  constructor(private quizService: QuizService, private router: Router) {}
+  categories$ = this.webRequestService.get('category');
+
+  constructor(
+    private webRequestService: WebRequestService,
+    private router: Router
+  ) {}
 
   ngOnInit() {}
 
   goToStartPage(category: Category) {
-    this.quizService.currentCategory = category;
-    this.router.navigate(['main/start-quiz']);
+    this.router.navigate(['main/start-quiz'], {
+      queryParams: { categoryId: category._id },
+    });
   }
 }

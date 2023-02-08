@@ -11,11 +11,11 @@ import { Category, Question, QuestionOption } from 'src/models/models';
 import { FormBase } from 'src/modules/shared/base-classes/form.base';
 
 @Component({
-  selector: 'app-quiz',
-  templateUrl: './quiz.component.html',
-  styleUrls: ['./quiz.component.scss'],
+  selector: 'app-question',
+  templateUrl: './question.component.html',
+  styleUrls: ['./question.component.scss'],
 })
-export class QuizComponent extends FormBase<Question> {
+export class QuestionComponent extends FormBase<Question> {
   //#region public variables
 
   entityName = 'question';
@@ -82,6 +82,7 @@ export class QuizComponent extends FormBase<Question> {
       const optionsGroup = new FormGroup({
         optionText: new FormControl(null, [Validators.required]),
         isAnswer: new FormControl(false),
+        _id: new FormControl(null),
       });
       controls.push(optionsGroup);
       this.optionGroups.push(optionsGroup);

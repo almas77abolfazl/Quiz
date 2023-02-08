@@ -5,7 +5,6 @@ import { QuestionComponent } from './components/question/question.component';
 import { QuizPageComponent } from './components/quiz-page/quiz-page.component';
 import { QuizResultComponent } from './components/quiz-result/quiz-result.component';
 import { StartQuizComponent } from './components/start-quiz/start-quiz.component';
-import { QuizService } from './services/quiz/quiz.service';
 import { SharedModule } from '../shared/shared.module';
 import { SelectQuizComponent } from './components/select-quiz/select-quiz.component';
 
@@ -19,6 +18,6 @@ import { SelectQuizComponent } from './components/select-quiz/select-quiz.compon
     StartQuizComponent,
     SelectQuizComponent,
   ],
-  providers: [QuizService],
+  providers: [],
 })
 export class MainModule {}

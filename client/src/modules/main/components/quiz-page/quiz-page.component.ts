@@ -1,19 +1,17 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { Question } from 'src/models/models';
 import { QuizService } from '../../services/quiz/quiz.service';
+import { CustomSocket } from '../../sockets/custom-socket';
 
 @Component({
   selector: 'app-quiz-page',
   templateUrl: './quiz-page.component.html',
   styleUrls: ['./quiz-page.component.scss'],
+  providers: [QuizService, CustomSocket],
 })
 export class QuizPageComponent implements OnInit, OnDestroy {
   question = {} as Question;
-  randomId: number[] = [];
-
-  subscriptions = new Subscription();
 
   constructor(
     private quizService: QuizService,
@@ -21,19 +19,29 @@ export class QuizPageComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.quizService.currentLevel = this.route.snapshot.params.level;
-    this.quizService.createQuiz()
+    const { level, categoryId } = this.route.snapshot.queryParams;
+    this.quizService.level = level;
+    this.quizService.categoryId = categoryId;
+    this.quizService.createQuiz();
+    this.quizService.subscriptions.add(
+      this.quizService.listenToMessages().subscribe((res) => {
+        this.question = res.question;
+        if (res.quizId) {
+          this.quizService.quizId = res.quizId;
+        }
+        if (res.hasOwnProperty('answerWasCorrect')) {
+          alert(res.answerWasCorrect);
+        }
+      })
+    );
   }
 
   ngOnDestroy(): void {
-    if (!this.subscriptions.closed) this.subscriptions.unsubscribe();
+    if (!this.quizService.subscriptions.closed)
+      this.quizService.subscriptions.unsubscribe();
   }
 
-  public findNextQuestion(): void {
-    this.subscriptions.add(
-      this.quizService.getQuestion().subscribe((res: any) => {
-        this.question = res;
-      })
-    );
+  public findNextQuestion(lastAnswer: string): void {
+    this.quizService.getNextQuestion(this.question._id, lastAnswer);
   }
 }

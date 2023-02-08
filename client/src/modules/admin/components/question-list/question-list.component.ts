@@ -4,11 +4,11 @@ import { Command, Question, QuestionOption } from 'src/models/models';
 import { ListBase } from 'src/modules/shared/base-classes/list.base';
 
 @Component({
-  selector: 'app-quiz-list',
-  templateUrl: './quiz-list.component.html',
-  styleUrls: ['./quiz-list.component.scss'],
+  selector: 'app-question-list',
+  templateUrl: './question-list.component.html',
+  styleUrls: ['./question-list.component.scss'],
 })
-export class QuizListComponent extends ListBase<Question> {
+export class QuestionListComponent extends ListBase<Question> {
   entityName = 'question';
 
   constructor(injector: Injector) {

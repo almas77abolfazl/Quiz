@@ -89,9 +89,8 @@ export class AuthService {
   }
 
   public async getUserFromAuthenticationToken(token: string) {
-    const { _id } = this.jwtService.verify(token, {
-      secret: 'secretKey',
-    });
+    const secret = 'secretKey';
+    const { _id } = this.jwtService.verify(token, { secret });
     if (_id) return await this.model.findOne({ _id });
   }
 
