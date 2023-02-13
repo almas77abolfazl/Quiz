@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Headers } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signin.dto';
 import { SignupDto } from './dto/signup.dto';
@@ -15,5 +15,15 @@ export class AuthController {
   @Post('signIn')
   async signIn(@Body() body: SignInDto): Promise<{ accessToken: string }> {
     return await this.authService.signIn(body);
+  }
+
+  @Get('validateToken')
+  async validateToken(
+    @Headers('x-access-token') accessToken: string,
+  ): Promise<boolean> {
+    const user = await this.authService.getUserFromAuthenticationToken(
+      accessToken,
+    );
+    return !!user;
   }
 }
