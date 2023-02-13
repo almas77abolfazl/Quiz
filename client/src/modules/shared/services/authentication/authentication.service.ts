@@ -65,12 +65,7 @@ export class AuthenticationService {
   }
 
   public validateToken(): Observable<boolean> {
-    return this.webRequestService.get('users/validateToken').pipe(
-      map((res) => {
-        if (res.isValid) return true;
-        else return false;
-      })
-    );
+    return this.webRequestService.get('auth/validateToken');
   }
 
   public getAccessToken(): string {
