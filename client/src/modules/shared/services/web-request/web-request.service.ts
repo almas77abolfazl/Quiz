@@ -43,7 +43,7 @@ export class WebRequestService {
   }
 
   public getNewAccessToken(options: any): Observable<any> {
-    return this.http.get(`${this.ROOT_URL}/users/me/access-token`, options);
+    return this.http.get(`${this.ROOT_URL}/auth/access-token`, options);
   }
 
   getEntity(entityName: string, id: string): Observable<any> {

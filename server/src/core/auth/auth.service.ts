@@ -3,6 +3,7 @@ import {
   HttpStatus,
   Injectable,
   UnprocessableEntityException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { SignupDto } from './dto/signup.dto';
@@ -11,7 +12,7 @@ import * as crypto from 'crypto';
 import { SignInDto } from './dto/signin.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
-import { User, UserDocument } from '../user/user.schema';
+import { Session, User, UserDocument } from '../user/user.schema';
 
 @Injectable()
 export class AuthService {
@@ -61,14 +62,6 @@ export class AuthService {
     }
   }
 
-  private async doesUserExist(
-    email: string,
-    username: string,
-  ): Promise<boolean> {
-    const user = await this.model.findOne({ email, username });
-    return !!user;
-  }
-
   public hashPassword(password: string): Promise<string> {
     return new Promise((resolve, reject) => {
       const costFactor = 10;
@@ -88,14 +81,45 @@ export class AuthService {
     });
   }
 
-  public async getUserFromAuthenticationToken(token: string) {
+  public async getUserFromAuthenticationToken(token: string): Promise<User> {
     const secret = 'secretKey';
-    const { _id } = this.jwtService.verify(token, { secret });
-    if (_id) return await this.model.findOne({ _id });
+    try {
+      const { _id } = this.jwtService.verify(token, { secret });
+      if (_id) return await this.model.findOne({ _id });
+    } catch (error) {
+      throw new UnauthorizedException();
+    }
+  }
+
+  public hasRefreshTokenExpired(expiresAt: number): boolean {
+    const secondsSinceEpoch = Date.now() / 1000;
+    if (expiresAt > secondsSinceEpoch) {
+      return false; // hasn't expired
+    } else {
+      return true; // has expired
+    }
+  }
+
+  public async getNewAccessToken(accessToken: string): Promise<string> {
+    const user = await this.getUserFromAuthenticationToken(accessToken);
+    const lastSession = user.sessions[user.sessions.length - 1];
+    const refreshTokenIsExpired = this.hasRefreshTokenExpired(
+      lastSession.expiresAt, //TODO
+    );
+    if (!refreshTokenIsExpired) return this.generateJWT(user);
+    else throw new UnauthorizedException();
   }
 
   private generateJWT(user: Partial<User>): string {
     return this.jwtService.sign(user, { expiresIn: '15m' });
+  }
+
+  private async doesUserExist(
+    email: string,
+    username: string,
+  ): Promise<boolean> {
+    const user = await this.model.findOne({ email, username });
+    return !!user;
   }
 
   private async createSession(user: Partial<User>): Promise<boolean> {

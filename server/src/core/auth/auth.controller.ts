@@ -26,4 +26,11 @@ export class AuthController {
     );
     return !!user;
   }
+
+  @Get('access-token')
+  async accessToken(
+    @Headers('x-access-token') accessToken: string,
+  ): Promise<string> {
+    return await this.authService.getNewAccessToken(accessToken);
+  }
 }

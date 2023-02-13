@@ -39,6 +39,7 @@ export class QuizPageComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (!this.quizService.subscriptions.closed)
       this.quizService.subscriptions.unsubscribe();
+    this.quizService.socket.disconnect();
   }
 
   public findNextQuestion(lastAnswer: string): void {

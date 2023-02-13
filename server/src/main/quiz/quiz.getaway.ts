@@ -65,10 +65,13 @@ export class QuizGateway implements OnGatewayConnection {
       lastQuestion,
       lastAnswer,
     );
-    const answerWasCorrect = this.quizService.checkCorrectnessOfAnswer(
-      lastQuestion,
-      lastAnswer,
-    );
+    let answerWasCorrect = false;
+    if (lastAnswer) {
+      answerWasCorrect = this.quizService.checkCorrectnessOfAnswer(
+        lastQuestion,
+        lastAnswer,
+      );
+    }
     const question = await this.questionService.getQuestion(
       currentQuiz.level,
       currentQuiz.category as Types.ObjectId,
