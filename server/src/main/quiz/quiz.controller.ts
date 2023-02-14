@@ -19,4 +19,9 @@ export class QuizController {
     //TODO
     return await this.service.getAll();
   }
+
+  @Get('getQuizResult/:quizId')
+  async getQuizResult(@Param('quizId') quizId: string): Promise<any[]> {
+    return await this.service.getQuizResult(quizId);
+  }
 }

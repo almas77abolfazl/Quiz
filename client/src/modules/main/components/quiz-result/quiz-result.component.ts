@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
+import { take } from 'rxjs';
 import { UserAnswers } from 'src/models/models';
+import { WebRequestService } from 'src/modules/shared/services/web-request/web-request.service';
 
 @Component({
   selector: 'app-quiz-result',
@@ -8,22 +10,29 @@ import { UserAnswers } from 'src/models/models';
   styleUrls: ['./quiz-result.component.scss'],
 })
 export class QuizResultComponent implements OnInit {
-  userAnswers: UserAnswers[] = [];
-  userPoint = 0;
-  constructor(private route: ActivatedRoute, private router: Router) {
+  quizId!: string;
+  quizResult: { result: any[]; score: number } = { result: [], score: 0 };
+  constructor(
+    private router: Router,
+    private webRequestService: WebRequestService
+  ) {
     const dataAfterNavigate =
       this.router?.getCurrentNavigation()?.extras?.state;
     if (dataAfterNavigate) {
-      this.userAnswers = dataAfterNavigate.userAnswers;
+      this.quizId = dataAfterNavigate.quizId;
     }
   }
 
   ngOnInit(): void {
-    this.userAnswers.forEach((x) => {
-      const answerId = x.question.options.find((x) => x.isAnswer);
-      if (answerId?._id === x.userAnswerId) {
-        this.userPoint += 2;
-      }
-    });
+    this.getQuizResult();
+  }
+
+  private getQuizResult(): void {
+    this.webRequestService
+      .get(`quiz/getQuizResult/${this.quizId}`)
+      .pipe(take(1))
+      .subscribe((res) => {
+        this.quizResult = res;
+      });
   }
 }

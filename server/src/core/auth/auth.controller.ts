@@ -23,6 +23,7 @@ export class AuthController {
   ): Promise<boolean> {
     const user = await this.authService.getUserFromAuthenticationToken(
       accessToken,
+      false,
     );
     return !!user;
   }

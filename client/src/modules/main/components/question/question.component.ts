@@ -3,7 +3,8 @@ import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { Question, UserAnswers } from 'src/models/models';
+import { Question } from 'src/models/models';
+import { QuizService } from '../../services/quiz/quiz.service';
 
 const timeNum = 30;
 @Component({
@@ -32,7 +33,6 @@ export class QuestionComponent {
       this.setCountDown();
     }
   }
-
   get question(): Question {
     return this._question;
   }
@@ -41,25 +41,15 @@ export class QuestionComponent {
     questionId: new UntypedFormControl(),
     answer: new UntypedFormControl(),
   });
-
   timeNum = timeNum;
-
   questionNumber = 0;
+  subscription!: Subscription;
 
-  sub!: Subscription;
-
-  userAnswers: UserAnswers[] = [];
-
-  constructor(private router: Router) {}
+  constructor(private router: Router, private quizService: QuizService) {}
 
   public onSubmitClick(): void {
     const answerControl = this.formGroup.get('answer');
     if (answerControl?.value) {
-      this.userAnswers.push({
-        questionNumber: this.questionNumber,
-        question: this.question,
-        userAnswerId: answerControl.value,
-      });
       this.goNextQuestion(answerControl.value);
       answerControl.reset();
     }
@@ -67,25 +57,22 @@ export class QuestionComponent {
 
   public quizEnded(): void {
     this.router.navigate(['main/quiz-result'], {
-      state: { userAnswers: this.userAnswers },
+      state: { quizId: this.quizService.quizId },
     });
   }
 
-  private setCountDown() {
+  private setCountDown(): void {
     this.questionNumber += 1;
-
     const countDown$ = interval(1000).pipe(take(timeNum));
-    this.sub = countDown$.subscribe((val: any) => {
+    this.subscription = countDown$.subscribe((val: any) => {
       this.timeNum = timeNum - (val + 1);
-      if (this.timeNum === 0) {
-        this.goNextQuestion('');
-      }
+      if (this.timeNum === 0) this.goNextQuestion('');
     });
   }
 
   private goNextQuestion(userAnswerId: string): void {
     this.timeNum = timeNum;
     this.requestForNextQuestion.emit(userAnswerId);
-    this.sub.unsubscribe();
+    this.subscription.unsubscribe();
   }
 }

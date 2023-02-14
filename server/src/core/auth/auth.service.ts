@@ -13,6 +13,7 @@ import { SignInDto } from './dto/signin.dto';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Session, User, UserDocument } from '../user/user.schema';
+import { WsException } from '@nestjs/websockets';
 
 @Injectable()
 export class AuthService {
@@ -81,13 +82,16 @@ export class AuthService {
     });
   }
 
-  public async getUserFromAuthenticationToken(token: string): Promise<User> {
+  public async getUserFromAuthenticationToken(
+    token: string,
+    isWebSocket: boolean,
+  ): Promise<User> {
     const secret = 'secretKey';
     try {
       const { _id } = this.jwtService.verify(token, { secret });
       if (_id) return await this.model.findOne({ _id });
     } catch (error) {
-      throw new UnauthorizedException();
+      if (!isWebSocket) throw new UnauthorizedException();
     }
   }
 
