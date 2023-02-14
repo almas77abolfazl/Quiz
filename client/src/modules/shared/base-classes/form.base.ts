@@ -167,8 +167,8 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
 
   private validationUserBeforeSave(): boolean {
     if (this.entityName === 'user') return true;
-    const user = this.authenticationService.currentUserValue?.user;
-    const userHasFullName = !!user?.firstName && !!user.lastName;
+    const user = this.authenticationService.currentUserValue;
+    const userHasFullName = !!user?.firstName && !!user?.lastName;
     if (!userHasFullName) {
       this.dialogService.showMessage(
         'messages.pleaseCompleteYourProfileInformation',
@@ -177,7 +177,7 @@ export abstract class FormBase<T> implements OnInit, OnDestroy {
             (x) => {
               this.dialogService.showComponent(x.UserComponent, {
                 data: {
-                  id: this.authenticationService.currentUserValue?.user._id,
+                  id: this.authenticationService.currentUserValue?._id,
                 },
                 height: '90%',
                 width: '500px',

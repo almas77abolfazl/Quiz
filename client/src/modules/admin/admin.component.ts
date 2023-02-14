@@ -57,7 +57,7 @@ export class AdminComponent {
   }
 
   private getCurrentUserFullName(): string {
-    const currentUser = this.authenticationService.currentUserValue?.user;
+    const currentUser = this.authenticationService.currentUserValue;
     const firstName = currentUser?.firstName || '';
     const lastName = currentUser?.lastName || '';
     let fullName = firstName + ' ' + lastName;

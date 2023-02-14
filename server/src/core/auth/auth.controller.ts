@@ -29,8 +29,8 @@ export class AuthController {
 
   @Get('access-token')
   async accessToken(
-    @Headers('x-access-token') accessToken: string,
-  ): Promise<string> {
-    return await this.authService.getNewAccessToken(accessToken);
+    @Headers('_id') userId: string,
+  ): Promise<{ accessToken: string }> {
+    return await this.authService.getNewAccessToken(userId);
   }
 }

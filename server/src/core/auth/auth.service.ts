@@ -100,18 +100,23 @@ export class AuthService {
     }
   }
 
-  public async getNewAccessToken(accessToken: string): Promise<string> {
-    const user = await this.getUserFromAuthenticationToken(accessToken);
-    const lastSession = user.sessions[user.sessions.length - 1];
+  public async getNewAccessToken(
+    userId: string,
+  ): Promise<{ accessToken: string }> {
+    const validUser = await this.model.findById(userId).lean();
+    const lastSession = validUser.sessions[validUser.sessions.length - 1];
     const refreshTokenIsExpired = this.hasRefreshTokenExpired(
       lastSession.expiresAt, //TODO
     );
-    if (!refreshTokenIsExpired) return this.generateJWT(user);
-    else throw new UnauthorizedException();
+    if (!refreshTokenIsExpired) {
+      const { password, sessions, ...user } = validUser;
+      const accessToken = this.generateJWT(user);
+      return { accessToken };
+    } else throw new UnauthorizedException();
   }
 
   private generateJWT(user: Partial<User>): string {
-    return this.jwtService.sign(user, { expiresIn: '15m' });
+    return this.jwtService.sign(user, { expiresIn: '1m' });
   }
 
   private async doesUserExist(
