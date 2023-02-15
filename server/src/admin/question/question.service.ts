@@ -53,7 +53,16 @@ export class QuestionService {
   }
 
   public async getById(id?: string): Promise<Question> {
-    return await this.model.findById(id).exec();
+    return await this.model.findById(id).lean().exec();
+  }
+
+  public async getByIds(questionIds: string[]): Promise<Question[]> {
+    const questions = await this.model
+      .where('_id')
+      .in(questionIds)
+      .lean()
+      .exec();
+    return questions;
   }
 
   public async deleteById(id?: string): Promise<Question> {

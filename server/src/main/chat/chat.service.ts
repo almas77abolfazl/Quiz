@@ -4,7 +4,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Message, MessageDocument } from './schema/message.schema';
 import { Model } from 'mongoose';
 import { Socket } from 'socket.io';
-import { parse } from 'cookie';
 import { WsException } from '@nestjs/websockets';
 import { AuthService } from 'src/core/auth/auth.service';
 import { User } from 'src/core/user/user.schema';
@@ -33,10 +32,10 @@ export class ChatService {
   async getUserFromSocket(socket: Socket) {
     const token = socket.handshake.headers.authorization;
     const user =
-      await this.authenticationService.getUserFromAuthenticationToken(token);
-    if (!user) {
-      throw new WsException('Invalid credentials.');
-    }
+      await this.authenticationService.getUserFromAuthenticationToken(
+        token,
+        true,
+      );
     return user;
   }
 }

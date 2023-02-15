@@ -12,9 +12,9 @@ import { WebRequestService } from '../web-request/web-request.service';
   providedIn: 'root',
 })
 export class AuthenticationService {
-  public currentUserSubject: BehaviorSubject<{ user: User } | null>;
+  public currentUserSubject: BehaviorSubject<User | null>;
 
-  public get currentUserValue(): { user: User } | null {
+  public get currentUserValue(): User | null {
     return this.currentUserSubject.value;
   }
 
@@ -23,7 +23,7 @@ export class AuthenticationService {
     private router: Router,
     private spinner: NgxSpinnerService
   ) {
-    this.currentUserSubject = new BehaviorSubject<{ user: User } | null>(
+    this.currentUserSubject = new BehaviorSubject<User | null>(
       JSON.parse(localStorage.getItem('currentUser') as string)
     );
   }
@@ -33,11 +33,11 @@ export class AuthenticationService {
     return this.webRequestService.login(userData).pipe(
       map((result: any) => {
         this.spinner.hide();
-        const user = result.body;
-        this.setSession(user.user._id, user.accessToken);
+        const user = result.body.user;
+        this.setSession(user._id, result.body.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
-        return user.user;
+        return user;
       })
     );
   }
@@ -47,11 +47,11 @@ export class AuthenticationService {
     return this.webRequestService.signup(userData).pipe(
       map((result: any) => {
         this.spinner.hide();
-        const user = result.body;
-        this.setSession(user.user._id, user.accessToken);
+        const user = result.body.user;
+        this.setSession(user._id, result.body.accessToken);
         localStorage.setItem('currentUser', JSON.stringify(user));
         this.currentUserSubject.next(user);
-        return user.user;
+        return user;
       })
     );
   }
@@ -60,7 +60,6 @@ export class AuthenticationService {
     localStorage.removeItem('currentUser');
     this.currentUserSubject.next(null);
     this.removeSession();
-
     this.router.navigate(['/login']);
   }
 

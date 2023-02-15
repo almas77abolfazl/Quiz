@@ -67,6 +67,6 @@ export class UsersListComponent extends ListBase<User> {
   }
 
   private getUserInfo(): User {
-    return this.authenticationService.currentUserValue?.user as User;
+    return this.authenticationService.currentUserValue as User;
   }
 }

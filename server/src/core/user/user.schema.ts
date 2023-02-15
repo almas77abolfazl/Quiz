@@ -14,6 +14,11 @@ export enum Roles {
   sa = 'sa',
 }
 
+export interface Session {
+  token: string;
+  expiresAt: number;
+}
+
 export type UserDocument = User & Document;
 
 @Schema({ timestamps: true })
@@ -43,7 +48,7 @@ export class User {
   address: string;
 
   @Prop()
-  sessions: any[];
+  sessions: Session[];
 
   @Prop()
   deletedAt?: Date;

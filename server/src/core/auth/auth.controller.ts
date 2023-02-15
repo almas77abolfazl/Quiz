@@ -23,7 +23,15 @@ export class AuthController {
   ): Promise<boolean> {
     const user = await this.authService.getUserFromAuthenticationToken(
       accessToken,
+      false,
     );
     return !!user;
+  }
+
+  @Get('access-token')
+  async accessToken(
+    @Headers('_id') userId: string,
+  ): Promise<{ accessToken: string }> {
+    return await this.authService.getNewAccessToken(userId);
   }
 }

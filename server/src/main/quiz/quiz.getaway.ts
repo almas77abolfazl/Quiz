@@ -41,12 +41,7 @@ export class QuizGateway implements OnGatewayConnection {
     question.options.forEach((o) => {
       delete o.isAnswer;
     });
-    const { _id } = await this.quizService.createQuiz(
-      body,
-      user,
-      question,
-      socket.id,
-    );
+    const { _id } = await this.quizService.createQuiz(body, user, socket.id);
     this.server.to(socket.id).emit('next_question', { question, quizId: _id });
   }
 
@@ -60,19 +55,22 @@ export class QuizGateway implements OnGatewayConnection {
     const currentQuiz = await this.quizService.getById(quizId, {
       populate: 'result',
     });
+    let answerWasCorrect = false;
+    if (lastAnswer) {
+      answerWasCorrect = this.quizService.checkCorrectnessOfAnswer(
+        lastQuestion,
+        lastAnswer,
+      );
+    }
     await this.quizService.updateQuizResult(
       currentQuiz.result as QuizResult,
-      lastQuestion,
-      lastAnswer,
-    );
-    const answerWasCorrect = this.quizService.checkCorrectnessOfAnswer(
-      lastQuestion,
-      lastAnswer,
+      lastQuestion['_id'],
+      answerWasCorrect,
     );
     const question = await this.questionService.getQuestion(
       currentQuiz.level,
       currentQuiz.category as Types.ObjectId,
-      (currentQuiz.result as QuizResult).questions.map((x) => x['_id']),
+      (currentQuiz.result as QuizResult).answers.map((x) => x.questionId),
     );
     this.server
       .to(socket.id)

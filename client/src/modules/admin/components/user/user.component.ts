@@ -41,8 +41,8 @@ export class UserComponent extends FormBase<User> {
   }
 
   protected virtualAfterSave(entity: User): void {
-    if (entity._id === this.authenticationService.currentUserValue?.user._id) {
-      this.authenticationService.currentUserSubject.next({ user: entity });
+    if (entity._id === this.authenticationService.currentUserValue?._id) {
+      this.authenticationService.currentUserSubject.next(entity);
     }
     if (!this.navigatedData.id) {
       this.router.navigate(['admin/users-list']);
@@ -51,11 +51,7 @@ export class UserComponent extends FormBase<User> {
 
   protected validateFormBeforeSave(): boolean {
     const validation = !!this.getSubControl('password').value;
-
-    if (!validation) {
-      this.dialogService.showMessage('messages.passwordIsReq');
-    }
-
+    if (!validation) this.dialogService.showMessage('messages.passwordIsReq');
     return validation;
   }
 }
