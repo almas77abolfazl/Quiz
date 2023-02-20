@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, QueryOptions } from 'mongoose';
 import { Socket } from 'socket.io';
 import { AuthService } from 'src/core/auth/auth.service';
-import { User } from 'src/core/user/user.schema';
+import { User, UserDocument } from 'src/core/user/user.schema';
 import { Quiz, QuizDocument } from './schema/quiz.schema';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { Question } from 'src/admin/question/question.schema';
@@ -14,10 +14,11 @@ import { QuestionService } from 'src/admin/question/question.service';
 @Injectable()
 export class QuizService {
   constructor(
-    private readonly authenticationService: AuthService,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
     @InjectModel(Quiz.name) private readonly model: Model<QuizDocument>,
     @InjectModel(QuizResult.name)
     private readonly quizResultModel: Model<QuizResultDocument>,
+    private authenticationService: AuthService,
     private questionService: QuestionService,
   ) {}
 
@@ -82,9 +83,10 @@ export class QuizService {
   }
 
   public async getQuizResult(quizId: string): Promise<any> {
-    const { result } = await this.model
+    const { result, user } = await this.model
       .findById(quizId)
       .populate('result')
+      .populate('user')
       .lean();
     const questionIds = (result as QuizResult).answers.map((x) => x.questionId);
     const questions = await this.questionService.getByIds(questionIds);
@@ -101,13 +103,20 @@ export class QuizService {
         question,
       });
     });
+    const score = res
+      .map((x) => Number(x.answerWasCorrect))
+      .reduce((x, y) => {
+        return x + y;
+      });
+    this.updateUserScore(user as User, score);
     return {
       result: res,
-      score: res
-        .map((x) => Number(x.answerWasCorrect))
-        .reduce((x, y) => {
-          return x + y;
-        }),
+      score,
     };
+  }
+
+  private async updateUserScore(user: User, score: number) {
+    user.globalScore += score;
+    await this.userModel.findByIdAndUpdate(user['_id'], user);
   }
 }
