@@ -50,6 +50,9 @@ export class User {
   @Prop()
   sessions: Session[];
 
+  @Prop({ default: 0 })
+  globalScore: number;
+
   @Prop()
   deletedAt?: Date;
 }
