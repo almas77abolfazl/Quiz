@@ -84,14 +84,14 @@ export class AuthService {
 
   public async getUserFromAuthenticationToken(
     token: string,
-    isWebSocket: boolean,
+    throwException: boolean,
   ): Promise<User> {
     const secret = 'secretKey';
     try {
       const { _id } = this.jwtService.verify(token, { secret });
-      if (_id) return await this.model.findOne({ _id });
+      if (_id) return await this.model.findOne({ _id }).lean();
     } catch (error) {
-      if (!isWebSocket) throw new UnauthorizedException();
+      if (throwException) throw new UnauthorizedException();
     }
   }
 

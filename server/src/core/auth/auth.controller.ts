@@ -1,7 +1,15 @@
-import { Controller, Post, Body, Get, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Headers,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/signin.dto';
 import { SignupDto } from './dto/signup.dto';
+import { UserIsUserGuard } from './user-is-user.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -23,7 +31,7 @@ export class AuthController {
   ): Promise<boolean> {
     const user = await this.authService.getUserFromAuthenticationToken(
       accessToken,
-      false,
+      true,
     );
     return !!user;
   }

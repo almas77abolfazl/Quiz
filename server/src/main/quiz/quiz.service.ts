@@ -46,7 +46,7 @@ export class QuizService {
     const user =
       await this.authenticationService.getUserFromAuthenticationToken(
         token,
-        true,
+        false,
       );
     return user;
   }
