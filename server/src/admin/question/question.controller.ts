@@ -6,13 +6,16 @@ import {
   Body,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
+import { UserIsUserGuard } from 'src/core/auth/user-is-user.guard';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
 import { Question } from './question.schema';
 import { QuestionService } from './question.service';
 
 @Controller('question')
+@UseGuards(UserIsUserGuard)
 export class QuestionController {
   constructor(private service: QuestionService) {}
 

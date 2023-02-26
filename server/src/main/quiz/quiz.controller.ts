@@ -6,7 +6,9 @@ import {
   Body,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
+import { UserIsUserGuard } from 'src/core/auth/user-is-user.guard';
 import { QuizService } from './quiz.service';
 import { Quiz } from './schema/quiz.schema';
 

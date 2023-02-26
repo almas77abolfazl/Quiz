@@ -41,6 +41,7 @@ export class UserService implements OnApplicationBootstrap {
     Object.assign(user, body);
     const { password, ...otherInfo } = await this.model
       .findByIdAndUpdate(id, user)
+      .lean()
       .exec();
     return otherInfo;
   }

@@ -6,12 +6,15 @@ import {
   Body,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
+import { UserIsUserGuard } from '../auth/user-is-user.guard';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './user.schema';
 import { UserService } from './user.service';
 
 @Controller('user')
+@UseGuards(UserIsUserGuard)
 export class UserController {
   constructor(private service: UserService) {}
 
@@ -29,7 +32,7 @@ export class UserController {
   }
 
   @Get(':id')
-  async getQuestionById(@Param('id') id: string): Promise<Partial<User>> {
+  async getUserId(@Param('id') id: string): Promise<Partial<User>> {
     const { password, ...user } = await this.service.getById(id);
     return user;
   }
