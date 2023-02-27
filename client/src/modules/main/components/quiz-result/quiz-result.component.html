@@ -1,6 +1,18 @@
-<div class="center">
+<div class="result-questions">
+  <ng-container *ngFor="let item of quizResult.result">
+    <div class="result-question">
+      <h3>{{ item.question.questionText }}</h3>
+      <h4>{{ item.question.category }}</h4>
+      <h4>{{ item.question.level }}</h4>
+      <ng-container *ngFor="let option of item.question.options">
+        <summary class="">{{ option.optionText }}</summary>
+      </ng-container>
+    </div>
+  </ng-container>
+</div>
+<div class="flex space-evenly">
   <p>
     {{ quizResult.score }}
   </p>
+  <button [routerLink]="['/main']">آزمون جدید</button>
 </div>
-<button [routerLink]="['/main']">آزمون جدید</button>

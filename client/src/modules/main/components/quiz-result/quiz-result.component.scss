@@ -1,0 +1,9 @@
+.result-questions {
+  overflow: auto;
+  max-height: 80vh;
+
+  .result-question {
+    border: 1px solid;
+    margin: 10px;
+  }
+}
