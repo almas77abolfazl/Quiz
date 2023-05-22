@@ -38,7 +38,8 @@ export class AuthService {
       newUser.email = body.email;
       newUser.password = hashedPassword;
       newUser.sessions = [];
-      newUser = await new this.model(newUser).save();
+      newUser = await this.model.create(newUser);
+      newUser = await this.model.findOne({ _id: newUser['_id'] }).lean();
       await this.createSession(newUser);
       const { password, sessions, ...user } = newUser;
       const accessToken = this.generateJWT(user);
