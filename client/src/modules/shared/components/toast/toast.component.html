@@ -1,0 +1,18 @@
+<div class="toast" #toast>
+  <div class="toast-content">
+    <i *ngIf="isSuccess" class="fas fa-solid fa-check type success"></i>
+    <i *ngIf="!isSuccess" class="fas fa-solid fa-exclamation-triangle type failed"></i>
+    <div class="message">
+      <span class="text text-1">{{ message }}</span>
+      <span class="text text-2">{{ detail }}</span>
+    </div>
+  </div>
+
+  <mat-icon
+    class="fa-solid fa-xmark close"
+    (click)="onCloseIconClick(toast, progress)"
+    >close</mat-icon
+  >
+
+  <div class="progress" #progress></div>
+</div>
