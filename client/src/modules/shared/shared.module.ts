@@ -23,6 +23,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { DialogComponent } from './components/dialog/dialog.component';
 import { SideNavComponent } from './components/side-nav/side-nav.component';
 import { FormComponent } from './components/form/form.component';
+import { ToastComponent } from './components/toast/toast.component';
 
 @NgModule({
   imports: [
@@ -47,7 +48,8 @@ import { FormComponent } from './components/form/form.component';
     ToolbarComponent,
     DialogComponent,
     SideNavComponent,
-    FormComponent
+    FormComponent,
+    ToastComponent
   ],
   exports: [
     GridComponent,
@@ -62,7 +64,8 @@ import { FormComponent } from './components/form/form.component';
     MatIconModule,
     MatButtonModule,
     FlexLayoutModule,
-    FormComponent
+    FormComponent,
+    ToastComponent
   ],
   providers: [
     { provide: MAT_DIALOG_DATA, useValue: {} },
