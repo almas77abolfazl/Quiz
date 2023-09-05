@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthenticationService } from '../shared/services/authentication/authentication.service';
+import { DialogService } from '../shared/services/dialog/dialog.service';
+import { ProfileComponent } from './components/profile/profile.component';
 
 @Component({
   selector: 'app-main',
@@ -9,8 +11,9 @@ import { AuthenticationService } from '../shared/services/authentication/authent
 })
 export class MainComponent implements OnInit {
   constructor(
-    private authenticationService: AuthenticationService,
-    private router: Router
+    public authenticationService: AuthenticationService,
+    private router: Router,
+    private dialogService: DialogService
   ) {}
 
   ngOnInit(): void {}
@@ -22,5 +25,12 @@ export class MainComponent implements OnInit {
 
   goToAdminPage() {
     this.router.navigate(['/admin']);
+  }
+
+  onUserNameClick() {
+    this.dialogService.showComponent(ProfileComponent, {
+      width: '200px',
+      height: '80%',
+    });
   }
 }

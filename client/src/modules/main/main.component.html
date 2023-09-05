@@ -1,6 +1,16 @@
-<nav class="main-nav flex end">
+<nav class="main-nav flex space-between">
+  <div>
+    <button (click)="onUserNameClick()">
+      {{
+        authenticationService.currentUserValue?.firstName ??
+          authenticationService.currentUserValue?.username
+      }}
+    </button>
+  </div>
   <div class="">
-    <button (click)="goToAdminPage()">{{ "labels.AdminPage" | translate }}</button>
+    <button (click)="goToAdminPage()">
+      {{ "labels.AdminPage" | translate }}
+    </button>
     <button (click)="logout()">{{ "labels.logOut" | translate }}</button>
   </div>
 </nav>
