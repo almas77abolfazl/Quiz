@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { AuthGuard } from 'src/quards/auth.guard';
-import { ValidateTokenGuard } from 'src/quards/validateToken.guard';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { ValidateTokenGuard } from 'src/guards/validateToken.guard';
 import { ContainerComponent } from './components/container/container.component';
 import { NotFoundComponent } from './components/not-found/not-found.component';
 

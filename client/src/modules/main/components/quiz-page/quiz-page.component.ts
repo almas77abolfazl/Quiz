@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Question } from 'src/models/models';
 import { QuizService } from '../../services/quiz/quiz.service';
 import { CustomSocket } from '../../sockets/custom-socket';
+import { ToastService } from 'src/modules/shared/services/toast/toast.service';
 
 @Component({
   selector: 'app-quiz-page',
@@ -15,7 +16,8 @@ export class QuizPageComponent implements OnInit, OnDestroy {
 
   constructor(
     private quizService: QuizService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -30,7 +32,12 @@ export class QuizPageComponent implements OnInit, OnDestroy {
           this.quizService.quizId = res.quizId;
         }
         if (res.hasOwnProperty('answerWasCorrect')) {
-          alert(res.answerWasCorrect);
+          this.toastService.showToast({
+            detail: res.answerWasCorrect
+              ? 'آفرین درست بود.'
+              : 'متاسفم. امتیازش رو از دست دادی!',
+            isSuccess: !!res.answerWasCorrect,
+          });
         }
       })
     );

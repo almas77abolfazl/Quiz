@@ -4,7 +4,7 @@ import { QuizPageComponent } from './components/quiz-page/quiz-page.component';
 import { QuizResultComponent } from './components/quiz-result/quiz-result.component';
 import { StartQuizComponent } from './components/start-quiz/start-quiz.component';
 import { SelectQuizComponent } from './components/select-quiz/select-quiz.component';
-import { ValidateTokenGuard } from 'src/quards/validateToken.guard';
+import { ValidateTokenGuard } from 'src/guards/validateToken.guard';
 
 const routes: Routes = [
   {

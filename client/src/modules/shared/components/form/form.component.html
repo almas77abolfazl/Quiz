@@ -1,4 +1,4 @@
-<div class="form-container">
+<div class="form-container" (keydown.control.s)="save(true, $event)">
   <ul class="toolbar cf">
     <li (click)="save()">
       <a><i class="far fa-save"></i></a>

@@ -10,7 +10,7 @@
     id="username"
     class="fadeIn second"
     name="username"
-    [placeholder]="'labels.username'| translate"
+    [placeholder]="'labels.username' | translate"
     formControlName="username"
   />
   <input
@@ -18,7 +18,7 @@
     id="password"
     class="fadeIn third"
     name="password"
-    [placeholder]="'labels.password'| translate"
+    [placeholder]="'labels.password' | translate"
     formControlName="password"
   />
   <input
@@ -26,10 +26,23 @@
     id="email"
     class="fadeIn fourth"
     name="email"
-    [placeholder]="'labels.email'| translate"
+    [placeholder]="'labels.email' | translate"
     formControlName="email"
   />
-  <input type="submit" class="fadeIn fifth" [value]="'labels.signUp'| translate" />
+  <div
+    *ngIf="
+      registerForm.get('email')?.dirty && registerForm.get('email')?.invalid
+    "
+  >
+    <div *ngIf="registerForm.get('email')?.hasError('email')">
+      Please enter a valid email address
+    </div>
+  </div>
+  <input
+    type="submit"
+    class="fadeIn fifth"
+    [value]="'labels.signUp' | translate"
+  />
 </form>
 
 <!-- Remind Passowrd -->
