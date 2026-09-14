@@ -1,5 +1,6 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { IoAdapter } from '@nestjs/platform-socket.io';
 import { AppModule } from './app.module';
 
 async function bootstrap(): Promise<void> {
@@ -14,6 +15,7 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
+  app.useWebSocketAdapter(new IoAdapter(app));
   await app.listen(Number(process.env.PORT ?? 3000));
 }
 

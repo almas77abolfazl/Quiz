@@ -108,6 +108,7 @@ model User {
   deletedAt             DateTime?
 
   sessions              AuthSession[]
+  otpChallenges         OtpChallenge[]
   usernameHistory       UsernameHistory[]
   categoryFollows       CategoryFollow[]
   seasonEntries         SeasonEntry[]
@@ -123,7 +124,7 @@ model User {
 model AuthSession {
   id            String    @id @default(uuid())
   userId        String
-  refreshToken  String    @unique
+  refreshTokenHash String @unique
   expiresAt     DateTime
   lastActiveAt  DateTime  @default(now())
   revokedAt     DateTime?
@@ -132,6 +133,20 @@ model AuthSession {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
+}
+
+model OtpChallenge {
+  id            String    @id @default(uuid())
+  userId        String
+  codeHash      String
+  expiresAt     DateTime
+  attempts      Int       @default(0)
+  consumedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model UsernameHistory {
@@ -191,6 +206,7 @@ model Question {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   archivedAt      DateTime?
+  deletedAt       DateTime?
 
   authoredBy      User?           @relation("QuestionAuthor", fields: [authoredById], references: [id])
   reviewedBy      User?           @relation("QuestionReviewer", fields: [reviewedById], references: [id])
