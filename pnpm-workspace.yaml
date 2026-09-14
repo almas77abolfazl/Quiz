@@ -1,0 +1,21 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  lmdb: true
+  msgpackr-extract: true
+  prisma: true
+
+onlyBuiltDependencies:
+  - '@parcel/watcher'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - 'esbuild'
+  - 'lmdb'
+  - 'msgpackr-extract'
+  - 'prisma'

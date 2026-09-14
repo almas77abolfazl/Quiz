@@ -6,13 +6,16 @@
     "build": "prisma generate && nest build",
     "start": "nest start",
     "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "prisma": "prisma",
     "prisma:generate": "prisma generate",
+    "prisma:db-push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@quiz/contracts": "*",
+    "@quiz/contracts": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",

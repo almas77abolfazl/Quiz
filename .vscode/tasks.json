@@ -1,0 +1,111 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start PostgreSQL",
+      "type": "shell",
+      "command": "pnpm db:up",
+      "problemMatcher": []
+    },
+    {
+      "label": "Stop PostgreSQL",
+      "type": "shell",
+      "command": "pnpm db:down",
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Prisma Client",
+      "type": "shell",
+      "command": "pnpm prisma:generate",
+      "dependsOn": ["Start PostgreSQL"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Push Prisma Schema",
+      "type": "shell",
+      "command": "pnpm prisma:db-push",
+      "dependsOn": ["Start PostgreSQL"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Start API",
+      "type": "shell",
+      "command": "pnpm dev:api",
+      "isBackground": true,
+      "dependsOn": ["Start PostgreSQL"],
+      "problemMatcher": {
+        "owner": "typescript",
+        "source": "nest",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[Nest\\].*Starting Nest application...",
+          "endsPattern": "^\\[Nest\\].*Nest application successfully started"
+        },
+        "pattern": {
+          "regexp": "^$"
+        }
+      }
+    },
+    {
+      "label": "Start Game",
+      "type": "shell",
+      "command": "pnpm dev:game",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "source": "angular",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*(Compiling|Building)...",
+          "endsPattern": "^.*(Local:\\s+http:\\/\\/localhost:|Angular Live Development Server is listening)"
+        },
+        "pattern": {
+          "regexp": "^$"
+        }
+      }
+    },
+    {
+      "label": "Start Admin",
+      "type": "shell",
+      "command": "pnpm dev:admin",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "source": "angular",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*(Compiling|Building)...",
+          "endsPattern": "^.*(Local:\\s+http:\\/\\/localhost:|Angular Live Development Server is listening)"
+        },
+        "pattern": {
+          "regexp": "^$"
+        }
+      }
+    },
+    {
+      "label": "Start All Development Servers",
+      "type": "shell",
+      "command": "pnpm dev",
+      "isBackground": true,
+      "dependsOn": ["Start PostgreSQL"],
+      "problemMatcher": {
+        "owner": "typescript",
+        "source": "concurrently",
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^\\[(API|GAME|ADMIN)\\].*",
+          "endsPattern": "^\\[Nest\\].*Nest application successfully started"
+        },
+        "pattern": {
+          "regexp": "^$"
+        }
+      }
+    },
+    {
+      "label": "Build All Workspaces",
+      "type": "shell",
+      "command": "pnpm build",
+      "problemMatcher": []
+    }
+  ]
+}

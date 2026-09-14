@@ -2,20 +2,28 @@
   "name": "quiz",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "packages/contracts",
-    "apps/api",
-    "apps/game",
-    "apps/admin"
-  ],
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "scripts": {
-    "build": "npm run build:contracts && npm run build:api && npm run build:game && npm run build:admin",
-    "build:contracts": "npm run build -w @quiz/contracts",
-    "build:api": "npm run build -w @quiz/api",
-    "build:game": "npm run build -w @quiz/game",
-    "build:admin": "npm run build -w @quiz/admin",
-    "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "dev": "concurrently -k -p \"[{name}]\" -n \"API,GAME,ADMIN\" -c \"blue,green,magenta\" \"pnpm --filter @quiz/api start:dev\" \"pnpm --filter @quiz/game start\" \"pnpm --filter @quiz/admin start\"",
+    "dev:api": "pnpm --filter @quiz/api start:dev",
+    "dev:game": "pnpm --filter @quiz/game start",
+    "dev:admin": "pnpm --filter @quiz/admin start",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f",
+    "db:status": "docker compose ps",
+    "prisma:generate": "dotenv -e .env -- pnpm --filter @quiz/api prisma generate",
+    "prisma:db-push": "dotenv -e .env -- pnpm --filter @quiz/api prisma db push",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "format:check": "prettier --check \"apps/**/*.{ts,html,css}\" \"packages/**/*.{ts,html,css}\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv-cli": "^11.0.0",
+    "prettier": "^3.9.6"
   }
 }
-

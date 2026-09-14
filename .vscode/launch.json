@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug API",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@quiz/api", "start:debug"],
+      "console": "integratedTerminal",
+      "restart": true,
+      "preLaunchTask": "Start PostgreSQL"
+    },
+    {
+      "name": "Launch Game (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/apps/game"
+    },
+    {
+      "name": "Launch Admin (Chrome)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:4201",
+      "webRoot": "${workspaceFolder}/apps/admin"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug API & Launch Frontends",
+      "configurations": [
+        "Debug API",
+        "Launch Game (Chrome)",
+        "Launch Admin (Chrome)"
+      ]
+    }
+  ]
+}
