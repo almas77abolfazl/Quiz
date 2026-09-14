@@ -1,0 +1,22 @@
+{
+  "name": "quiz-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Persian competitive quiz platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace=@quiz/api",
+    "build:api": "npm run build --workspace=@quiz/api",
+    "dev:game": "npm run start --workspace=@quiz/game",
+    "build:game": "npm run build --workspace=@quiz/game",
+    "dev:admin": "npm run start --workspace=@quiz/admin",
+    "build:admin": "npm run build --workspace=@quiz/admin"
+  },
+  "engines": {
+    "node": ">=22",
+    "npm": ">=10"
+  }
+}
