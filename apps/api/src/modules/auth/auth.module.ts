@@ -6,8 +6,9 @@ import { AuthService } from './auth.service';
 import { OtpDeliveryService } from './otp-delivery.service';
 
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({ global: true })],
   controllers: [AuthController],
   providers: [AuthService, OtpDeliveryService, AccessTokenGuard],
+  exports: [AccessTokenGuard],
 })
 export class AuthModule {}

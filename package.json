@@ -4,7 +4,8 @@
   "private": true,
   "packageManager": "pnpm@11.21.0",
   "engines": {
-    "node": ">=18.18.0"
+    "node": "^22.22.3 || ^24.15.0 || ^26.0.0",
+    "pnpm": "11.21.0"
   },
   "scripts": {
     "dev": "concurrently -k -p \"[{name}]\" -n \"API,GAME,ADMIN\" -c \"blue,green,magenta\" \"pnpm --filter @quiz/api start:dev\" \"pnpm --filter @quiz/game start\" \"pnpm --filter @quiz/admin start\"",
@@ -18,8 +19,7 @@
     "prisma:generate": "dotenv -e .env -- pnpm --filter @quiz/api prisma generate",
     "prisma:db-push": "dotenv -e .env -- pnpm --filter @quiz/api prisma db push",
     "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "format:check": "prettier --check \"apps/**/*.{ts,html,css}\" \"packages/**/*.{ts,html,css}\""
+    "test": "pnpm -r test"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

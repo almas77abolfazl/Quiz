@@ -12,7 +12,7 @@ import { MatchModule } from './modules/match/match.module';
 import { CoinModule } from './modules/coin/coin.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, CategoryModule, QuestionModule, UserModule, QuizModule, SeasonModule, MatchModule, CoinModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true, envFilePath: ['../../.env', '.env'] }), PrismaModule, AuthModule, CategoryModule, QuestionModule, UserModule, QuizModule, SeasonModule, MatchModule, CoinModule],
   controllers: [HealthController],
 })
 export class AppModule {}

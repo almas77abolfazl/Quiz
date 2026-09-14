@@ -16,14 +16,16 @@
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/apps/game"
+      "webRoot": "${workspaceFolder}/apps/game",
+      "preLaunchTask": "Start Game"
     },
     {
       "name": "Launch Admin (Chrome)",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:4201",
-      "webRoot": "${workspaceFolder}/apps/admin"
+      "webRoot": "${workspaceFolder}/apps/admin",
+      "preLaunchTask": "Start Admin"
     }
   ],
   "compounds": [
