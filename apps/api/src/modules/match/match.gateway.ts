@@ -11,7 +11,7 @@ import {
 import { Server, Socket } from 'socket.io';
 import { MatchService } from './match.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MatchStatus, AnswerStatus } from '../../types/contracts';
+import { MatchStatus, AnswerStatus } from '@quiz/contracts';
 
 @WebSocketGateway({
   cors: { origin: process.env.CORS_ORIGIN?.split(',') ?? '*' },

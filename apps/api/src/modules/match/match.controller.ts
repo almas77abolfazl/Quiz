@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { MatchService } from './match.service';
 import { AccessTokenGuard } from '../auth/access-token.guard';
-import { Difficulty } from '../../types/contracts';
+import { Difficulty } from '@quiz/contracts';
 import { AuthenticatedRequest } from '../auth/access-token.guard';
 
 @Controller('match')

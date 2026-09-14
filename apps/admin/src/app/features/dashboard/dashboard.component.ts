@@ -1,26 +1,24 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { AdminApiService, Category } from '../core/services/admin-api.service';
+import { RouterLink } from '@angular/router';
+import { AdminApiService, Category } from '../../core/services/admin-api.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="dashboard">
       <h2>داشبورد مدیریت</h2>
       <div class="stats">
         <div class="stat-card">
-          <h3>دسته‌ها</h3>
+          <h3>دستهها</h3>
           <p>{{ categories.length }}</p>
         </div>
       </div>
       <div class="actions">
-        <button mat-raised-button color="primary" routerLink="/categories">مدیریت دسته‌ها</button>
-        <button mat-raised-button color="accent" routerLink="/questions">مدیریت سوالات</button>
+        <button routerLink="/categories">مدیریت دستهها</button>
+        <button routerLink="/questions">مدیریت سوالات</button>
       </div>
     </div>
   `,

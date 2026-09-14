@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { Difficulty, QuestionStatus } from '../../types/contracts';
+import { Difficulty, QuestionStatus } from '@quiz/contracts';
 
 @Injectable()
 export class QuestionService {

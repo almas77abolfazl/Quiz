@@ -1,5 +1,5 @@
 import { IsOptional, IsString, IsEnum, IsArray, MinLength, MaxLength, IsInt, IsBoolean } from 'class-validator';
-import { Difficulty, QuestionStatus } from '../../../types/contracts';
+import { Difficulty, QuestionStatus } from '@quiz/contracts';
 
 export class QuestionOptionDto {
   @IsString()

@@ -1,0 +1,21 @@
+{
+  "name": "quiz",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/contracts",
+    "apps/api",
+    "apps/game",
+    "apps/admin"
+  ],
+  "scripts": {
+    "build": "npm run build:contracts && npm run build:api && npm run build:game && npm run build:admin",
+    "build:contracts": "npm run build -w @quiz/contracts",
+    "build:api": "npm run build -w @quiz/api",
+    "build:game": "npm run build -w @quiz/game",
+    "build:admin": "npm run build -w @quiz/admin",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  }
+}
+

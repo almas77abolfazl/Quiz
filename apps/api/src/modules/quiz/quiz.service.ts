@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { StartQuizDto } from './dto/start-quiz.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
-import { Difficulty, GameStatus, AnswerStatus, CoinTransactionType } from '../../types/contracts';
+import { Difficulty, GameStatus, AnswerStatus, CoinTransactionType } from '@quiz/contracts';
 
 const QUESTION_COUNT = 5;
 const DEFAULT_TIME_LIMIT_BY_DIFFICULTY: Record<Difficulty, number> = {

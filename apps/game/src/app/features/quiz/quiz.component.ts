@@ -1,27 +1,23 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { MatButtonModule } from '@angular/material/button';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { Category } from '../../core/services/api.service';
+import { FormsModule } from '@angular/forms';
+import { ApiService, Category } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-quiz',
   standalone: true,
-  imports: [CommonModule, MatButtonModule, MatSelectModule, MatFormFieldModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="quiz-container">
       <h2>بازی تک نفره</h2>
-      <mat-form-field appearance="fill">
-        <mat-label>دسته‌بندی</mat-label>
-        <mat-select [(value)]="categoryId">
-          <mat-option value="">همه</mat-option>
-          <mat-option *ngFor="let cat of categories" [value]="cat.id">{{cat.title}}</mat-option>
-        </mat-select>
-      </mat-form-field>
-      <button mat-raised-button color="primary" (click)="start()" [disabled]="loading">شروع بازی</button>
-      <button mat-button (click)="back()">بازگشت</button>
+      <label>دستهبندی</label>
+      <select [(ngModel)]="categoryId">
+        <option value="">همه</option>
+        <option *ngFor="let cat of categories" [value]="cat.id">{{cat.title}}</option>
+      </select>
+      <button (click)="start()" [disabled]="loading">شروع بازی</button>
+      <button (click)="back()">بازگشت</button>
     </div>
   `,
   styles: [`

@@ -13,7 +13,7 @@ import { CreateSeasonDto } from './dto/create-season.dto';
 import { AccessTokenGuard } from '../auth/access-token.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../../types/contracts';
+import { UserRole } from '@quiz/contracts';
 import { AuthenticatedRequest } from '../auth/access-token.guard';
 
 @Controller('seasons')

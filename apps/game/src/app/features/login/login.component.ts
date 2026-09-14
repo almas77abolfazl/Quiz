@@ -1,32 +1,23 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { MatCardModule } from '@angular/material/card';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
-import { AuthService } from '../core/services/auth.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatCardModule, MatInputModule, MatButtonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   template: `
     <div class="login-container">
       <h2>ورود با شماره موبایل</h2>
-      <mat-card>
-        <form [formGroup]="form" (ngSubmit)="submit()">
-          <mat-form-field appearance="fill">
-            <mat-label>شماره موبایل</mat-label>
-            <input matInput formControlName="phone" type="tel" />
-          </mat-form-field>
-          <mat-form-field appearance="fill">
-            <mat-label>کد OTP</mat-label>
-            <input matInput formControlName="code" type="text" />
-          </mat-form-field>
-          <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || loading">ورود</button>
-        </form>
-      </mat-card>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label>شماره موبایل</label>
+        <input formControlName="phone" type="tel" />
+        <label>کد OTP</label>
+        <input formControlName="code" type="text" />
+        <button type="submit" [disabled]="form.invalid || loading">ورود</button>
+      </form>
     </div>
   `,
   styles: [`
@@ -36,6 +27,11 @@ import { AuthService } from '../core/services/auth.service';
       gap: 1rem;
       max-width: 400px;
       margin: 2rem auto;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
   `]
 })

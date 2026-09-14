@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSeasonDto } from './dto/create-season.dto';
-import { CoinTransactionType } from '../../types/contracts';
+import { CoinTransactionType } from '@quiz/contracts';
 
 @Injectable()
 export class SeasonService {

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { MatchStatus, AnswerStatus, Difficulty } from '../../types/contracts';
+import { MatchStatus, AnswerStatus, Difficulty } from '@quiz/contracts';
 
 const MATCH_TIMEOUT_MS = 15 * 1000;
 const TOTAL_ROUNDS = 5;

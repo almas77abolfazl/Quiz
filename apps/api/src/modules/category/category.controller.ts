@@ -14,7 +14,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { AccessTokenGuard } from '../auth/access-token.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole } from '../../types/contracts';
+import { UserRole } from '@quiz/contracts';
 
 @Controller('categories')
 export class CategoryController {

@@ -16,7 +16,7 @@ import { UpdateQuestionDto } from './dto/update-question.dto';
 import { AccessTokenGuard } from '../auth/access-token.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole, Difficulty } from '../../types/contracts';
+import { UserRole, Difficulty } from '@quiz/contracts';
 import { AuthenticatedRequest } from '../auth/access-token.guard';
 
 @Controller('questions')

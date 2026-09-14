@@ -13,11 +13,8 @@
     "incremental": true,
     "strict": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "paths": {
-      "@quiz/contracts": ["../packages/contracts/src/index.ts"]
-    }
+    "esModuleInterop": true
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

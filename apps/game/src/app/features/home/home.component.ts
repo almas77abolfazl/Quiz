@@ -9,9 +9,9 @@ import { Router } from '@angular/router';
     <div class="home-container">
       <h1>به کوییز خوش آمدید</h1>
       <div class="menu">
-        <button mat-raised-button color="primary" (click)="startQuiz()">بازی تک نفره</button>
-        <button mat-raised-button color="accent" (click)="start1v1()">بازی دو نفره 1v1</button>
-        <button mat-raised-button (click)="viewProfile()">پروفایل</button>
+        <button (click)="startQuiz()">بازی تک نفره</button>
+        <button (click)="start1v1()">بازی دو نفره 1v1</button>
+        <button (click)="viewProfile()">پروفایل</button>
       </div>
     </div>
   `,

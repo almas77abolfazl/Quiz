@@ -8,8 +8,8 @@ import { Router } from '@angular/router';
   template: `
     <div class="container">
       <h2>بازی دو نفره</h2>
-      <button mat-raised-button color="accent" (click)="findMatch()">یافتن حریف</button>
-      <button mat-button (click)="back()">بازگشت</button>
+      <button (click)="findMatch()">یافتن حریف</button>
+      <button (click)="back()">بازگشت</button>
     </div>
   `,
   styles: [`

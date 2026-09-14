@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { Difficulty } from '../../../types/contracts';
+import { Difficulty } from '@quiz/contracts';
 
 export class StartQuizDto {
   @IsOptional()
