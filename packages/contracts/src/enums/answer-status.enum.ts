@@ -1,0 +1,8 @@
+export enum AnswerStatus {
+  PENDING = 'PENDING',
+  CORRECT = 'CORRECT',
+  INCORRECT = 'INCORRECT',
+  TIMED_OUT = 'TIMED_OUT',
+  REVEALED = 'REVEALED',
+}
+

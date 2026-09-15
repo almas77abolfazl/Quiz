@@ -1,0 +1,6 @@
+export enum ReportTargetType {
+  USER = 'USER',
+  QUESTION = 'QUESTION',
+  QUESTION_SUGGESTION = 'QUESTION_SUGGESTION',
+}
+

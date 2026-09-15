@@ -2,20 +2,29 @@
   "name": "@quiz/contracts",
   "version": "0.1.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test:types": "tsc --noEmit -p test/tsconfig.json",
+    "test:runtime": "node test/runtime-esm.mjs && node test/runtime-cjs.cjs",
+    "test": "pnpm run typecheck && pnpm run test:types && pnpm run test:runtime",
     "clean": "node -e \"const fs=require('fs');fs.rmSync('dist',{recursive:true,force:true})\""
   },
   "devDependencies": {
+    "tsup": "^8.5.1",
     "typescript": "~5.7.0"
   }
 }

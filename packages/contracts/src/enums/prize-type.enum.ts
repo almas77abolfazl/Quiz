@@ -1,0 +1,9 @@
+export enum PrizeType {
+  CASH = 'CASH',
+  PHYSICAL_ITEM = 'PHYSICAL_ITEM',
+  COINS = 'COINS',
+  BADGE = 'BADGE',
+  PROFILE_BANNER = 'PROFILE_BANNER',
+  TITLE = 'TITLE',
+}
+

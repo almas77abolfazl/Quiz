@@ -1,0 +1,7 @@
+export enum MatchStatus {
+  WAITING = 'WAITING',
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+

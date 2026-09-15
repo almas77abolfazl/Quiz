@@ -1,0 +1,7 @@
+export enum PrizeClaimStatus {
+  PENDING = 'PENDING',
+  CONTACTED = 'CONTACTED',
+  FULFILLED = 'FULFILLED',
+  CANCELLED = 'CANCELLED',
+}
+

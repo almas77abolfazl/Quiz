@@ -1,0 +1,7 @@
+export enum GameStatus {
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  ABANDONED = 'ABANDONED',
+  EXPIRED = 'EXPIRED',
+}
+
