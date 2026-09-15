@@ -651,7 +651,7 @@ export class OneVOneComponent implements OnInit, OnDestroy {
   opponentAnswered = false;
 
   ngOnInit() {
-    this.questions = this.demoData.sampleQuestions;
+    this.questions = [...this.demoData.sampleQuestions];
   }
 
   ngOnDestroy() {

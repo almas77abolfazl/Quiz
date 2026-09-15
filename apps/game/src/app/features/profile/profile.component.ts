@@ -427,7 +427,9 @@ export class ProfileComponent {
 
   readonly user = this.demoData.currentUser;
   readonly achievements = this.demoData.achievements;
-  readonly matchHistory = this.demoData.matchHistory;
+  get matchHistory() {
+    return this.demoData.matchHistory();
+  }
 
   editProfilePlaceholder() {
     alert('امکان ویرایش نام نمایشی و آواتار در نسخه آینده فعال خواهد شد.');

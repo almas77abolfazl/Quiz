@@ -1,18 +1,18 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-empty-state',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="empty-card">
-      <div class="icon-circle">{{ icon }}</div>
-      <h3 class="title">{{ title }}</h3>
-      <p class="description">{{ description }}</p>
-      <button *ngIf="actionText" class="action-btn" (click)="onAction.emit()">
-        {{ actionText }}
-      </button>
+      <div class="icon-circle" aria-hidden="true">{{ icon() }}</div>
+      <h3 class="title">{{ title() }}</h3>
+      <p class="description">{{ description() }}</p>
+      @if (actionText()) {
+        <button type="button" class="action-btn" (click)="actionClicked.emit()">
+          {{ actionText() }}
+        </button>
+      }
     </div>
   `,
   styles: [
@@ -64,6 +64,8 @@ import { CommonModule } from '@angular/common';
         border-radius: var(--radius-md);
         font-weight: 700;
         font-size: 0.9rem;
+        border: none;
+        cursor: pointer;
         transition: background var(--transition-fast);
       }
 
@@ -74,9 +76,10 @@ import { CommonModule } from '@angular/common';
   ],
 })
 export class EmptyStateComponent {
-  @Input() icon = '🔍';
-  @Input() title = 'موردی یافت نشد';
-  @Input() description = 'هیچ اطلاعاتی برای نمایش وجود ندارد.';
-  @Input() actionText?: string;
-  @Output() onAction = new EventEmitter<void>();
+  readonly icon = input('🔍');
+  readonly title = input('موردی یافت نشد');
+  readonly description = input('هیچ اطلاعاتی برای نمایش وجود ندارد.');
+  readonly actionText = input<string | undefined>(undefined);
+
+  readonly actionClicked = output<void>();
 }

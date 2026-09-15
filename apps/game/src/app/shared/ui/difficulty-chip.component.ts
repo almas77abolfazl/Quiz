@@ -1,15 +1,13 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 import { Difficulty } from '@quiz/contracts';
 
 @Component({
   selector: 'app-difficulty-chip',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <span class="chip" [ngClass]="difficultyClass">
+    <span class="chip" [class]="difficultyClass()">
       <span class="dot"></span>
-      <span>{{ label }}</span>
+      <span>{{ label() }}</span>
     </span>
   `,
   styles: [
@@ -70,10 +68,10 @@ import { Difficulty } from '@quiz/contracts';
   ],
 })
 export class DifficultyChipComponent {
-  @Input() difficulty: Difficulty | string = Difficulty.EASY;
+  readonly difficulty = input<Difficulty | string>(Difficulty.EASY);
 
-  get label(): string {
-    switch (this.difficulty) {
+  readonly label = computed(() => {
+    switch (this.difficulty()) {
       case Difficulty.EASY:
       case 'EASY':
         return 'آسان';
@@ -89,10 +87,10 @@ export class DifficultyChipComponent {
       default:
         return 'متوسط';
     }
-  }
+  });
 
-  get difficultyClass(): string {
-    switch (this.difficulty) {
+  readonly difficultyClass = computed(() => {
+    switch (this.difficulty()) {
       case Difficulty.EASY:
       case 'EASY':
         return 'easy';
@@ -108,5 +106,5 @@ export class DifficultyChipComponent {
       default:
         return 'medium';
     }
-  }
+  });
 }

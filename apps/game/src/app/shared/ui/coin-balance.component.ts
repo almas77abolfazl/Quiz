@@ -1,15 +1,23 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output, computed } from '@angular/core';
 
 @Component({
   selector: 'app-coin-balance',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="coin-badge" [class.large]="size === 'large'">
+    <div class="coin-badge" [class.large]="size() === 'large'">
       <span class="coin-icon" aria-hidden="true">🪙</span>
-      <span class="amount">{{ amount | number }}</span>
-      <button *ngIf="showAdd" class="add-btn" title="افزایش سکه" aria-label="افزایش سکه">+</button>
+      <span class="amount">{{ formattedAmount() }}</span>
+      @if (showAdd()) {
+        <button
+          type="button"
+          class="add-btn"
+          title="افزایش سکه"
+          aria-label="افزایش سکه"
+          (click)="addClicked.emit()"
+        >
+          +
+        </button>
+      }
     </div>
   `,
   styles: [
@@ -52,6 +60,8 @@ import { CommonModule } from '@angular/common';
         font-weight: 900;
         font-size: 0.85rem;
         margin-right: 0.2rem;
+        border: none;
+        cursor: pointer;
         transition: transform var(--transition-fast);
       }
       .add-btn:hover {
@@ -61,7 +71,11 @@ import { CommonModule } from '@angular/common';
   ],
 })
 export class CoinBalanceComponent {
-  @Input() amount = 0;
-  @Input() showAdd = false;
-  @Input() size: 'normal' | 'large' = 'normal';
+  readonly amount = input(0);
+  readonly showAdd = input(false);
+  readonly size = input<'normal' | 'large'>('normal');
+
+  readonly addClicked = output<void>();
+
+  readonly formattedAmount = computed(() => this.amount().toLocaleString('fa-IR'));
 }

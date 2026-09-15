@@ -1,12 +1,10 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 
 @Component({
   selector: 'app-timer-ring',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="timer-container" [class.urgent]="secondsLeft <= 5">
+    <div class="timer-container" [class.urgent]="isUrgent()">
       <svg class="timer-svg" viewBox="0 0 100 100" aria-hidden="true">
         <!-- Background circle -->
         <circle class="ring-bg" cx="50" cy="50" r="42" />
@@ -16,11 +14,11 @@ import { CommonModule } from '@angular/common';
           cx="50"
           cy="50"
           r="42"
-          [style.strokeDashoffset]="strokeOffset"
+          [style.strokeDashoffset]="strokeOffset()"
         />
       </svg>
       <div class="timer-text">
-        <span class="value">{{ secondsLeft }}</span>
+        <span class="value">{{ formattedSeconds() }}</span>
         <span class="unit">ثانیه</span>
       </div>
     </div>
@@ -101,13 +99,18 @@ import { CommonModule } from '@angular/common';
   ],
 })
 export class TimerRingComponent {
-  @Input() secondsLeft = 30;
-  @Input() totalSeconds = 30;
+  readonly secondsLeft = input(30);
+  readonly totalSeconds = input(30);
 
-  get strokeOffset(): number {
+  readonly isUrgent = computed(() => this.secondsLeft() <= 5);
+
+  readonly formattedSeconds = computed(() => this.secondsLeft().toLocaleString('fa-IR'));
+
+  readonly strokeOffset = computed(() => {
     const radius = 42;
     const circumference = 2 * Math.PI * radius; // ~263.89
-    const progress = Math.max(0, Math.min(1, this.secondsLeft / this.totalSeconds));
+    const total = Math.max(1, this.totalSeconds());
+    const progress = Math.max(0, Math.min(1, this.secondsLeft() / total));
     return circumference * (1 - progress);
-  }
+  });
 }

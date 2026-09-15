@@ -297,7 +297,9 @@ export class QuizSetupComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly demoData = inject(DemoGameDataService);
 
-  categories = this.demoData.categories;
+  get categories() {
+    return this.demoData.categories();
+  }
   selectedCategoryId = 'ALL';
   selectedDifficulty: Difficulty = Difficulty.MEDIUM;
   loading = false;

@@ -1,16 +1,17 @@
-import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TopBarComponent } from './top-bar.component';
 import { BottomNavComponent } from './bottom-nav.component';
-import { DemoGameDataService } from '../../core/demo/demo-game-data.service';
+import { GameFacade } from '../../core/data/game.facade';
 
 @Component({
   selector: 'app-shell',
-  standalone: true,
-  imports: [CommonModule, TopBarComponent, BottomNavComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TopBarComponent, BottomNavComponent],
   template: `
     <div class="shell-backdrop">
+      <app-bottom-nav />
+
       <div class="app-frame">
         <app-top-bar
           [displayName]="user().displayName"
@@ -18,14 +19,12 @@ import { DemoGameDataService } from '../../core/demo/demo-game-data.service';
           [seasonPoints]="user().seasonPoints"
           [seasonRank]="user().seasonRank"
           [dailyStreak]="user().dailyStreak"
-          (onProfileClick)="goToProfile()"
+          (profileClicked)="goToProfile()"
         />
 
         <main class="content-area">
-          <ng-content></ng-content>
+          <ng-content />
         </main>
-
-        <app-bottom-nav />
       </div>
     </div>
   `,
@@ -35,26 +34,28 @@ import { DemoGameDataService } from '../../core/demo/demo-game-data.service';
         min-height: 100vh;
         background: radial-gradient(circle at 50% 10%, #1f1847 0%, #0f0c24 70%);
         display: flex;
-        justify-content: center;
         width: 100%;
+        position: relative;
       }
 
       .app-frame {
         width: 100%;
-        max-width: 480px;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
         background-color: var(--bg-dark);
         position: relative;
-        box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
-        padding-bottom: 70px; /* space for sticky bottom nav */
+        padding-bottom: 70px; /* space for mobile sticky bottom nav */
       }
 
-      @media (min-width: 769px) {
+      /* Desktop Responsive Layout (>=1024px) */
+      @media (min-width: 1024px) {
         .app-frame {
+          margin-right: 240px; /* width of right sidebar in RTL layout */
+          padding-bottom: 0;
+          max-width: 1200px;
           border-left: 1px solid var(--surface-border);
-          border-right: 1px solid var(--surface-border);
+          box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
         }
       }
 
@@ -68,11 +69,11 @@ import { DemoGameDataService } from '../../core/demo/demo-game-data.service';
 })
 export class AppShellComponent {
   private readonly router = inject(Router);
-  private readonly demoData = inject(DemoGameDataService);
+  private readonly gameFacade = inject(GameFacade);
 
-  readonly user = this.demoData.currentUser;
+  readonly user = this.gameFacade.user;
 
-  goToProfile() {
+  goToProfile(): void {
     this.router.navigate(['/profile']);
   }
 }

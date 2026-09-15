@@ -1,70 +1,22 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, Signal } from '@angular/core';
 import { Difficulty } from '@quiz/contracts';
+import {
+  AnswerValidationResult,
+  GameCategory,
+  GameDailyMission,
+  GameDataSource,
+  GameMatchHistoryItem,
+  GameQuestion,
+  GameUser,
+} from '../data/game-data-source.interface';
 
-/* TEMPORARY DEMO DATA SERVICE FOR FRONTEND PROTOTYPE */
-/* Safe frontend-only mock data provider that supplements existing APIs for visual presentation */
+export interface DemoUser extends GameUser {}
+export interface DemoCategory extends GameCategory {}
+export interface DemoDailyMission extends GameDailyMission {}
+export interface DemoMatchHistoryItem extends GameMatchHistoryItem {}
 
-export interface DemoUser {
-  id: string;
-  phone: string;
-  username: string;
-  displayName: string;
-  avatarKey: string;
-  level: number;
-  xp: number;
-  xpToNextLevel: number;
-  coins: number;
-  seasonPoints: number;
-  seasonRank: number;
-  dailyStreak: number;
-  totalGames: number;
-  totalWins1v1: number;
-  totalCorrectAnswers: number;
-  favoriteCategoryIds: string[];
-}
-
-export interface DemoCategory {
-  id: string;
-  title: string;
-  description: string;
-  iconName: string;
-  color: string;
-  questionCount: number;
-  isPopular?: boolean;
-}
-
-export interface DemoDailyMission {
-  id: string;
-  title: string;
-  rewardPoints: number;
-  currentProgress: number;
-  targetProgress: number;
-  isCompleted: boolean;
-  icon: string;
-}
-
-export interface DemoQuestion {
-  id: string;
-  text: string;
-  categoryId: string;
-  categoryTitle: string;
-  difficulty: Difficulty;
-  options: string[];
+export interface DemoQuestion extends GameQuestion {
   correctIndex: number;
-  explanation?: string;
-  imageUrl?: string;
-}
-
-export interface DemoMatchHistoryItem {
-  id: string;
-  mode: 'SOLO' | '1V1';
-  opponentName?: string;
-  opponentAvatar?: string;
-  result: 'WIN' | 'LOSS' | 'DRAW' | 'COMPLETED';
-  scoreText: string;
-  earnedCoins: number;
-  earnedPoints: number;
-  dateText: string;
 }
 
 export interface DemoAchievement {
@@ -84,8 +36,8 @@ export interface DemoSeasonPrize {
 }
 
 @Injectable({ providedIn: 'root' })
-export class DemoGameDataService {
-  readonly currentUser = signal<DemoUser>({
+export class DemoGameDataSource extends GameDataSource {
+  private readonly _currentUser = signal<DemoUser>({
     id: 'usr_demo_123',
     phone: '09123456789',
     username: 'alborz_gamer',
@@ -104,7 +56,7 @@ export class DemoGameDataService {
     favoriteCategoryIds: ['cat_tech', 'cat_history', 'cat_sports'],
   });
 
-  readonly categories: DemoCategory[] = [
+  private readonly _categoriesSignal = signal<readonly DemoCategory[]>([
     {
       id: 'cat_general',
       title: 'اطلاعات عمومی',
@@ -156,9 +108,9 @@ export class DemoGameDataService {
       color: '#8b5cf6',
       questionCount: 160,
     },
-  ];
+  ]);
 
-  readonly dailyMissions: DemoDailyMission[] = [
+  private readonly _dailyMissionsSignal = signal<readonly DemoDailyMission[]>([
     {
       id: 'm1',
       title: 'پاسخ به ۱۰ سؤال صحیح در هر حالتی',
@@ -186,7 +138,50 @@ export class DemoGameDataService {
       isCompleted: false,
       icon: 'workspace_premium',
     },
-  ];
+  ]);
+
+  private readonly _matchHistorySignal = signal<readonly DemoMatchHistoryItem[]>([
+    {
+      id: 'h1',
+      mode: '1V1',
+      opponentName: 'کیارش_گیمر',
+      opponentAvatar: 'avatar_wolf',
+      result: 'WIN',
+      scoreText: '۴ - ۲',
+      earnedCoins: 8,
+      earnedPoints: 5,
+      dateText: '۱۰ دقیقه پیش',
+    },
+    {
+      id: 'h2',
+      mode: 'SOLO',
+      result: 'COMPLETED',
+      scoreText: '۵ از ۵ درست',
+      earnedCoins: 7,
+      earnedPoints: 10,
+      dateText: '۱ ساعت پیش',
+    },
+    {
+      id: 'h3',
+      mode: '1V1',
+      opponentName: 'مریم_سایه',
+      opponentAvatar: 'avatar_cat',
+      result: 'LOSS',
+      scoreText: '۲ - ۳',
+      earnedCoins: 1,
+      earnedPoints: 1,
+      dateText: 'دیروز',
+    },
+    {
+      id: 'h4',
+      mode: 'SOLO',
+      result: 'COMPLETED',
+      scoreText: '۴ از ۵ درست',
+      earnedCoins: 5,
+      earnedPoints: 6,
+      dateText: '۲ روز پیش',
+    },
+  ]);
 
   readonly seasonPrizes: DemoSeasonPrize[] = [
     {
@@ -252,50 +247,7 @@ export class DemoGameDataService {
     },
   ];
 
-  readonly matchHistory: DemoMatchHistoryItem[] = [
-    {
-      id: 'h1',
-      mode: '1V1',
-      opponentName: 'کیارش_گیمر',
-      opponentAvatar: 'avatar_wolf',
-      result: 'WIN',
-      scoreText: '۴ - ۲',
-      earnedCoins: 8,
-      earnedPoints: 5,
-      dateText: '۱۰ دقیقه پیش',
-    },
-    {
-      id: 'h2',
-      mode: 'SOLO',
-      result: 'COMPLETED',
-      scoreText: '۵ از ۵ درست',
-      earnedCoins: 7,
-      earnedPoints: 10,
-      dateText: '۱ ساعت پیش',
-    },
-    {
-      id: 'h3',
-      mode: '1V1',
-      opponentName: 'مریم_سایه',
-      opponentAvatar: 'avatar_cat',
-      result: 'LOSS',
-      scoreText: '۲ - ۳',
-      earnedCoins: 1,
-      earnedPoints: 1,
-      dateText: 'دیروز',
-    },
-    {
-      id: 'h4',
-      mode: 'SOLO',
-      result: 'COMPLETED',
-      scoreText: '۴ از ۵ درست',
-      earnedCoins: 5,
-      earnedPoints: 6,
-      dateText: '۲ روز پیش',
-    },
-  ];
-
-  readonly sampleQuestions: DemoQuestion[] = [
+  private readonly _sampleQuestions: DemoQuestion[] = [
     {
       id: 'q1',
       text: 'بلندترین قله کوهستانی ایران کدام است؟',
@@ -348,15 +300,52 @@ export class DemoGameDataService {
     },
   ];
 
+  override readonly currentUser: Signal<GameUser> = this._currentUser.asReadonly();
+  override readonly categories: Signal<readonly GameCategory[]> =
+    this._categoriesSignal.asReadonly();
+  override readonly dailyMissions: Signal<readonly GameDailyMission[]> =
+    this._dailyMissionsSignal.asReadonly();
+  override readonly matchHistory: Signal<readonly GameMatchHistoryItem[]> =
+    this._matchHistorySignal.asReadonly();
+
+  get sampleQuestions(): DemoQuestion[] {
+    return [...this._sampleQuestions];
+  }
+
+  override addCoins(amount: number): void {
+    this._currentUser.update((u) => ({ ...u, coins: u.coins + amount }));
+  }
+
+  override addSeasonPoints(amount: number): void {
+    this._currentUser.update((u) => ({ ...u, seasonPoints: u.seasonPoints + amount }));
+  }
+
+  override getQuestions(categoryId?: string, difficulty?: Difficulty): GameQuestion[] {
+    let filtered = this._sampleQuestions;
+    if (categoryId && categoryId !== 'ALL') {
+      filtered = filtered.filter((q) => q.categoryId === categoryId);
+    }
+    if (difficulty) {
+      filtered = filtered.filter((q) => q.difficulty === difficulty);
+    }
+    return filtered.map(({ correctIndex, ...publicProps }) => ({ ...publicProps }));
+  }
+
+  override validateAnswer(questionId: string, selectedIndex: number): AnswerValidationResult {
+    const question = this._sampleQuestions.find((q) => q.id === questionId);
+    if (!question) {
+      return { isCorrect: false, correctIndex: -1 };
+    }
+    return {
+      isCorrect: question.correctIndex === selectedIndex,
+      correctIndex: question.correctIndex,
+    };
+  }
+
   getCategoryById(id: string): DemoCategory | undefined {
-    return this.categories.find((c) => c.id === id);
-  }
-
-  addCoins(amount: number) {
-    this.currentUser.update((u) => ({ ...u, coins: u.coins + amount }));
-  }
-
-  addSeasonPoints(amount: number) {
-    this.currentUser.update((u) => ({ ...u, seasonPoints: u.seasonPoints + amount }));
+    return this._categoriesSignal().find((c) => c.id === id);
   }
 }
+
+/** Backward compatibility alias */
+export const DemoGameDataService = DemoGameDataSource;

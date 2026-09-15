@@ -1,16 +1,16 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
 
 @Component({
   selector: 'app-season-badge',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="season-badge">
       <span class="trophy" aria-hidden="true">🏆</span>
       <div class="info">
-        <span class="points">{{ points }} امتیاز</span>
-        <span *ngIf="rank" class="rank">رتبه {{ rank }}#</span>
+        <span class="points">{{ formattedPoints() }} امتیاز</span>
+        @if (rank()) {
+          <span class="rank">رتبه {{ rank() }}#</span>
+        }
       </div>
     </div>
   `,
@@ -52,6 +52,8 @@ import { CommonModule } from '@angular/common';
   ],
 })
 export class SeasonBadgeComponent {
-  @Input() points = 0;
-  @Input() rank?: number;
+  readonly points = input(0);
+  readonly rank = input<number | undefined>(undefined);
+
+  readonly formattedPoints = computed(() => this.points().toLocaleString('fa-IR'));
 }

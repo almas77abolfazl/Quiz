@@ -334,7 +334,7 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
   confirmQuit = false;
 
   ngOnInit() {
-    this.questions = this.demoData.sampleQuestions;
+    this.questions = [...this.demoData.sampleQuestions];
     this.startQuestionTimer();
   }
 

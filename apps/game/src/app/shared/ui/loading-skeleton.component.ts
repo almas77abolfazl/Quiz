@@ -1,16 +1,14 @@
-import { Component, Input } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 
 @Component({
   selector: 'app-loading-skeleton',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
       class="skeleton-wrapper"
-      [style.height]="height"
-      [style.width]="width"
-      [style.border-radius]="radius"
+      [style.height]="height()"
+      [style.width]="width()"
+      [style.borderRadius]="radius()"
     >
       <div class="shimmer"></div>
     </div>
@@ -46,7 +44,7 @@ import { CommonModule } from '@angular/common';
   ],
 })
 export class LoadingSkeletonComponent {
-  @Input() height = '48px';
-  @Input() width = '100%';
-  @Input() radius = '12px';
+  readonly height = input('48px');
+  readonly width = input('100%');
+  readonly radius = input('12px');
 }

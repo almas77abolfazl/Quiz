@@ -1,26 +1,36 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+  computed,
+  booleanAttribute,
+} from '@angular/core';
 
 export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DISABLED';
 
 @Component({
   selector: 'app-option-button',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
+      type="button"
       class="option-btn"
-      [class.state-selected]="state === 'SELECTED'"
-      [class.state-correct]="state === 'CORRECT'"
-      [class.state-incorrect]="state === 'INCORRECT'"
-      [class.state-disabled]="disabled || state === 'DISABLED'"
-      [disabled]="disabled || state === 'DISABLED'"
-      (click)="onClick.emit()"
+      [class.state-selected]="state() === 'SELECTED'"
+      [class.state-correct]="state() === 'CORRECT'"
+      [class.state-incorrect]="state() === 'INCORRECT'"
+      [class.state-disabled]="isDisabled()"
+      [disabled]="isDisabled()"
+      (click)="clicked.emit()"
     >
-      <span class="option-badge">{{ label }}</span>
-      <span class="option-text">{{ text }}</span>
-      <span class="state-icon" *ngIf="state === 'CORRECT'">✓</span>
-      <span class="state-icon" *ngIf="state === 'INCORRECT'">✕</span>
+      <span class="option-badge">{{ label() }}</span>
+      <span class="option-text">{{ text() }}</span>
+      @if (state() === 'CORRECT') {
+        <span class="state-icon" aria-hidden="true">✓</span>
+      }
+      @if (state() === 'INCORRECT') {
+        <span class="state-icon" aria-hidden="true">✕</span>
+      }
     </button>
   `,
   styles: [
@@ -40,6 +50,7 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
         text-align: right;
         transition: all var(--transition-fast);
         position: relative;
+        cursor: pointer;
       }
 
       .option-btn:hover:not(:disabled) {
@@ -50,6 +61,11 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
 
       .option-btn:active:not(:disabled) {
         transform: translateY(0);
+      }
+
+      .option-btn:focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 2px;
       }
 
       .option-badge {
@@ -79,7 +95,6 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
         margin-left: 0.2rem;
       }
 
-      /* Selected State */
       .option-btn.state-selected {
         background: rgba(99, 102, 241, 0.2);
         border-color: var(--primary);
@@ -90,7 +105,6 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
         color: #ffffff;
       }
 
-      /* Correct State */
       .option-btn.state-correct {
         background: var(--success-surface);
         border-color: var(--success);
@@ -102,7 +116,6 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
         color: #ffffff;
       }
 
-      /* Incorrect State */
       .option-btn.state-incorrect {
         background: var(--error-surface);
         border-color: var(--error);
@@ -114,7 +127,6 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
         color: #ffffff;
       }
 
-      /* Disabled State */
       .option-btn.state-disabled {
         opacity: 0.55;
         cursor: not-allowed;
@@ -123,9 +135,12 @@ export type OptionState = 'DEFAULT' | 'SELECTED' | 'CORRECT' | 'INCORRECT' | 'DI
   ],
 })
 export class OptionButtonComponent {
-  @Input() label = 'الف';
-  @Input() text = '';
-  @Input() state: OptionState = 'DEFAULT';
-  @Input() disabled = false;
-  @Output() onClick = new EventEmitter<void>();
+  readonly label = input('الف');
+  readonly text = input('');
+  readonly state = input<OptionState>('DEFAULT');
+  readonly disabled = input(false, { transform: booleanAttribute });
+
+  readonly clicked = output<void>();
+
+  readonly isDisabled = computed(() => this.disabled() || this.state() === 'DISABLED');
 }

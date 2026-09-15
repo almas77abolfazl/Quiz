@@ -1,24 +1,28 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, input, output, booleanAttribute } from '@angular/core';
 
 @Component({
   selector: 'app-confirm-dialog',
-  standalone: true,
-  imports: [CommonModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="dialog-overlay" *ngIf="isOpen" (click)="onCancel.emit()">
-      <div class="dialog-card" (click)="$event.stopPropagation()">
-        <div class="icon-header">
-          <span class="warning-icon">⚠️</span>
-        </div>
-        <h3 class="dialog-title">{{ title }}</h3>
-        <p class="dialog-message">{{ message }}</p>
-        <div class="dialog-actions">
-          <button class="btn btn-confirm" (click)="onConfirm.emit()">{{ confirmText }}</button>
-          <button class="btn btn-cancel" (click)="onCancel.emit()">{{ cancelText }}</button>
+    @if (isOpen()) {
+      <div class="dialog-overlay" (click)="cancelled.emit()">
+        <div class="dialog-card" (click)="$event.stopPropagation()">
+          <div class="icon-header">
+            <span class="warning-icon" aria-hidden="true">⚠️</span>
+          </div>
+          <h3 class="dialog-title">{{ title() }}</h3>
+          <p class="dialog-message">{{ message() }}</p>
+          <div class="dialog-actions">
+            <button type="button" class="btn btn-confirm" (click)="confirmed.emit()">
+              {{ confirmText() }}
+            </button>
+            <button type="button" class="btn btn-cancel" (click)="cancelled.emit()">
+              {{ cancelText() }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    }
   `,
   styles: [
     `
@@ -83,6 +87,8 @@ import { CommonModule } from '@angular/common';
         border-radius: var(--radius-md);
         font-weight: 700;
         font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
         transition: all var(--transition-fast);
       }
 
@@ -116,11 +122,12 @@ import { CommonModule } from '@angular/common';
   ],
 })
 export class ConfirmDialogComponent {
-  @Input() isOpen = false;
-  @Input() title = 'انصراف از بازی';
-  @Input() message = 'آیا از خروج اطمینان دارید؟ امتیاز این نوبت را از دست خواهید داد.';
-  @Input() confirmText = 'بله، خروج';
-  @Input() cancelText = 'ادامه بازی';
-  @Output() onConfirm = new EventEmitter<void>();
-  @Output() onCancel = new EventEmitter<void>();
+  readonly isOpen = input(false, { transform: booleanAttribute });
+  readonly title = input('انصراف از بازی');
+  readonly message = input('آیا از خروج اطمینان دارید؟ امتیاز این نوبت را از دست خواهید داد.');
+  readonly confirmText = input('بله، خروج');
+  readonly cancelText = input('ادامه بازی');
+
+  readonly confirmed = output<void>();
+  readonly cancelled = output<void>();
 }
