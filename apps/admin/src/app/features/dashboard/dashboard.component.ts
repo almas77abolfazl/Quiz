@@ -1,59 +1,40 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { AdminApiService, Category } from '../../core/services/admin-api.service';
+import { AdminApiService } from '../../core/services/admin-api.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  template: `
-    <div class="dashboard">
-      <h2>داشبورد مدیریت</h2>
-      <div class="stats">
-        <div class="stat-card">
-          <h3>دستهها</h3>
-          <p>{{ categories.length }}</p>
-        </div>
-      </div>
-      <div class="actions">
-        <button routerLink="/categories">مدیریت دستهها</button>
-        <button routerLink="/questions">مدیریت سوالات</button>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .dashboard {
-      padding: 2rem;
-    }
-    .stats {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
-    .stat-card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      text-align: center;
-      min-width: 150px;
-    }
-    .actions {
-      display: flex;
-      gap: 1rem;
-    }
-  `]
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent implements OnInit {
-  categories: Category[] = [];
+  private readonly api = inject(AdminApiService);
 
-  constructor(private readonly api: AdminApiService) {}
+  readonly categoryCount = signal<number | null>(null);
+  readonly isLoading = signal<boolean>(true);
+  readonly error = signal<string | null>(null);
 
-  ngOnInit() {
+  ngOnInit(): void {
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    this.isLoading.set(true);
+    this.error.set(null);
+
     this.api.getCategories().subscribe({
-      next: (data) => (this.categories = data),
-      error: () => {},
+      next: (categories) => {
+        this.categoryCount.set(categories.length);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        this.error.set('خطا در بارگذاری آمار دسته‌بندی‌ها.');
+        this.isLoading.set(false);
+      },
     });
   }
 }

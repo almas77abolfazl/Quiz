@@ -1,1 +1,27 @@
-<router-outlet />
+@if (isAuthenticated() && isStaff()) {
+  <header class="app-navbar">
+    <div class="navbar-container">
+      <div class="brand">
+        <span class="brand-title">پنل مدیریت کوییز</span>
+      </div>
+
+      <nav class="nav-links">
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">داشبورد</a>
+        <a routerLink="/categories" routerLinkActive="active" class="nav-item">دسته‌بندی‌ها</a>
+        <a routerLink="/questions" routerLinkActive="active" class="nav-item">سوالات</a>
+      </nav>
+
+      <div class="user-profile">
+        <span class="user-name">{{
+          user()?.displayName || user()?.username || user()?.phone
+        }}</span>
+        <span class="role-badge">{{ userRole() }}</span>
+        <button class="btn-logout" (click)="onLogout()">خروج</button>
+      </div>
+    </div>
+  </header>
+}
+
+<main class="main-content">
+  <router-outlet />
+</main>

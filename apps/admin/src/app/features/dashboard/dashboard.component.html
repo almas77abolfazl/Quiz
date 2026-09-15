@@ -1,0 +1,65 @@
+<div class="dashboard-page">
+  <div class="page-header">
+    <h2>داشبورد مدیریت</h2>
+    <p class="subtitle">خلاصه وضعیت سیستم و دسترسی سریع</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card active-card">
+      <div class="stat-header">
+        <span class="stat-title">دسته‌بندی‌های فعال</span>
+        <span class="stat-badge">واقعی</span>
+      </div>
+      <div class="stat-value-container">
+        @if (isLoading()) {
+          <div class="spinner-sm"></div>
+        } @else if (error()) {
+          <span class="stat-error">خطا</span>
+        } @else {
+          <span class="stat-value">{{ categoryCount() }}</span>
+        }
+      </div>
+      <a routerLink="/categories" class="stat-link">مشاهده و مدیریت دسته‌ها ←</a>
+    </div>
+
+    <div class="stat-card muted-card">
+      <div class="stat-header">
+        <span class="stat-title">سوالات ثبت شده</span>
+        <span class="stat-badge upcoming">به‌زودی</span>
+      </div>
+      <div class="stat-value-container">
+        <span class="stat-muted">---</span>
+      </div>
+      <a routerLink="/questions" class="stat-link">صفحه سوالات ←</a>
+    </div>
+
+    <div class="stat-card muted-card">
+      <div class="stat-header">
+        <span class="stat-title">کاربران فعال</span>
+        <span class="stat-badge upcoming">به‌زودی</span>
+      </div>
+      <div class="stat-value-container">
+        <span class="stat-muted">---</span>
+      </div>
+      <span class="stat-link disabled">در فاز بعدی</span>
+    </div>
+
+    <div class="stat-card muted-card">
+      <div class="stat-header">
+        <span class="stat-title">گزارش‌ها و پشتیبانی</span>
+        <span class="stat-badge upcoming">به‌زودی</span>
+      </div>
+      <div class="stat-value-container">
+        <span class="stat-muted">---</span>
+      </div>
+      <span class="stat-link disabled">در فاز بعدی</span>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div class="alert alert-error">
+      <span>{{ error() }}</span>
+      <button class="btn-retry" (click)="loadStats()">تلاش مجدد</button>
+    </div>
+  }
+</div>

@@ -1,0 +1,66 @@
+<div class="categories-page">
+  <div class="page-header">
+    <div>
+      <h2>مدیریت دسته‌بندی‌ها</h2>
+      <p class="subtitle">لیست دسته‌بندی‌های رسمی ثبت شده در سیستم</p>
+    </div>
+    <button class="btn btn-disabled" disabled title="ایجاد دسته جدید در فاز بعدی فعال خواهد شد">
+      + افزودن دسته (به‌زودی)
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-container loading-state">
+      <div class="spinner"></div>
+      <p>در حال بارگذاری دسته‌بندی‌ها...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state-container error-state">
+      <p>{{ error() }}</p>
+      <button class="btn btn-primary" (click)="loadCategories()">تلاش مجدد</button>
+    </div>
+  } @else if (categories().length === 0) {
+    <div class="state-container empty-state">
+      <p>هیچ دسته‌بندی یافت نشد.</p>
+    </div>
+  } @else {
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>عنوان</th>
+            <th>توضیحات</th>
+            <th>وضعیت</th>
+            <th>تاریخ ایجاد</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (cat of categories(); track cat.id) {
+            <tr>
+              <td class="font-bold">{{ cat.title }}</td>
+              <td class="text-secondary">{{ cat.description || '---' }}</td>
+              <td>
+                @if (cat.isActive) {
+                  <span class="badge badge-success">فعال</span>
+                } @else {
+                  <span class="badge badge-secondary">غیرفعال</span>
+                }
+              </td>
+              <td class="text-secondary" dir="ltr">{{ cat.createdAt | date: 'yyyy-MM-dd' }}</td>
+              <td>
+                <button
+                  class="btn-action btn-disabled"
+                  disabled
+                  title="ویرایش و حذف در فاز بعدی فعال خواهد شد"
+                >
+                  ویرایش / حذف (به‌زودی)
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

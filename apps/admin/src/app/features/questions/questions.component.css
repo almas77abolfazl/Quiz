@@ -1,0 +1,61 @@
+.questions-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  color: #1e293b;
+}
+
+.subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.placeholder-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px dashed #cbd5e1;
+}
+
+.placeholder-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.placeholder-card h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  color: #1e293b;
+}
+
+.placeholder-desc {
+  color: #64748b;
+  max-width: 500px;
+  margin: 0 auto 1.5rem auto;
+  line-height: 1.6;
+}
+
+.endpoint-info {
+  display: inline-block;
+  background-color: #f1f5f9;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+}
+
+.endpoint-info code {
+  color: #475569;
+  font-size: 0.85rem;
+  font-family: monospace;
+}

@@ -1,10 +1,34 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
+  standalone: true,
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
   styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App implements OnInit {
+  readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  readonly isAuthenticated = this.authService.isAuthenticated;
+  readonly isStaff = this.authService.isStaff;
+  readonly user = this.authService.user;
+  readonly userRole = this.authService.userRole;
+
+  ngOnInit(): void {
+    if (!this.authService.isInitialized()) {
+      this.authService.restoreSession().subscribe();
+    }
+  }
+
+  onLogout(): void {
+    this.authService.logout().subscribe(() => {
+      this.router.navigate(['/login']);
+    });
+  }
+}

@@ -1,0 +1,96 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="card-header">
+      <h2>ورود به پنل مدیریت</h2>
+      <p class="subtitle">برای ورود، شماره موبایل خود را وارد کنید</p>
+    </div>
+
+    @if (successMessage()) {
+      <div class="alert alert-success" role="alert">
+        {{ successMessage() }}
+      </div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert alert-error" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    @if (step() === 'phone') {
+      <form [formGroup]="phoneForm" (ngSubmit)="onSendOtp()" class="login-form">
+        <div class="form-group">
+          <label for="phone">شماره موبایل</label>
+          <input
+            id="phone"
+            type="text"
+            formControlName="phone"
+            placeholder="۰9۱۲۰۰۰۰۰۰۱"
+            dir="ltr"
+            class="form-control"
+            [class.is-invalid]="
+              phoneForm.controls.phone.invalid && phoneForm.controls.phone.touched
+            "
+          />
+          @if (phoneForm.controls.phone.invalid && phoneForm.controls.phone.touched) {
+            <span class="field-error">شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.</span>
+          }
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="phoneForm.invalid || authServiceLoading()"
+        >
+          @if (authServiceLoading()) {
+            <span>در حال ارسال...</span>
+          } @else {
+            <span>دریافت کد تایید</span>
+          }
+        </button>
+      </form>
+    } @else {
+      <form [formGroup]="otpForm" (ngSubmit)="onVerifyOtp()" class="login-form">
+        <div class="form-group">
+          <label for="code">کد تایید ۶ رقمی</label>
+          <input
+            id="code"
+            type="text"
+            formControlName="code"
+            placeholder="۱۲۳۴۵۶"
+            dir="ltr"
+            maxlength="6"
+            class="form-control code-input"
+            [class.is-invalid]="otpForm.controls.code.invalid && otpForm.controls.code.touched"
+          />
+          @if (otpForm.controls.code.invalid && otpForm.controls.code.touched) {
+            <span class="field-error">کد تایید باید ۶ رقم باشد.</span>
+          }
+        </div>
+
+        <div class="button-group">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="otpForm.invalid || authServiceLoading()"
+          >
+            @if (authServiceLoading()) {
+              <span>در حال بررسی...</span>
+            } @else {
+              <span>ورود به حساب</span>
+            }
+          </button>
+
+          <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="onChangePhone()"
+            [disabled]="authServiceLoading()"
+          >
+            ویرایش شماره
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>
