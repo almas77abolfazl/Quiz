@@ -1,0 +1,15 @@
+<div class="coin-badge" [class.large]="size() === 'large'">
+  <span class="coin-icon" aria-hidden="true">🪙</span>
+  <span class="amount">{{ formattedAmount() }}</span>
+  @if (showAdd()) {
+    <button
+      type="button"
+      class="add-btn"
+      title="افزایش سکه"
+      aria-label="افزایش سکه"
+      (click)="addClicked.emit()"
+    >
+      +
+    </button>
+  }
+</div>

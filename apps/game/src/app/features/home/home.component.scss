@@ -96,7 +96,7 @@
   }
 }
 
-/* Home Grid for Desktop Layout (>=1024px) */
+/* Home Grid */
 .home-grid {
   display: flex;
   flex-direction: column;
@@ -116,7 +116,6 @@
   gap: 1.5rem;
 }
 
-/* Sections */
 .section {
   display: flex;
   flex-direction: column;
@@ -156,7 +155,7 @@
   color: var(--text-dim);
 }
 
-/* Game Modes Grid */
+/* Game Modes */
 .modes-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -179,8 +178,6 @@
   text-align: right;
   cursor: pointer;
   transition: all var(--transition-fast);
-  position: relative;
-  width: 100%;
 
   &:hover:not(.disabled-mode) {
     background: var(--surface-card-hover);
@@ -197,11 +194,9 @@
 .primary-mode {
   border-right: 4px solid var(--primary);
 }
-
 .accent-mode {
   border-right: 4px solid var(--gold);
 }
-
 .disabled-mode {
   opacity: 0.6;
   cursor: not-allowed;
@@ -235,13 +230,11 @@
   align-items: center;
   gap: 0.5rem;
 }
-
 .mode-name {
   margin: 0;
   font-size: 1rem;
   font-weight: 700;
 }
-
 .mode-desc {
   margin: 0;
   font-size: 0.8rem;
@@ -308,12 +301,10 @@
   display: flex;
   flex-direction: column;
 }
-
 .cat-title {
   font-size: 0.88rem;
   font-weight: 700;
 }
-
 .cat-count {
   font-size: 0.75rem;
   color: var(--text-dim);
@@ -335,7 +326,6 @@
   align-items: center;
   justify-content: space-between;
 }
-
 .season-title {
   display: flex;
   align-items: center;
@@ -373,7 +363,8 @@
 }
 
 /* Daily Missions */
-.missions-list {
+.missions-list,
+.activity-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -407,7 +398,6 @@
     height: 24px;
     color: var(--success);
   }
-
   .pending-icon {
     width: 22px;
     height: 22px;
@@ -426,7 +416,6 @@
   font-size: 0.85rem;
   font-weight: 600;
 }
-
 .mission-progress {
   display: flex;
   align-items: center;
@@ -458,12 +447,6 @@
 }
 
 /* Activity History */
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
 .activity-card {
   display: flex;
   align-items: center;
@@ -479,29 +462,24 @@
   flex-direction: column;
   gap: 0.15rem;
 }
-
 .activity-mode {
   font-size: 0.88rem;
   font-weight: 700;
 }
-
 .activity-time {
   font-size: 0.75rem;
   color: var(--text-dim);
 }
-
 .activity-score {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
 }
-
 .score-text {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-main);
 }
-
 .coins-earned {
   font-size: 0.75rem;
   color: var(--gold-light);

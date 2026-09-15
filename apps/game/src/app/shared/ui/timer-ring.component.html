@@ -1,0 +1,18 @@
+<div class="timer-container" [class.urgent]="isUrgent()">
+  <svg class="timer-svg" viewBox="0 0 100 100" aria-hidden="true">
+    <!-- Background circle -->
+    <circle class="ring-bg" cx="50" cy="50" r="42" />
+    <!-- Animated stroke circle -->
+    <circle
+      class="ring-progress"
+      cx="50"
+      cy="50"
+      r="42"
+      [style.strokeDashoffset]="strokeOffset()"
+    />
+  </svg>
+  <div class="timer-text">
+    <span class="value">{{ formattedSeconds() }}</span>
+    <span class="unit">ثانیه</span>
+  </div>
+</div>

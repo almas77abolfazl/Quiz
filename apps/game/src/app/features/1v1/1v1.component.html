@@ -1,0 +1,203 @@
+@if (
+  matchState() === 'SETUP' ||
+  matchState() === 'RESULT_WIN' ||
+  matchState() === 'RESULT_LOSS' ||
+  matchState() === 'RESULT_DRAW'
+) {
+  <app-shell>
+    <div class="match-hub">
+      <!-- SETUP STATE -->
+      @if (matchState() === 'SETUP') {
+        <div class="setup-view">
+          <div class="hero-1v1">
+            <div class="vs-badge">⚔️ رقابت دو‌نفره آنلاین</div>
+            <h1 class="hero-title">نبرد هم‌زمان با حریف واقعی</h1>
+            <p class="hero-subtitle">۵ سؤال مشترک، پاداش برد: <strong>۳ امتیاز + ۵ سکه</strong></p>
+          </div>
+
+          <div class="mode-select-card">
+            <h2 class="card-title">تنظیمات رقابت</h2>
+            <div class="option-row">
+              <span class="label">دسته موضوعی:</span>
+              <span class="value">همه دسته‌ها (تصادفی)</span>
+            </div>
+            <div class="option-row">
+              <span class="label">سطح سختی:</span>
+              <span class="value">متوسط</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-find-match" (click)="startSearching()">
+            <span class="btn-icon">⚡</span>
+            <span>یافتن حریف و شروع مسابقه</span>
+          </button>
+        </div>
+      }
+
+      <!-- OUTCOME RESULT STATES -->
+      @if (
+        matchState() === 'RESULT_WIN' ||
+        matchState() === 'RESULT_LOSS' ||
+        matchState() === 'RESULT_DRAW'
+      ) {
+        <div class="result-view">
+          <div
+            class="result-banner"
+            [class.result-win]="matchState() === 'RESULT_WIN'"
+            [class.result-loss]="matchState() === 'RESULT_LOSS'"
+            [class.result-draw]="matchState() === 'RESULT_DRAW'"
+          >
+            <div class="result-icon">
+              {{
+                matchState() === 'RESULT_WIN' ? '🏆' : matchState() === 'RESULT_LOSS' ? '💔' : '🤝'
+              }}
+            </div>
+            <h2 class="result-title">
+              {{
+                matchState() === 'RESULT_WIN'
+                  ? 'شما پیروز شدید!'
+                  : matchState() === 'RESULT_LOSS'
+                    ? 'حریف برنده شد'
+                    : 'مسابقه مساوی شد!'
+              }}
+            </h2>
+            <p class="result-score">نتیجه نهایی: {{ playerScore() }} - {{ opponentScore() }}</p>
+          </div>
+
+          <div class="reward-box">
+            <h3 class="reward-heading">پاداش این مسابقه</h3>
+            <div class="reward-row">
+              <span class="reward-item">
+                🪙 +{{
+                  matchState() === 'RESULT_WIN' ? 5 : matchState() === 'RESULT_DRAW' ? 3 : 1
+                }}
+                سکه
+              </span>
+              <span class="reward-item">
+                🏆 +{{
+                  matchState() === 'RESULT_WIN' ? 3 : matchState() === 'RESULT_DRAW' ? 2 : 1
+                }}
+                امتیاز فصل
+              </span>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button type="button" class="btn-primary" (click)="startSearching()">
+              🔄 رقابت مجدد
+            </button>
+            <button type="button" class="btn-secondary" (click)="resetSetup()">
+              🏠 بازگشت به منو
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </app-shell>
+}
+
+<!-- FULL SCREEN SEARCHING / VS INTRO / PLAYING OVERLAYS -->
+@if (matchState() === 'SEARCHING') {
+  <div class="fullscreen-overlay searching-overlay">
+    <div class="search-card">
+      <div class="radar-pulse">
+        <span class="radar-icon">📡</span>
+      </div>
+      <h2 class="search-title">در حال جستجوی حریف هم‌سطح...</h2>
+      <p class="search-timer">زمان جستجو: {{ searchingSeconds() }} ثانیه</p>
+      <button type="button" class="cancel-btn" (click)="resetSetup()">انصراف از جستجو</button>
+    </div>
+  </div>
+}
+
+@if (matchState() === 'FOUND_VS') {
+  <div class="fullscreen-overlay vs-overlay">
+    <div class="vs-card">
+      <div class="vs-badge-tag">حریف پیدا شد!</div>
+      <div class="matchup-row">
+        <div class="player-col">
+          <div class="avatar-ring">👑</div>
+          <span class="player-name">{{ currentUser().displayName }}</span>
+          <span class="player-rank">رتبه ۱۴#</span>
+        </div>
+
+        <div class="vs-divider">VS</div>
+
+        <div class="player-col">
+          <div class="avatar-ring opponent">🐺</div>
+          <span class="player-name">کیارش_گیمر</span>
+          <span class="player-rank">رتبه ۱۸#</span>
+        </div>
+      </div>
+      <p class="starting-text">مسابقه تا ۳ ثانیه دیگر آغاز می‌شود...</p>
+    </div>
+  </div>
+}
+
+<!-- ACTIVE SHARED QUESTION SCREEN -->
+@if (matchState() === 'PLAYING') {
+  <div class="fullscreen-overlay playing-overlay">
+    <div class="match-playing-frame">
+      <!-- Live Match Header with Opponent Status -->
+      <header class="match-header">
+        <div class="player-score-box">
+          <span class="name">{{ currentUser().displayName }}</span>
+          <span class="score">{{ playerScore() }}</span>
+        </div>
+
+        <app-timer-ring [secondsLeft]="secondsLeft()" [totalSeconds]="30" />
+
+        <div class="player-score-box opponent">
+          <span class="name">کیارش_گیمر</span>
+          <span class="score">{{ opponentScore() }}</span>
+        </div>
+      </header>
+
+      <!-- Opponent Live Status Bar -->
+      <div class="opponent-status-bar" [class.answered]="opponentAnswered()">
+        <span class="status-dot"></span>
+        <span>
+          {{ opponentAnswered() ? 'حریف پاسخ خود را ثبت کرد ✓' : 'حریف در حال فکر کردن است...' }}
+        </span>
+      </div>
+
+      <!-- Question Card -->
+      @if (currentQuestion(); as q) {
+        <main class="question-container">
+          <div class="question-meta">
+            <span class="cat-chip">سؤال {{ currentIndex() + 1 }} از ۵</span>
+            <app-difficulty-chip [difficulty]="q.difficulty" />
+          </div>
+
+          <div class="question-card">
+            <h2 class="q-text">{{ q.text }}</h2>
+          </div>
+
+          <div class="options-list">
+            @for (optText of q.options; track $index) {
+              <app-option-button
+                [label]="getOptionLabel($index)"
+                [text]="optText"
+                [state]="getOptionState($index)"
+                [disabled]="answered()"
+                (clicked)="selectOption($index)"
+              />
+            }
+          </div>
+
+          @if (answered()) {
+            <div class="next-bar">
+              <button type="button" class="btn-next" (click)="advanceQuestion()">
+                @if (currentIndex() < 4) {
+                  <span>سؤال بعدی &larr;</span>
+                } @else {
+                  <span>مشاهده نتیجه نهایی 🏆</span>
+                }
+              </button>
+            </div>
+          }
+        </main>
+      }
+    </div>
+  </div>
+}

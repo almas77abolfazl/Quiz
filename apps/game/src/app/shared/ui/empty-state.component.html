@@ -1,0 +1,10 @@
+<div class="empty-card">
+  <div class="icon-circle" aria-hidden="true">{{ icon() }}</div>
+  <h3 class="title">{{ title() }}</h3>
+  <p class="description">{{ description() }}</p>
+  @if (actionText()) {
+    <button type="button" class="action-btn" (click)="actionClicked.emit()">
+      {{ actionText() }}
+    </button>
+  }
+</div>

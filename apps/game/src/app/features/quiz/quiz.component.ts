@@ -1,62 +1,52 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Category } from '../../core/services/api.service';
+import { DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-quiz',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <div class="quiz-container">
-      <h2>بازی تک نفره</h2>
-      <label>دستهبندی</label>
-      <select [(ngModel)]="categoryId">
-        <option value="">همه</option>
-        <option *ngFor="let cat of categories" [value]="cat.id">{{cat.title}}</option>
-      </select>
-      <button (click)="start()" [disabled]="loading">شروع بازی</button>
-      <button (click)="back()">بازگشت</button>
-    </div>
-  `,
-  styles: [`
-    .quiz-container {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 400px;
-      margin: 2rem auto;
-    }
-  `]
+  templateUrl: './quiz.component.html',
+  styleUrl: './quiz.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule],
 })
 export class QuizComponent implements OnInit {
-  categories: Category[] = [];
+  private readonly router = inject(Router);
+  private readonly api = inject(ApiService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly categories = signal<Category[]>([]);
   categoryId = '';
-  loading = false;
+  readonly loading = signal(false);
 
-  constructor(private readonly router: Router, private readonly api: ApiService) {}
-
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadCategories();
   }
 
-  loadCategories() {
-    this.api.getCategories().subscribe({
-      next: (data) => (this.categories = data),
-      error: () => {},
-    });
+  loadCategories(): void {
+    this.api
+      .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => this.categories.set(data),
+        error: () => {},
+      });
   }
 
-  start() {
-    this.loading = true;
-    this.api.startQuiz(this.categoryId || undefined).subscribe({
-      next: () => this.router.navigate(['/quiz/play']),
-      error: () => (this.loading = false),
-    });
+  start(): void {
+    this.loading.set(true);
+    this.api
+      .startQuiz(this.categoryId || undefined)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.router.navigate(['/quiz/play']),
+        error: () => this.loading.set(false),
+      });
   }
 
-  back() {
+  back(): void {
     this.router.navigate(['/']);
   }
 }

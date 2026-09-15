@@ -1,0 +1,78 @@
+<app-shell>
+  <div class="result-container">
+    <!-- Result Header -->
+    <div class="result-hero" [class.hero-success]="isHighPerformance()">
+      <div class="hero-icon">{{ isHighPerformance() ? '🏆' : '👏' }}</div>
+      <h1 class="hero-title">
+        {{ isHighPerformance() ? 'تست فوق‌العاده‌ای بود!' : 'تلاش خوبی بود!' }}
+      </h1>
+      <p class="hero-subtitle">
+        {{
+          isHighPerformance()
+            ? 'عملکرد عالی شما در این کوییز قابل تحسین است.'
+            : 'با تمرین بیشتر می‌توانید تمام سؤالات را درست پاسخ دهید.'
+        }}
+      </p>
+    </div>
+
+    <!-- Score & Reward Breakdown Card -->
+    <div class="summary-card">
+      <div class="score-circle">
+        <span class="count">{{ correctCount() }}</span>
+        <span class="total">از {{ totalQuestions() }} درست</span>
+      </div>
+
+      <div class="rewards-row">
+        <div class="reward-item">
+          <span class="reward-icon">🪙</span>
+          <span class="reward-val">+{{ earnedCoins() }} سکه</span>
+        </div>
+        <div class="reward-item">
+          <span class="reward-icon">🏆</span>
+          <span class="reward-val">+{{ earnedPoints() }} امتیاز فصل</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Answers Recap List -->
+    <div class="section">
+      <h2 class="section-title">خلاصه پاسخ‌های شما</h2>
+      <div class="recap-list">
+        @for (item of userAnswers(); track $index) {
+          <div class="recap-item" [class.correct]="item.isCorrect">
+            <span class="recap-badge">{{ item.isCorrect ? '✓' : '✕' }}</span>
+            <div class="recap-info">
+              <span class="q-title">سؤال {{ $index + 1 }}: {{ item.question.text }}</span>
+              @if (item.selectedIndex !== null && item.selectedIndex !== undefined) {
+                <span class="q-answer"
+                  >پاسخ شما: {{ item.question.options[item.selectedIndex] }}</span
+                >
+              } @else {
+                <span class="q-answer timeout">بدون پاسخ (زمان تمام شد)</span>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-answers">
+            <p>اطلاعاتی از بازی اخیر یافت نشد. می‌توانید بازی جدیدی را شروع کنید!</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Action CTAs -->
+    <div class="actions-grid">
+      <button type="button" class="btn btn-primary" (click)="playAgain()">
+        <span>🔄 بازی مجدد</span>
+      </button>
+
+      <button type="button" class="btn btn-secondary" (click)="goHome()">
+        <span>🏠 بازگشت به خانه</span>
+      </button>
+
+      <button type="button" class="btn btn-disabled" title="این ویژگی در فاز بعد فعال می‌شود">
+        <span>📤 اشتراک‌گذاری (به‌زودی)</span>
+      </button>
+    </div>
+  </div>
+</app-shell>

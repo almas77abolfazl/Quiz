@@ -1,0 +1,19 @@
+@if (isOpen()) {
+  <div class="dialog-overlay" (click)="cancelled.emit()">
+    <div class="dialog-card" (click)="$event.stopPropagation()">
+      <div class="icon-header">
+        <span class="warning-icon" aria-hidden="true">⚠️</span>
+      </div>
+      <h3 class="dialog-title">{{ title() }}</h3>
+      <p class="dialog-message">{{ message() }}</p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-confirm" (click)="confirmed.emit()">
+          {{ confirmText() }}
+        </button>
+        <button type="button" class="btn btn-cancel" (click)="cancelled.emit()">
+          {{ cancelText() }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

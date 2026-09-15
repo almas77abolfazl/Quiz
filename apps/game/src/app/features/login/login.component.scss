@@ -1,0 +1,230 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 20%, #241d57 0%, #0f0c24 80%);
+  padding: 1.5rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(31, 25, 71, 0.85);
+  border: 1px solid var(--surface-border-bright);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem 1.75rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.brand-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-badge {
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 0.85rem;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.brand-name {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.brand-tagline {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.step-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 0.35rem;
+}
+
+.step-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.step-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.back-link {
+  color: var(--secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.masked-phone {
+  color: var(--gold-light);
+  direction: ltr;
+  display: inline-block;
+}
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+}
+
+.field-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+
+  input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.75rem;
+    background: var(--bg-dark);
+    border: 1.5px solid var(--surface-border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-size: 1.1rem;
+    font-family: inherit;
+    letter-spacing: 1px;
+    transition: border-color var(--transition-fast);
+
+    &.otp-input {
+      letter-spacing: 6px;
+      font-weight: 700;
+      text-align: center;
+      padding-left: 1rem;
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    &.is-invalid {
+      border-color: var(--error);
+    }
+  }
+}
+
+.input-icon {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 1.2rem;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.error-msg {
+  font-size: 0.78rem;
+  color: var(--error);
+  margin-top: 0.2rem;
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+
+  &-error {
+    background: var(--error-surface);
+    border: 1px solid var(--error-border);
+    color: #fca5a5;
+  }
+}
+
+.btn {
+  padding: 0.85rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+
+  &-block {
+    width: 100%;
+  }
+
+  &-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: #ffffff;
+    box-shadow: var(--shadow-glow-primary);
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(99, 102, 241, 0.6);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.resend-wrapper {
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.resend-btn {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    color: var(--gold-light);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+}
+
+.login-footer {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}

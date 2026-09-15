@@ -1,0 +1,113 @@
+<div class="quiz-play-page">
+  <!-- Top Header & Quit Trigger -->
+  <header class="quiz-header">
+    <button type="button" class="quit-btn" (click)="confirmQuit.set(true)">
+      <span class="icon">✕</span>
+      <span>خروج</span>
+    </button>
+
+    <div class="quiz-step-info">
+      <span class="step-text">سؤال {{ currentIndex() + 1 }} از {{ questions().length }}</span>
+      <div class="step-dots">
+        @for (q of questions(); track q.id; let i = $index) {
+          <span
+            class="dot"
+            [class.active]="i === currentIndex()"
+            [class.done]="i < currentIndex()"
+          ></span>
+        }
+      </div>
+    </div>
+
+    <app-timer-ring [secondsLeft]="secondsLeft()" [totalSeconds]="30" />
+  </header>
+
+  <!-- Overall Progress Line -->
+  <div class="progress-bar-container">
+    <div
+      class="progress-fill"
+      [style.width.%]="questions().length ? ((currentIndex() + 1) / questions().length) * 100 : 0"
+    ></div>
+  </div>
+
+  <!-- Main Question Container -->
+  @if (currentQuestion(); as q) {
+    <main class="question-container">
+      <!-- Category & Difficulty Header -->
+      <div class="question-meta">
+        <span class="category-badge">🎨 {{ q.categoryTitle }}</span>
+        <app-difficulty-chip [difficulty]="q.difficulty" />
+      </div>
+
+      <!-- Question Card -->
+      <div class="question-card">
+        <h2 class="question-text">{{ q.text }}</h2>
+
+        <!-- Optional Question Image Placeholder -->
+        @if (q.imageUrl) {
+          <div class="question-image-box">
+            <span class="img-placeholder-icon">🖼️</span>
+            <span>تصویر مرتبط به سؤال</span>
+          </div>
+        }
+      </div>
+
+      <!-- Feedback Alert Banner after answering -->
+      @if (answered()) {
+        <div
+          class="feedback-banner"
+          [class.correct-banner]="isAnswerCorrect()"
+          [class.incorrect-banner]="!isAnswerCorrect()"
+        >
+          <span class="feedback-icon">{{ isAnswerCorrect() ? '🎉' : '❌' }}</span>
+          <span class="feedback-text">
+            {{
+              isAnswerCorrect()
+                ? 'پاسخ شما درست بود!'
+                : secondsLeft() === 0
+                  ? 'زمان تمام شد!'
+                  : 'پاسخ شما نادرست بود!'
+            }}
+          </span>
+        </div>
+      }
+
+      <!-- 4 Option Buttons -->
+      <div class="options-grid">
+        @for (optText of q.options; track $index) {
+          <app-option-button
+            [label]="getOptionLabel($index)"
+            [text]="optText"
+            [state]="getOptionState($index)"
+            [disabled]="answered()"
+            (clicked)="selectOption($index)"
+          />
+        }
+      </div>
+
+      <!-- Next / Transition CTA Button -->
+      @if (answered()) {
+        <div class="action-bar">
+          <button type="button" class="btn-next-question" (click)="goToNextQuestion()">
+            @if (currentIndex() < questions().length - 1) {
+              <span>سؤال بعدی &larr;</span>
+            } @else {
+              <span>مشاهده نتیجه نهایی &larr;</span>
+            }
+          </button>
+        </div>
+      }
+    </main>
+  }
+
+  <!-- Quit Confirmation Modal -->
+  <app-confirm-dialog
+    [isOpen]="confirmQuit()"
+    title="انصراف از کوییز"
+    message="آیا مطمئن هستید که می‌خواهید از بازی خارج شوید؟ امتیاز این نوبت ذخیره نخواهد شد."
+    confirmText="بله، خروج"
+    cancelText="ادامه بازی"
+    (confirmed)="quitGame()"
+    (cancelled)="confirmQuit.set(false)"
+  />
+</div>

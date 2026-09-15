@@ -1,0 +1,137 @@
+<div class="login-page">
+  <div class="login-card">
+    <!-- Logo Header -->
+    <div class="brand-header">
+      <div class="logo-badge">
+        <span class="logo-icon">🧠</span>
+      </div>
+      <h1 class="brand-name">کوییز آنلاین</h1>
+      <p class="brand-tagline">هیجان، رقابت و اطلاعات عمومی با هزاران بازیکن ایرانی</p>
+    </div>
+
+    <!-- Step 1: Phone Number Input -->
+    @if (step() === 1) {
+      <div class="step-container">
+        <h2 class="step-title">ورود / ثبت‌نام با شماره موبایل</h2>
+        <p class="step-desc">کد تأیید به شماره موبایل شما پیامک خواهد شد.</p>
+
+        <form [formGroup]="phoneForm" (ngSubmit)="sendOtp()">
+          <div class="field-group">
+            <label for="phoneInput" class="field-label">شماره موبایل</label>
+            <div class="input-wrapper">
+              <input
+                id="phoneInput"
+                type="tel"
+                dir="ltr"
+                formControlName="phone"
+                placeholder="09123456789"
+                maxlength="11"
+                [class.is-invalid]="
+                  phoneForm.controls['phone'].invalid && phoneForm.controls['phone'].touched
+                "
+              />
+              <span class="input-icon">📱</span>
+            </div>
+            @if (phoneForm.controls['phone'].invalid && phoneForm.controls['phone'].touched) {
+              <div class="error-msg">
+                لطفاً شماره موبایل معتبر ۱۱ رقمی (مثلاً ۰۹۱۲۳۴۵۶۷۸۹) وارد کنید.
+              </div>
+            }
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-error">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+            [disabled]="phoneForm.invalid || loading()"
+          >
+            @if (!loading()) {
+              <span>دریافت کد تأیید</span>
+            } @else {
+              <span class="spinner-text">در حال ارسال...</span>
+            }
+          </button>
+        </form>
+      </div>
+    }
+
+    <!-- Step 2: OTP Verification -->
+    @if (step() === 2) {
+      <div class="step-container">
+        <div class="step-header">
+          <button type="button" class="back-link" (click)="editPhone()">&rarr; ویرایش شماره</button>
+          <h2 class="step-title">تأیید شماره موبایل</h2>
+        </div>
+
+        <p class="step-desc">
+          کد تأیید ارسال‌شده به شماره
+          <strong dir="ltr" class="masked-phone">{{ maskedPhone() }}</strong>
+          را وارد کنید:
+        </p>
+
+        <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+          <div class="field-group">
+            <label for="otpInput" class="field-label">کد تأیید (OTP)</label>
+            <div class="input-wrapper">
+              <input
+                id="otpInput"
+                type="text"
+                dir="ltr"
+                formControlName="code"
+                placeholder="123456"
+                maxlength="6"
+                class="otp-input"
+                [class.is-invalid]="
+                  otpForm.controls['code'].invalid && otpForm.controls['code'].touched
+                "
+              />
+              <span class="input-icon">🔑</span>
+            </div>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="alert alert-error">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block"
+            [disabled]="otpForm.invalid || loading()"
+          >
+            @if (!loading()) {
+              <span>ورود به بازی</span>
+            } @else {
+              <span class="spinner-text">در حال بررسی...</span>
+            }
+          </button>
+
+          <!-- Resend Countdown -->
+          <div class="resend-wrapper">
+            <button
+              type="button"
+              class="resend-btn"
+              [disabled]="resendSeconds() > 0 || loading()"
+              (click)="resendOtp()"
+            >
+              @if (resendSeconds() > 0) {
+                <span>ارسال مجدد کد تا {{ resendSeconds() }} ثانیه دیگر</span>
+              } @else {
+                <span>ارسال مجدد کد تأیید</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- Footer terms -->
+    <div class="login-footer">با ورود، قوانین و مقررات بازی کوییز را می‌پذیرید.</div>
+  </div>
+</div>

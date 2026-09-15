@@ -1,0 +1,18 @@
+<div class="shell-backdrop">
+  <app-bottom-nav />
+
+  <div class="app-frame">
+    <app-top-bar
+      [displayName]="user().displayName"
+      [coins]="user().coins"
+      [seasonPoints]="user().seasonPoints"
+      [seasonRank]="user().seasonRank"
+      [dailyStreak]="user().dailyStreak"
+      (profileClicked)="goToProfile()"
+    />
+
+    <main class="content-area">
+      <ng-content />
+    </main>
+  </div>
+</div>

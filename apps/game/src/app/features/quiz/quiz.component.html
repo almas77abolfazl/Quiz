@@ -1,0 +1,12 @@
+<div class="quiz-container">
+  <h2>بازی تک نفره</h2>
+  <label for="categorySelect">دستهبندی</label>
+  <select id="categorySelect" [(ngModel)]="categoryId">
+    <option value="">همه</option>
+    @for (cat of categories(); track cat.id) {
+      <option [value]="cat.id">{{ cat.title }}</option>
+    }
+  </select>
+  <button type="button" (click)="start()" [disabled]="loading()">شروع بازی</button>
+  <button type="button" (click)="back()">بازگشت</button>
+</div>

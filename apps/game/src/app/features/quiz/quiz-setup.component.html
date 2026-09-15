@@ -1,0 +1,96 @@
+<app-shell>
+  <div class="setup-container">
+    <!-- Header -->
+    <div class="setup-header">
+      <button type="button" class="back-btn" (click)="goHome()">&rarr; بازگشت</button>
+      <h1 class="page-title">تنظیمات کوییز تک‌نفره</h1>
+    </div>
+
+    <!-- Rules Info Card -->
+    <div class="rules-card">
+      <div class="rules-header">
+        <span class="rules-icon">📋</span>
+        <span class="rules-title">قوانین این مسابقه</span>
+      </div>
+      <ul class="rules-list">
+        <li>⚡ شامل <strong>۵ سؤال چهار گزینه‌ای</strong> به صورت تصادفی.</li>
+        <li>⏱️ <strong>۳۰ ثانیه زمان</strong> برای پاسخ به هر سؤال.</li>
+        <li>🏆 پاسخ درست = <strong>امتیاز فصل + سکه پاداش</strong> (بر اساس درجه سختی).</li>
+        <li>💡 عدم وابستگی امتیاز به سرعت پاسخ‌دهی.</li>
+      </ul>
+    </div>
+
+    <!-- Category Selection -->
+    <div class="section">
+      <h2 class="section-title">انتخاب دسته موضوعی</h2>
+      <div class="categories-grid">
+        <button
+          type="button"
+          class="cat-option-btn"
+          [class.active]="selectedCategoryId() === 'ALL'"
+          (click)="selectCategory('ALL')"
+        >
+          <span class="icon">🎲</span>
+          <span class="label">همه دسته‌ها (تصادفی)</span>
+        </button>
+
+        @for (cat of categories(); track cat.id) {
+          <button
+            type="button"
+            class="cat-option-btn"
+            [class.active]="selectedCategoryId() === cat.id"
+            (click)="selectCategory(cat.id)"
+          >
+            <span class="icon">🎨</span>
+            <span class="label">{{ cat.title }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Difficulty Selection -->
+    <div class="section">
+      <h2 class="section-title">سطح سختی سؤالات</h2>
+      <div class="difficulty-options">
+        @for (diff of difficulties; track diff.value) {
+          <button
+            type="button"
+            class="diff-btn"
+            [class.active]="selectedDifficulty() === diff.value"
+            (click)="selectDifficulty(diff.value)"
+          >
+            <app-difficulty-chip [difficulty]="diff.value" />
+            <span class="diff-reward">{{ diff.rewardText }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Selected Config Summary -->
+    <div class="summary-card">
+      <div class="summary-row">
+        <span class="label">دسته انتخابی:</span>
+        <span class="value">{{ selectedCategoryTitle() }}</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">سطح سختی:</span>
+        <span class="value"><app-difficulty-chip [difficulty]="selectedDifficulty()" /></span>
+      </div>
+      <div class="summary-row">
+        <span class="label">پاداش هر پاسخ درست:</span>
+        <span class="value gold-text">{{ rewardSummaryText() }}</span>
+      </div>
+    </div>
+
+    <!-- Start CTA -->
+    <div class="action-footer">
+      <button type="button" class="btn-start-game" [disabled]="loading()" (click)="startQuiz()">
+        @if (!loading()) {
+          <span>🚀 شروع کوییز (۵ سؤال)</span>
+        } @else {
+          <span>در حال آماده‌سازی سؤالات...</span>
+        }
+      </button>
+    </div>
+  </div>
+</app-shell>

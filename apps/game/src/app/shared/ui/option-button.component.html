@@ -1,0 +1,19 @@
+<button
+  type="button"
+  class="option-btn"
+  [class.state-selected]="state() === 'SELECTED'"
+  [class.state-correct]="state() === 'CORRECT'"
+  [class.state-incorrect]="state() === 'INCORRECT'"
+  [class.state-disabled]="isDisabled()"
+  [disabled]="isDisabled()"
+  (click)="clicked.emit()"
+>
+  <span class="option-badge">{{ label() }}</span>
+  <span class="option-text">{{ text() }}</span>
+  @if (state() === 'CORRECT') {
+    <span class="state-icon" aria-hidden="true">✓</span>
+  }
+  @if (state() === 'INCORRECT') {
+    <span class="state-icon" aria-hidden="true">✕</span>
+  }
+</button>
