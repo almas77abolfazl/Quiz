@@ -22,6 +22,7 @@
     "prisma:migrate:deploy": "dotenv -e .env -- pnpm --filter @quiz/api prisma migrate deploy",
     "prisma:migrate:status": "dotenv -e .env -- pnpm --filter @quiz/api prisma migrate status",
     "prisma:db-push": "dotenv -e .env -- pnpm --filter @quiz/api prisma db push",
+    "prisma:seed": "dotenv -e .env -- pnpm --filter @quiz/api prisma:seed",
     "build": "pnpm -r build",
     "test": "pnpm -r test"
   },

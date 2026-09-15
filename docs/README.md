@@ -6,7 +6,7 @@ Welcome to the Quiz monorepo documentation. This repository relies heavily on au
 
 - `product/`: Authoritative product rules, game logic, and open decisions.
 - `architecture/`: Technical boundaries, architecture direction, API contracts, and security boundaries.
-- `workflows/`: Repeatable development procedures for agents, verification steps, and Git policy.
+- `workflows/`: Repeatable development procedures ([local-development.md](workflows/local-development.md), [verification.md](workflows/verification.md), [git-policy.md](workflows/git-policy.md)).
 - `audits/`: Point-in-time historical audit reports.
 - `design/`: Design references and visual review artifacts.
 
