@@ -52,11 +52,21 @@
    pnpm prisma:generate
    ```
 
-5. **سینک کردن دیتابیس (Schema Synchronization)**:
-   ```bash
-   pnpm prisma:db-push
-   ```
-   > **توجه**: دستور `pnpm prisma:db-push` برای محیط توسعه استفاده می‌شود چرا که هنوز دایرکتوری baseline migrations ایجاد نشده است. برای سرور تولید از دستورات migration استفاده خواهد شد.
+5. **اعمال مایگریشن‌های دیتابیس (Database Migrations)**:
+   مایگریشن‌های Prisma اکنون منبع واحد حقیقت (Source of Truth) برای اسکیمای پایگاه‌داده هستند. دستور `prisma db push` دیگر روش اصلی راه‌اندازی نیست.
+   - برای اعمال مایگریشن‌ها بر روی دیتابیس:
+     ```bash
+     pnpm prisma:migrate:deploy
+     ```
+   - برای توسعه و تغییر اسکیما در محیط محلی:
+     ```bash
+     pnpm prisma:migrate:dev
+     ```
+   - برای بررسی وضعیت مایگریشن‌ها:
+     ```bash
+     pnpm prisma:migrate:status
+     ```
+   *(توجه: فاز داده‌های اولیه/Seed در فاز بعدی اضافه خواهد شد.)*
 
 6. **اجرای پروژه‌ها**:
    اجرای تمام سرویس‌ها به صورت هم‌زمان:
