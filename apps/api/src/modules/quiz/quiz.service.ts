@@ -2,7 +2,8 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { StartQuizDto } from './dto/start-quiz.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
-import { Difficulty, GameStatus, AnswerStatus, CoinTransactionType } from '@quiz/contracts';
+import { Difficulty, GameStatus, AnswerStatus, CoinTransactionType, AnswerFeedbackDto } from '@quiz/contracts';
+import { mapToPlayerQuestionDto } from '../question/question.mapper';
 
 const QUESTION_COUNT = 5;
 const DEFAULT_TIME_LIMIT_BY_DIFFICULTY: Record<Difficulty, number> = {
@@ -68,7 +69,22 @@ export class QuizService {
       },
     });
 
-    return quizSession;
+    return {
+      id: quizSession.id,
+      userId: quizSession.userId,
+      categoryId: quizSession.categoryId,
+      difficulty: quizSession.difficulty,
+      status: quizSession.status,
+      startedAt: quizSession.startedAt instanceof Date ? quizSession.startedAt.toISOString() : quizSession.startedAt,
+      questions: quizSession.questions.map((sq) => ({
+        id: sq.id,
+        questionId: sq.questionId,
+        position: sq.position,
+        startsAt: sq.startsAt instanceof Date ? sq.startsAt.toISOString() : sq.startsAt,
+        deadlineAt: sq.deadlineAt instanceof Date ? sq.deadlineAt.toISOString() : sq.deadlineAt,
+        question: mapToPlayerQuestionDto(sq.question),
+      })),
+    };
   }
 
   async submitAnswer(userId: string, quizSessionId: string, dto: SubmitAnswerDto) {
@@ -122,10 +138,27 @@ export class QuizService {
       },
     });
 
+    const correctOption = quizQuestion.question.options.find((o) => o.isCorrect);
+    const correctOptionId = correctOption?.id ?? '';
+    const isAnswerCorrect = updated.status === AnswerStatus.CORRECT;
+    const isAnswerTimedOut = updated.status === AnswerStatus.TIMED_OUT;
+
+    const feedback: AnswerFeedbackDto = {
+      questionId: quizQuestion.questionId,
+      selectedOptionId: dto.selectedOptionId ?? null,
+      correctOptionId,
+      isCorrect: isAnswerCorrect,
+      timedOut: isAnswerTimedOut,
+      explanation: quizQuestion.question.explanation ?? null,
+      earnedSeasonPoints: isAnswerCorrect ? 10 : 0,
+      earnedCoins: isAnswerCorrect ? 10 : 0,
+    };
+
     return {
       status: updated.status,
-      isCorrect: updated.status === AnswerStatus.CORRECT,
-      correctOptionId: quizQuestion.question.options.find((o) => o.isCorrect)?.id,
+      isCorrect: isAnswerCorrect,
+      correctOptionId,
+      feedback,
     };
   }
 

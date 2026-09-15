@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "prisma generate && nest build",
+    "test": "jest",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -18,7 +19,6 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
-    "@quiz/contracts": "workspace:*",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
@@ -27,6 +27,7 @@
     "@nestjs/platform-socket.io": "^11.2.3",
     "@nestjs/websockets": "^11.2.3",
     "@prisma/client": "^6.0.0",
+    "@quiz/contracts": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "reflect-metadata": "^0.2.2",
@@ -37,9 +38,35 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/mapped-types": "^12.0.0",
     "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.2.3",
+    "@types/jest": "^29.5.14",
     "@types/node": "^22.0.0",
+    "@types/supertest": "^7.2.1",
+    "jest": "^29.7.0",
     "prisma": "^6.0.0",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.12",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@quiz/contracts$": "<rootDir>/../../../packages/contracts/src"
+    }
   }
 }
