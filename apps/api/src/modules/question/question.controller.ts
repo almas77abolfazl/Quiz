@@ -60,19 +60,20 @@ export class QuestionController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateQuestionDto,
+    @Req() request: AuthenticatedRequest,
   ): Promise<AdminQuestionDto> {
-    const updated = await this.questionService.update(id, dto);
+    const updated = await this.questionService.update(id, dto, request.user.role);
     return mapToAdminQuestionDto(updated);
   }
 
   @Put(':id/publish')
   @UseGuards(AccessTokenGuard, RolesGuard)
-  @Roles(UserRole.ROOT_ADMIN, UserRole.CONTENT_SPECIALIST)
+  @Roles(UserRole.ROOT_ADMIN)
   async publish(
     @Param('id') id: string,
     @Req() request: AuthenticatedRequest,
   ): Promise<AdminQuestionDto> {
-    const published = await this.questionService.publish(id, request.user.userId);
+    const published = await this.questionService.publish(id, request.user.userId, request.user.role);
     return mapToAdminQuestionDto(published);
   }
 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSeasonDto } from './dto/create-season.dto';
 import { CoinTransactionType } from '@quiz/contracts';
@@ -136,22 +136,37 @@ export class SeasonService {
     return entry;
   }
 
-  async claimPrize(seasonEntryId: string) {
+  async claimPrize(seasonEntryId: string, authenticatedUserId: string) {
     const entry = await this.prisma.seasonEntry.findFirst({
       where: { id: seasonEntryId },
       include: { prizeClaim: true, season: { include: { prizes: true } } },
     });
-    if (!entry) throw new NotFoundException('Entry not found');
+    if (!entry) throw new NotFoundException('Season entry not found');
+
+    if (entry.userId !== authenticatedUserId) {
+      throw new ForbiddenException('You are not authorized to claim this prize');
+    }
+
     if (entry.prizeClaim) return entry.prizeClaim;
 
     const matchingPrize = entry.season.prizes.find((p) => p.rank === entry.rank);
     if (!matchingPrize) throw new BadRequestException('No prize for this rank');
 
-    return this.prisma.prizeClaim.create({
-      data: {
-        seasonEntryId,
-        status: 'PENDING',
-      },
-    });
+    try {
+      return await this.prisma.prizeClaim.create({
+        data: {
+          seasonEntryId,
+          status: 'PENDING',
+        },
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        const existingClaim = await this.prisma.prizeClaim.findUnique({
+          where: { seasonEntryId },
+        });
+        if (existingClaim) return existingClaim;
+      }
+      throw error;
+    }
   }
 }

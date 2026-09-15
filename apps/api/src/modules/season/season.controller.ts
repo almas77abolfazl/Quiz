@@ -64,6 +64,6 @@ export class SeasonController {
     @Param('seasonEntryId') seasonEntryId: string,
     @Req() request: AuthenticatedRequest,
   ) {
-    return this.seasonService.claimPrize(seasonEntryId);
+    return this.seasonService.claimPrize(seasonEntryId, request.user.userId);
   }
 }

@@ -1,8 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
-import { Difficulty, QuestionStatus } from '@quiz/contracts';
+import { Difficulty, QuestionStatus, UserRole } from '@quiz/contracts';
 
 @Injectable()
 export class QuestionService {
@@ -78,11 +78,15 @@ export class QuestionService {
     return question;
   }
 
-  async update(id: string, dto: UpdateQuestionDto) {
+  async update(id: string, dto: UpdateQuestionDto, actorRole?: string) {
     const existing = await this.prisma.question.findFirst({
       where: { id, deletedAt: null },
     });
     if (!existing) throw new NotFoundException('Question not found');
+
+    if (dto.status === QuestionStatus.PUBLISHED && actorRole !== UserRole.ROOT_ADMIN) {
+      throw new ForbiddenException('Only Root Admin can publish questions');
+    }
 
     const updated = await this.prisma.$transaction(async (tx) => {
       const data: any = {};
@@ -118,7 +122,11 @@ export class QuestionService {
     return updated;
   }
 
-  async publish(id: string, reviewerId: string) {
+  async publish(id: string, reviewerId: string, actorRole?: string) {
+    if (actorRole && actorRole !== UserRole.ROOT_ADMIN) {
+      throw new ForbiddenException('Only Root Admin can publish questions');
+    }
+
     const question = await this.prisma.question.findFirst({
       where: { id, deletedAt: null },
     });
