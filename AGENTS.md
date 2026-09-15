@@ -1,70 +1,97 @@
 # Agent Guidelines & Repository Map
 
+This is the permanent instruction entry point for coding agents in the Quiz monorepo.
+
 ## 1. Workspace Map
 
 - `apps/game`: Angular v20+ Web & Mobile (Capacitor) game application (Port 4200)
 - `apps/admin`: Angular Admin control panel (Port 4201)
 - `apps/api`: NestJS API and Realtime Socket.IO server (Port 3000)
 - `packages/contracts`: Shared TypeScript DTOs, interfaces, and API contracts (`@quiz/contracts`)
-- `.agents/skills`: Portable, tool-agnostic Agent Skills repository (Canonical source)
-- `.kilo`: Kilo IDE specific settings and configurations
-- `docs/product`: Comprehensive product, architecture, and game specifications
+- `docs/`: Product rules, architectural decisions, and development workflows.
+- `.agents/skills`: Portable, tool-agnostic Agent Skills repository.
 
-## 2. Product Documentation References
+## 2. Mandatory Task-Entry Procedure
 
-Product rules and specifications are maintained in `docs/product`. Refer to:
-- [Product Brief](file:///e:/Projects/Quiz/docs/product/product-brief.md)
-- [Game Rules & Scoring](file:///e:/Projects/Quiz/docs/product/game-rules.md)
-- [Architecture Direction](file:///e:/Projects/Quiz/docs/product/architecture-direction.md)
-- [Open Decisions](file:///e:/Projects/Quiz/docs/product/open-decisions.md)
+Before making any changes, you MUST:
+1. Run `git status --short --branch` and `git log -3 --oneline`. The tree must be clean and synced with `origin/main`. If not, STOP and report the exact modified/untracked files.
+2. Read this `AGENTS.md` file.
+3. Identify the task type and read ONLY the specific documents listed in the Reading Map below.
 
-## 3. Directory Responsibilities
+## 3. Scope Discipline & User Changes
 
-- `.agents/skills`: Primary canonical location for portable agent skills (`angular-component`, `angular-signals`, `webapp-testing`).
-- `.kilo`: Reserved strictly for Kilo-specific IDE settings (`kilo.json`, agent profiles).
-- `docs`: Product rules, architectural decisions, and development documentation.
+- Keep changes strictly focused on the requested task. Do not perform broad, unrequested audits or refactoring.
+- Preserve existing user work. Do not delete or overwrite files outside your explicit scope.
 
-## 4. Required Angular Skills & Coding Standards
+## 4. Rules for Secrets
 
-When working on Angular applications (`apps/game`, `apps/admin`), follow the skills:
-- `angular-component` (`.agents/skills/angular-component/SKILL.md`)
-- `angular-signals` (`.agents/skills/angular-signals/SKILL.md`)
+- NEVER commit secrets, passwords, or `.env` file contents.
+- Always use `.env.example` as a template for required environment variables.
 
-### Modern Angular Standards (v20+)
-- **Standalone by Default**: Components are standalone by default in Angular v20+. Do **NOT** set `standalone: true`.
-- **Inputs**: Use `input()` / `input.required()` signal inputs instead of `@Input()` decorators.
-- **Outputs**: Use `output()` instead of `@Output()` or `EventEmitter`.
-- **Output Naming**: Use natural action names without `on` prefix (e.g., `clicked = output<void>()`, `profileClicked = output<void>()`).
-- **State Management**:
-  - `signal()` for owned synchronous component state.
-  - `computed()` for derived reactive state.
-  - `linkedSignal()` only when dependent state requires explicit reset on source change.
-  - `toSignal()` / `toObservable()` for RxJS stream interop.
-  - Do **NOT** use `effect()` for state derivation.
-- **Change Detection**: Always use `ChangeDetectionStrategy.OnPush`.
-- **Control Flow**: Use native `@if`, `@else`, `@for`, `@switch`, `@case`, `@default`. Do **NOT** use `*ngIf`, `*ngFor`, `*ngSwitch`.
-- **Class & Style Bindings**: Use direct class/style bindings (`[class.active]="..."`, `[style.width.%]="..."`). Avoid `ngClass` and `ngStyle`.
-- **Dependency Injection**: Use `inject(Service)` instead of constructor parameter injection.
-- **Subscriptions & Timers**: Always handle subscription cleanup using `takeUntilDestroyed()`. Clean up all timers on component destroy or when resetting state.
-- **File Structure**: Split substantial feature components into `.component.ts`, `.component.html`, and `.component.scss`. Keep components inline only when they are small presentational primitives (< 150 lines).
+## 5. Git Safety Rules
 
-## 5. API & Contract Boundaries
+- **STRICT PROHIBITION**: Do **NOT** run `git commit` or `git push` without explicit user request for the current task.
+- Do not reset, clean, stash, checkout, amend, rebase, or rewrite history.
+- Do not modify `.gitignore`.
+- Keep temporary review files outside tracked source directories.
 
-- All cross-package API payloads must use types from `@quiz/contracts`.
-- Feature UI components in `apps/game` must **never** directly depend on concrete demo data services.
-- Access data exclusively through the `GameFacade` and the `GAME_DATA_SOURCE` abstraction layer.
-- Never expose correct answer indices or answers to client-facing question view models.
+## 6. Build, Test, and Reporting Expectations
 
-## 6. Verification Commands
+Before completing any task, run the relevant verification commands found in [verification.md](docs/workflows/verification.md). At a minimum, ensure:
+- `pnpm run build` passes.
+- `git diff --check` passes cleanly.
 
-Before completing any task, run:
-- `pnpm --filter @quiz/game build`
-- `pnpm --filter @quiz/game test`
-- `pnpm run build`
-- `git diff --check`
+## 7. Documentation Precedence Policy
 
-## 7. Git Safety Rules
+When resolving conflicts, follow this order of precedence:
+1. The user's current explicit instruction.
+2. This `AGENTS.md` file.
+3. Authoritative documents linked in the Reading Map.
+4. Area-specific nested `AGENTS.md` (if any).
+5. Existing source code and tests.
+6. Historical plans, reports, and audits.
 
-- **STRICT PROHIBITION**: Do **NOT** run `git commit` or `git push` without explicit user request.
-- Keep all temporary review files and screenshot artifacts outside tracked source directories.
+*Note: If product rules conflict with current source code, record the conflict as an implementation gap. Do not change the product rule to match the code.*
 
+## 8. Reading Map
+
+Read ONLY the documents relevant to your current task type:
+
+| Task type | Required reading |
+| --- | --- |
+| Every task | `AGENTS.md` |
+| Product/game logic | [product-brief.md](docs/product/product-brief.md), [game-rules.md](docs/product/game-rules.md) |
+| API/security/auth/WebSocket | [architecture-direction.md](docs/architecture/architecture-direction.md), [security-boundaries.md](docs/architecture/security-boundaries.md) |
+| Shared network contracts | [contracts.md](docs/architecture/contracts.md) |
+| Prisma/database/migrations/seed | [architecture-direction.md](docs/architecture/architecture-direction.md), [verification.md](docs/workflows/verification.md), Prisma schema |
+| Game Angular UI | Product rules, relevant design docs, Angular skills |
+| Admin Angular UI | Product rules, [security-boundaries.md](docs/architecture/security-boundaries.md), Angular skills |
+| Visual/browser verification | [verification.md](docs/workflows/verification.md), `webapp-testing` skill |
+| Git/release work | [git-policy.md](docs/workflows/git-policy.md), [verification.md](docs/workflows/verification.md) |
+
+## 9. Skill Discovery & Usage Rules
+
+- This monorepo actively supports both Kilo and Antigravity tooling.
+- `.kilo/skills/` is the Kilo-compatible skill location.
+- `.agents/skills/` is the Antigravity-compatible skill location.
+- Neither directory is universally canonical at this time. Agents must use the native directory supported by their current tool context.
+- Before performing specialized tasks, read the relevant `SKILL.md` file from your tool's supported skill directory (e.g., `angular-component`, `angular-signals`, `webapp-testing`).
+- Maintaining separate skill directories creates potential drift risk. A future synchronization or single source-of-truth policy remains an open tooling decision.
+- Do not move, delete, synchronize, or modify either skill directory unless explicitly authorized.
+
+## 10. Clear Stop Conditions
+
+Stop work and request user feedback when:
+- You discover a dirty Git tree during the entry check.
+- You encounter conflicting authoritative documentation.
+- You identify a need to change core architecture or product rules to proceed.
+- The requested task is complete and verified.
+
+## 11. Final Handoff / Report Format
+
+Your final response must include:
+1. A summary of what was changed.
+2. The results of verification commands (`pnpm run build`, `git diff --check`).
+3. The final Git status (`git status --short --branch`).
+4. Any identified open decisions or unresolved implementation gaps.
+5. Confirmation that no unauthorized commits or pushes were made.

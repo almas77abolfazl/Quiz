@@ -4,7 +4,7 @@
 
 - [خلاصهٔ محصول](product-brief.md)
 - [قواعد بازی و اقتصاد](game-rules.md)
-- [جهت معماری](architecture-direction.md)
+- [جهت معماری](../architecture/architecture-direction.md)
 - [تصمیم‌های باز](open-decisions.md)
 
 وضعیت: پیش‌نویس مورد توافق اولیه — ۲۰۲۶-۰۹-۱۳
