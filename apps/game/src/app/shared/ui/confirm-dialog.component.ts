@@ -1,0 +1,126 @@
+import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+  selector: 'app-confirm-dialog',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div class="dialog-overlay" *ngIf="isOpen" (click)="onCancel.emit()">
+      <div class="dialog-card" (click)="$event.stopPropagation()">
+        <div class="icon-header">
+          <span class="warning-icon">⚠️</span>
+        </div>
+        <h3 class="dialog-title">{{ title }}</h3>
+        <p class="dialog-message">{{ message }}</p>
+        <div class="dialog-actions">
+          <button class="btn btn-confirm" (click)="onConfirm.emit()">{{ confirmText }}</button>
+          <button class="btn btn-cancel" (click)="onCancel.emit()">{{ cancelText }}</button>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [
+    `
+      .dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 12, 36, 0.85);
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 1rem;
+      }
+
+      .dialog-card {
+        background: var(--surface-card);
+        border: 1px solid var(--surface-border-bright);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 380px;
+        text-align: center;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      .icon-header {
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+      }
+
+      .dialog-title {
+        margin: 0 0 0.5rem;
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+
+      .dialog-message {
+        margin: 0 0 1.5rem;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+      }
+
+      .dialog-actions {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .btn {
+        flex: 1;
+        padding: 0.75rem;
+        border-radius: var(--radius-md);
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: all var(--transition-fast);
+      }
+
+      .btn-confirm {
+        background: var(--error);
+        color: #ffffff;
+      }
+      .btn-confirm:hover {
+        background: var(--error-border);
+      }
+
+      .btn-cancel {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-main);
+      }
+      .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      @keyframes popIn {
+        from {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+    `,
+  ],
+})
+export class ConfirmDialogComponent {
+  @Input() isOpen = false;
+  @Input() title = 'انصراف از بازی';
+  @Input() message = 'آیا از خروج اطمینان دارید؟ امتیاز این نوبت را از دست خواهید داد.';
+  @Input() confirmText = 'بله، خروج';
+  @Input() cancelText = 'ادامه بازی';
+  @Output() onConfirm = new EventEmitter<void>();
+  @Output() onCancel = new EventEmitter<void>();
+}

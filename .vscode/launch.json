@@ -2,14 +2,25 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug API",
+      "name": "Debug API (Launch)",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@quiz/api", "start:debug"],
       "console": "integratedTerminal",
       "restart": true,
-      "preLaunchTask": "Start PostgreSQL"
+      "preLaunchTask": "postgres:start"
+    },
+    {
+      "name": "Attach Debugger (Port 9229)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/apps/api/dist/**/*.js"],
+      "skipFiles": ["<node_internals>/**"],
+      "preLaunchTask": "api:debug"
     },
     {
       "name": "Launch Game (Chrome)",
@@ -17,7 +28,7 @@
       "request": "launch",
       "url": "http://localhost:4200",
       "webRoot": "${workspaceFolder}/apps/game",
-      "preLaunchTask": "Start Game"
+      "preLaunchTask": "game:serve"
     },
     {
       "name": "Launch Admin (Chrome)",
@@ -25,17 +36,18 @@
       "request": "launch",
       "url": "http://localhost:4201",
       "webRoot": "${workspaceFolder}/apps/admin",
-      "preLaunchTask": "Start Admin"
+      "preLaunchTask": "admin:serve"
     }
   ],
   "compounds": [
     {
-      "name": "Debug API & Launch Frontends",
+      "name": "Full Stack Dev (Debug API + Chrome Frontends)",
       "configurations": [
-        "Debug API",
+        "Debug API (Launch)",
         "Launch Game (Chrome)",
         "Launch Admin (Chrome)"
-      ]
+      ],
+      "stopAll": true
     }
   ]
 }

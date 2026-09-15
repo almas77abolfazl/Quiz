@@ -2,52 +2,46 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start PostgreSQL",
+      "label": "postgres:start",
       "type": "shell",
       "command": "pnpm db:up",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
     },
     {
-      "label": "Stop PostgreSQL",
+      "label": "postgres:stop",
       "type": "shell",
       "command": "pnpm db:down",
       "problemMatcher": []
     },
     {
-      "label": "Generate Prisma Client",
+      "label": "api:debug",
       "type": "shell",
-      "command": "pnpm prisma:generate",
-      "dependsOn": ["Start PostgreSQL"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Push Prisma Schema",
-      "type": "shell",
-      "command": "pnpm prisma:db-push",
-      "dependsOn": ["Start PostgreSQL"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Start API",
-      "type": "shell",
-      "command": "pnpm dev:api",
+      "command": "pnpm --filter @quiz/api start:debug",
+      "dependsOn": ["postgres:start"],
       "isBackground": true,
-      "dependsOn": ["Start PostgreSQL"],
       "problemMatcher": {
         "owner": "typescript",
-        "source": "nest",
+        "source": "nestjs",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^\\[Nest\\].*Starting Nest application...",
-          "endsPattern": "^\\[Nest\\].*Nest application successfully started"
+          "beginsPattern": "Starting compilation|\\[Nest\\]",
+          "endsPattern": "successfully started|Debugger listening on"
         },
         "pattern": {
           "regexp": "^$"
         }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
       }
     },
     {
-      "label": "Start Game",
+      "label": "game:serve",
       "type": "shell",
       "command": "pnpm dev:game",
       "isBackground": true,
@@ -56,16 +50,20 @@
         "source": "angular",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^.*(Compiling|Building)...",
-          "endsPattern": "^.*(Local:\\s+http:\\/\\/localhost:|Angular Live Development Server is listening)"
+          "beginsPattern": "Building\\.\\.\\.|Starting\\.\\.\\.",
+          "endsPattern": "Application bundle generation complete|Watch mode enabled|Local:\\s+http"
         },
         "pattern": {
           "regexp": "^$"
         }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
       }
     },
     {
-      "label": "Start Admin",
+      "label": "admin:serve",
       "type": "shell",
       "command": "pnpm dev:admin",
       "isBackground": true,
@@ -74,20 +72,24 @@
         "source": "angular",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "^.*(Compiling|Building)...",
-          "endsPattern": "^.*(Local:\\s+http:\\/\\/localhost:|Angular Live Development Server is listening)"
+          "beginsPattern": "Building\\.\\.\\.|Starting\\.\\.\\.",
+          "endsPattern": "Application bundle generation complete|Watch mode enabled|Local:\\s+http"
         },
         "pattern": {
           "regexp": "^$"
         }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
       }
     },
     {
-      "label": "Start All Development Servers",
+      "label": "dev:all",
       "type": "shell",
       "command": "pnpm dev",
       "isBackground": true,
-      "dependsOn": ["Start PostgreSQL"],
+      "dependsOn": ["postgres:start"],
       "problemMatcher": {
         "owner": "typescript",
         "source": "concurrently",
@@ -100,12 +102,6 @@
           "regexp": "^$"
         }
       }
-    },
-    {
-      "label": "Build All Workspaces",
-      "type": "shell",
-      "command": "pnpm build",
-      "problemMatcher": []
     }
   ]
 }
