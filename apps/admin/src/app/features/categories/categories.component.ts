@@ -2,11 +2,12 @@ import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AdminApiService, Category } from '../../core/services/admin-api.service';
+import { JalaliDatePipe } from '../../shared/pipes/jalali-date.pipe';
 
 @Component({
   selector: 'app-categories',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, JalaliDatePipe],
   templateUrl: './categories.component.html',
   styleUrl: './categories.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

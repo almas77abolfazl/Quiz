@@ -1,10 +1,20 @@
 @import '@angular/material/prebuilt-themes/indigo-pink.css';
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   font-family: Vazirmatn, Tahoma, sans-serif;
   direction: rtl;
   text-align: right;
   background: #f5f5f5;
+}
+
+input,
+select,
+textarea,
+button,
+option,
+optgroup {
+  font-family: Vazirmatn, Tahoma, sans-serif;
 }

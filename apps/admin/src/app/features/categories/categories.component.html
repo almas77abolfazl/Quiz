@@ -58,7 +58,7 @@
                   {{ cat.isActive ? 'فعال' : 'غیرفعال' }}
                 </span>
               </td>
-              <td class="text-secondary" dir="ltr">{{ cat.createdAt | date: 'yyyy/MM/dd' }}</td>
+              <td class="text-secondary" dir="rtl">{{ cat.createdAt | jalaliDate }}</td>
               <td class="actions-cell">
                 <button class="btn-action btn-edit" (click)="openEditModal(cat)">ویرایش</button>
                 <button

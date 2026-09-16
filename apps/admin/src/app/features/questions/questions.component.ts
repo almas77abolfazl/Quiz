@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   inject,
   signal,
   computed,
@@ -18,11 +19,12 @@ import {
 } from '@quiz/contracts';
 import { AdminApiService, Category } from '../../core/services/admin-api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { JalaliDatePipe } from '../../shared/pipes/jalali-date.pipe';
 
 @Component({
   selector: 'app-questions',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, JalaliDatePipe],
   templateUrl: './questions.component.html',
   styleUrl: './questions.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +33,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
   readonly authService = inject(AuthService);
   private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   // User Role State
   readonly userRole = this.authService.userRole;
@@ -140,7 +143,10 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
   loadCategories(): void {
     this.api.getCategories().subscribe({
-      next: (data) => this.categories.set(data),
+      next: (data) => {
+        this.categories.set(data);
+        this.cdr.markForCheck();
+      },
       error: () => {},
     });
   }
@@ -149,6 +155,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     const currentReqId = ++this.requestId;
     this.isLoading.set(true);
     this.error.set(null);
+    this.cdr.markForCheck();
 
     this.api
       .getQuestions({
@@ -167,6 +174,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           this.questions.set(res.data as AdminQuestionDto[]);
           this.meta.set(res.meta);
           this.isLoading.set(false);
+          this.cdr.markForCheck();
         },
         error: () => {
           if (currentReqId !== this.requestId) {
@@ -174,6 +182,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           }
           this.error.set('خطا در دریافت لیست سوالات. لطفاً دوباره تلاش کنید.');
           this.isLoading.set(false);
+          this.cdr.markForCheck();
         },
       });
   }
@@ -229,6 +238,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     }
 
     this.isFormModalOpen.set(true);
+    this.cdr.markForCheck();
   }
 
   openEditModal(q: AdminQuestionDto): void {
@@ -240,7 +250,22 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     this.editingQuestion.set(q);
     this.formError.set(null);
 
-    const correctIndex = q.options.findIndex((opt) => opt.isCorrect);
+    this.populateForm(q);
+    this.isFormModalOpen.set(true);
+    this.cdr.markForCheck();
+
+    // Fetch fresh detailed question data from server
+    this.api.getQuestion(q.id).subscribe({
+      next: (fullQ) => {
+        this.populateForm(fullQ as AdminQuestionDto);
+        this.cdr.markForCheck();
+      },
+      error: () => {},
+    });
+  }
+
+  private populateForm(q: AdminQuestionDto): void {
+    const correctIndex = q.options ? q.options.findIndex((opt) => opt.isCorrect) : 0;
 
     this.questionForm.patchValue({
       text: q.text,
@@ -253,17 +278,21 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
     const opts = this.optionsFormArray;
     for (let i = 0; i < 4; i++) {
-      const optData = q.options[i];
+      const optData = q.options && q.options[i];
       opts.at(i).patchValue({ text: optData ? optData.text : '' });
     }
+  }
 
-    this.isFormModalOpen.set(true);
+  setCorrectOptionIndex(index: number): void {
+    this.questionForm.patchValue({ correctOptionIndex: index });
+    this.cdr.markForCheck();
   }
 
   closeFormModal(): void {
     this.isFormModalOpen.set(false);
     this.editingQuestion.set(null);
     this.formError.set(null);
+    this.cdr.markForCheck();
   }
 
   toggleCategorySelection(catId: string): void {
@@ -276,6 +305,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     }
     this.questionForm.patchValue({ categoryIds: updated });
     this.questionForm.get('categoryIds')?.markAsTouched();
+    this.cdr.markForCheck();
   }
 
   isCategorySelected(catId: string): boolean {

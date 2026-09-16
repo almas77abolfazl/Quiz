@@ -132,7 +132,7 @@
                   </span>
                 </td>
                 <td class="col-date">
-                  <span class="date-text">{{ q.createdAt | date: 'yyyy/MM/dd' }}</span>
+                  <span class="date-text">{{ q.createdAt | jalaliDate }}</span>
                 </td>
                 <td class="col-actions">
                   <div class="action-buttons">
@@ -415,11 +415,10 @@
                   <label class="radio-correct-label" [title]="'علامت‌گذاری به عنوان گزینه صحیح'">
                     <input
                       type="radio"
-                      formControlName="correctOptionIndex"
                       [value]="$index"
                       [name]="'correctOptionGroup'"
                       [checked]="questionForm.get('correctOptionIndex')?.value === $index"
-                      (change)="questionForm.patchValue({ correctOptionIndex: $index })"
+                      (change)="setCorrectOptionIndex($index)"
                     />
                     <span>گزینه {{ $index + 1 }}</span>
                   </label>
