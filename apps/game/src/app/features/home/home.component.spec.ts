@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { Router, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { HomeComponent } from './home.component';
-import { PlayerHomeStore } from '../../core/services/player-home.store';
+import { PlayerStore } from '../../core/services/player.store';
 import { PlayerHomeSummaryDto, Difficulty } from '@quiz/contracts';
 
 describe('HomeComponent', () => {
@@ -46,7 +47,7 @@ describe('HomeComponent', () => {
       {
         id: 'game-1',
         categoryId: 'cat-quiz-1',
-        categoryTitle: 'تاریخ و تمدن',
+        categoryTitle: 'تاریخ و تmockSummary',
         difficulty: Difficulty.MEDIUM,
         correctAnswers: 5,
         totalQuestions: 5,
@@ -60,12 +61,7 @@ describe('HomeComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [HomeComponent],
-      providers: [
-        provideRouter([]),
-        PlayerHomeStore,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideRouter([]), PlayerStore, provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     router = TestBed.inject(Router);
@@ -80,7 +76,7 @@ describe('HomeComponent', () => {
     httpMock.verify();
   });
 
-  it('should call loadHomeSummary on init and render real summary data', () => {
+  it('should call ensureLoaded on init and render real summary data', () => {
     fixture.detectChanges(); // triggers ngOnInit
 
     const req = httpMock.expectOne('/api/users/me/home-summary');

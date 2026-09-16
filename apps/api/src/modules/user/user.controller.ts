@@ -14,6 +14,12 @@ export class UserController {
     return this.userService.getHomeSummary(request.user.userId);
   }
 
+  @Get('me/profile')
+  @UseGuards(AccessTokenGuard)
+  getProfileDetails(@Req() request: AuthenticatedRequest) {
+    return this.userService.getProfileDetails(request.user.userId);
+  }
+
   @Get('me')
   @UseGuards(AccessTokenGuard)
   getMe(@Req() request: AuthenticatedRequest) {

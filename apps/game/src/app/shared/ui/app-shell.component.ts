@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TopBarComponent } from './top-bar.component';
 import { BottomNavComponent } from './bottom-nav.component';
-import { PlayerHomeStore } from '../../core/services/player-home.store';
+import { PlayerStore } from '../../core/services/player.store';
 
 @Component({
   selector: 'app-shell',
@@ -14,15 +14,15 @@ import { PlayerHomeStore } from '../../core/services/player-home.store';
 })
 export class AppShellComponent implements OnInit {
   private readonly router = inject(Router);
-  private readonly playerHomeStore = inject(PlayerHomeStore);
+  private readonly playerStore = inject(PlayerStore);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly user = this.playerHomeStore.user;
-  readonly seasonPoints = this.playerHomeStore.seasonPoints;
-  readonly seasonRank = this.playerHomeStore.seasonRank;
+  readonly user = this.playerStore.user;
+  readonly seasonPoints = this.playerStore.seasonPoints;
+  readonly seasonRank = this.playerStore.seasonRank;
 
   ngOnInit(): void {
-    this.playerHomeStore
+    this.playerStore
       .ensureLoaded()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ error: () => {} });

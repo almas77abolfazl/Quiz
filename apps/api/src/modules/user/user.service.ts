@@ -18,6 +18,9 @@ import {
   PlayerHomeSummarySeasonDto,
   PlayerHomeSummaryCategoryDto,
   PlayerHomeRecentGameDto,
+  PlayerProfileDto,
+  PlayerProfileBadgeDto,
+  PlayerProfileFavoriteCategoryDto,
   Difficulty,
   AnswerStatus,
   GameStatus,
@@ -199,6 +202,170 @@ export class UserService {
       categories: categoryDtos,
       recentSoloGames,
     };
+  }
+
+  async getProfileDetails(userId: string): Promise<PlayerProfileDto> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      select: {
+        id: true,
+        phone: true,
+        username: true,
+        displayName: true,
+        avatarKey: true,
+        coins: true,
+        dailyStreak: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const maskedPhone = user.phone ? this.maskPhone(user.phone) : '';
+
+    const activeSeason = await this.prisma.season.findFirst({
+      where: { isActive: true },
+    });
+
+    let seasonScore = 0;
+    let seasonRank: number | null = null;
+
+    if (activeSeason) {
+      const entry = await this.prisma.seasonEntry.findFirst({
+        where: { seasonId: activeSeason.id, userId },
+      });
+      if (entry) {
+        seasonScore = entry.score;
+        const higherCount = await this.prisma.seasonEntry.count({
+          where: {
+            seasonId: activeSeason.id,
+            score: { gt: entry.score },
+          },
+        });
+        seasonRank = higherCount + 1;
+      }
+    }
+
+    const totalCompletedSoloGames = await this.prisma.quizSession.count({
+      where: { userId, status: GameStatus.COMPLETED },
+    });
+
+    const [totalCorrectAnswers, totalIncorrectAnswers, totalTimedOutAnswers] = await Promise.all([
+      this.prisma.quizSessionQuestion.count({
+        where: { quizSession: { userId }, status: AnswerStatus.CORRECT },
+      }),
+      this.prisma.quizSessionQuestion.count({
+        where: { quizSession: { userId }, status: AnswerStatus.INCORRECT },
+      }),
+      this.prisma.quizSessionQuestion.count({
+        where: { quizSession: { userId }, status: AnswerStatus.TIMED_OUT },
+      }),
+    ]);
+
+    const totalAnswers = totalCorrectAnswers + totalIncorrectAnswers + totalTimedOutAnswers;
+    const answerAccuracy =
+      totalAnswers > 0 ? Math.round((totalCorrectAnswers / totalAnswers) * 100 * 10) / 10 : 0;
+
+    const recentSessions = await this.prisma.quizSession.findMany({
+      where: { userId, status: GameStatus.COMPLETED },
+      orderBy: { completedAt: 'desc' },
+      take: 10,
+      include: {
+        questions: {
+          include: {
+            question: {
+              select: { id: true, difficulty: true },
+            },
+          },
+        },
+      },
+    });
+
+    const categoryIds = Array.from(
+      new Set(recentSessions.map((s) => s.categoryId).filter((id): id is string => !!id)),
+    );
+
+    const catList =
+      categoryIds.length > 0
+        ? await this.prisma.category.findMany({
+            where: { id: { in: categoryIds } },
+            select: { id: true, title: true },
+          })
+        : [];
+    const catMap = new Map(catList.map((c) => [c.id, c.title]));
+
+    const recentSoloGames: PlayerHomeRecentGameDto[] = recentSessions.map((session) => {
+      let correctAnswers = 0;
+      let coinsFromAnswers = 0;
+      let seasonPointsFromAnswers = 0;
+
+      for (const q of session.questions) {
+        if (q.status === AnswerStatus.CORRECT) {
+          correctAnswers++;
+          const diff = q.question.difficulty as Difficulty;
+          coinsFromAnswers += getCoinsForDifficulty(diff);
+          seasonPointsFromAnswers += getSeasonPointsForDifficulty(diff);
+        }
+      }
+
+      const earnedCoins = coinsFromAnswers + 2;
+      const earnedSeasonPoints = session.isRanked ? seasonPointsFromAnswers : 0;
+      const completedAt = (session.completedAt ?? session.startedAt).toISOString();
+
+      return {
+        id: session.id,
+        categoryId: session.categoryId,
+        categoryTitle: session.categoryId ? (catMap.get(session.categoryId) ?? null) : null,
+        difficulty: session.difficulty as Difficulty | null,
+        correctAnswers,
+        totalQuestions: session.questions.length,
+        earnedCoins,
+        earnedSeasonPoints,
+        completedAt,
+      };
+    });
+
+    const follows = await this.prisma.categoryFollow.findMany({
+      where: { userId, category: { deletedAt: null } },
+      include: { category: true },
+    });
+
+    const favoriteCategories: PlayerProfileFavoriteCategoryDto[] = follows.map((f) => ({
+      id: f.category.id,
+      title: f.category.title,
+      coverKey: f.category.coverKey,
+    }));
+
+    const earnedBadges: PlayerProfileBadgeDto[] = [];
+
+    return {
+      id: user.id,
+      displayName: user.displayName,
+      username: user.username,
+      avatarKey: user.avatarKey,
+      maskedPhone,
+      coins: user.coins,
+      dailyStreak: user.dailyStreak,
+      seasonScore,
+      seasonRank,
+      stats: {
+        totalCompletedSoloGames,
+        totalCorrectAnswers,
+        totalIncorrectAnswers,
+        totalTimedOutAnswers,
+        answerAccuracy,
+      },
+      recentSoloGames,
+      favoriteCategories,
+      earnedBadges,
+    };
+  }
+
+  private maskPhone(phone: string): string {
+    if (!phone) return '';
+    if (phone.length <= 6) return phone;
+    return phone.slice(0, 4) + '***' + phone.slice(-4);
   }
 
   async getProfile(userId: string) {

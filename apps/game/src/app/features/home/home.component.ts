@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, OnInit, inject, DestroyRef } from '
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShellComponent } from '../../shared/ui/app-shell.component';
-import { PlayerHomeStore } from '../../core/services/player-home.store';
+import { PlayerStore } from '../../core/services/player.store';
 
 @Component({
   selector: 'app-home',
@@ -13,26 +13,27 @@ import { PlayerHomeStore } from '../../core/services/player-home.store';
 })
 export class HomeComponent implements OnInit {
   private readonly router = inject(Router);
-  readonly playerHomeStore = inject(PlayerHomeStore);
+  readonly playerStore = inject(PlayerStore);
+  readonly playerHomeStore = this.playerStore;
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly isLoading = this.playerHomeStore.isLoading;
-  readonly loadError = this.playerHomeStore.loadError;
-  readonly categories = this.playerHomeStore.categories;
-  readonly season = this.playerHomeStore.season;
-  readonly dailyQuota = this.playerHomeStore.dailyQuota;
-  readonly recentSoloGames = this.playerHomeStore.recentSoloGames;
+  readonly isLoading = this.playerStore.isLoading;
+  readonly loadError = this.playerStore.loadError;
+  readonly categories = this.playerStore.categories;
+  readonly season = this.playerStore.season;
+  readonly dailyQuota = this.playerStore.dailyQuota;
+  readonly recentSoloGames = this.playerStore.recentSoloGames;
 
   ngOnInit(): void {
-    this.playerHomeStore
+    this.playerStore
       .ensureLoaded()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ error: () => {} });
   }
 
   reloadSummary(): void {
-    this.playerHomeStore
-      .loadHomeSummary()
+    this.playerStore
+      .refresh()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: () => {},

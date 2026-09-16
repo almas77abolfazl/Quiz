@@ -1,9 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
 import { AppShellComponent } from './app-shell.component';
-import { PlayerHomeStore } from '../../core/services/player-home.store';
+import { PlayerStore } from '../../core/services/player.store';
 import { PlayerHomeSummaryDto } from '@quiz/contracts';
 
 describe('AppShellComponent', () => {
@@ -11,7 +12,7 @@ describe('AppShellComponent', () => {
   let fixture: ComponentFixture<AppShellComponent>;
   let router: Router;
   let httpMock: HttpTestingController;
-  let store: PlayerHomeStore;
+  let store: PlayerStore;
 
   const mockSummary: PlayerHomeSummaryDto = {
     user: {
@@ -41,18 +42,13 @@ describe('AppShellComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AppShellComponent],
-      providers: [
-        provideRouter([]),
-        PlayerHomeStore,
-        provideHttpClient(),
-        provideHttpClientTesting(),
-      ],
+      providers: [provideRouter([]), PlayerStore, provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     router = TestBed.inject(Router);
     vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
 
-    store = TestBed.inject(PlayerHomeStore);
+    store = TestBed.inject(PlayerStore);
     httpMock = TestBed.inject(HttpTestingController);
 
     fixture = TestBed.createComponent(AppShellComponent);
@@ -63,9 +59,11 @@ describe('AppShellComponent', () => {
     httpMock.verify();
   });
 
-  it('should display real user profile, coins, and season badge from PlayerHomeStore', () => {
-    store.loadHomeSummary().subscribe();
+  it('should call ensureLoaded on init and display real user profile, coins, and season badge from PlayerStore', () => {
+    fixture.detectChanges(); // triggers ngOnInit -> ensureLoaded
+
     const req = httpMock.expectOne('/api/users/me/home-summary');
+    expect(req.request.method).toBe('GET');
     req.flush(mockSummary);
 
     fixture.detectChanges();
