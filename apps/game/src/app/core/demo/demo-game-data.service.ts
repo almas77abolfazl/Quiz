@@ -1,5 +1,6 @@
-import { Injectable, signal, Signal } from '@angular/core';
+import { Injectable, signal, Signal, inject } from '@angular/core';
 import { Difficulty } from '@quiz/contracts';
+import { ApiService } from '../services/api.service';
 import {
   AnswerValidationResult,
   GameCategory,
@@ -37,6 +38,8 @@ export interface DemoSeasonPrize {
 
 @Injectable({ providedIn: 'root' })
 export class DemoGameDataSource extends GameDataSource {
+  private readonly apiService = inject(ApiService, { optional: true });
+
   private readonly _currentUser = signal<DemoUser>({
     id: 'usr_demo_123',
     phone: '09123456789',
@@ -56,59 +59,7 @@ export class DemoGameDataSource extends GameDataSource {
     favoriteCategoryIds: ['cat_tech', 'cat_history', 'cat_sports'],
   });
 
-  private readonly _categoriesSignal = signal<readonly DemoCategory[]>([
-    {
-      id: 'cat_general',
-      title: 'اطلاعات عمومی',
-      description: 'دانش عمومی و چیستان‌های جذاب',
-      iconName: 'psychology',
-      color: '#3b82f6',
-      questionCount: 240,
-      isPopular: true,
-    },
-    {
-      id: 'cat_tech',
-      title: 'فناوری و علوم',
-      description: 'کامپیوتر، هوش مصنوعی و دنیای دیجیتال',
-      iconName: 'devices',
-      color: '#06b6d4',
-      questionCount: 180,
-      isPopular: true,
-    },
-    {
-      id: 'cat_history',
-      title: 'تاریخ و تمدن',
-      description: 'تاریخ ایران و جهان از گذشته تا امروز',
-      iconName: 'account_balance',
-      color: '#f59e0b',
-      questionCount: 150,
-    },
-    {
-      id: 'cat_sports',
-      title: 'ورزش و تندرستی',
-      description: 'فوتبال، المپیک و اطلاعات ورزشی',
-      iconName: 'sports_soccer',
-      color: '#10b981',
-      questionCount: 190,
-      isPopular: true,
-    },
-    {
-      id: 'cat_cinema',
-      title: 'سینما و هنر',
-      description: 'فیلم، موسیقی و شاهکارهای هنری',
-      iconName: 'movie',
-      color: '#ec4899',
-      questionCount: 130,
-    },
-    {
-      id: 'cat_geo',
-      title: 'جغرافیا و گردشگری',
-      description: 'کشورها، پایتخت‌ها و جاذبه‌های طبیعی',
-      iconName: 'public',
-      color: '#8b5cf6',
-      questionCount: 160,
-    },
-  ]);
+  private readonly _categoriesSignal = signal<readonly GameCategory[]>([]);
 
   private readonly _dailyMissionsSignal = signal<readonly DemoDailyMission[]>([
     {
@@ -300,6 +251,34 @@ export class DemoGameDataSource extends GameDataSource {
     },
   ];
 
+  constructor() {
+    super();
+    this.loadCategories();
+  }
+
+  loadCategories(): void {
+    if (!this.apiService) return;
+    this.apiService.getCategories().subscribe({
+      next: (cats) => {
+        const active = (cats || [])
+          .filter((c) => c.isActive)
+          .map((c) => ({
+            id: c.id,
+            title: c.title,
+            description: c.description || '',
+            iconName: 'psychology',
+            color: '#3b82f6',
+            questionCount: (c as any).questionCount ?? 0,
+          }));
+        this._categoriesSignal.set(active);
+      },
+      error: () => {
+        // API failure state without mock fallback
+        this._categoriesSignal.set([]);
+      },
+    });
+  }
+
   override readonly currentUser: Signal<GameUser> = this._currentUser.asReadonly();
   override readonly categories: Signal<readonly GameCategory[]> =
     this._categoriesSignal.asReadonly();
@@ -342,7 +321,7 @@ export class DemoGameDataSource extends GameDataSource {
     };
   }
 
-  getCategoryById(id: string): DemoCategory | undefined {
+  getCategoryById(id: string): GameCategory | undefined {
     return this._categoriesSignal().find((c) => c.id === id);
   }
 }

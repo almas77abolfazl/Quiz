@@ -60,11 +60,9 @@ export class LoginComponent implements OnDestroy {
         this.step.set(2);
         this.startResendTimer(res?.expiresInSeconds || 60);
       },
-      error: () => {
-        // Fallback for prototype/demo testing: proceed to step 2
+      error: (err) => {
         this.loading.set(false);
-        this.step.set(2);
-        this.startResendTimer(60);
+        this.errorMessage.set(err?.error?.message || 'خطا در ارسال کد تأیید');
       },
     });
   }
@@ -78,16 +76,13 @@ export class LoginComponent implements OnDestroy {
     const code = this.otpForm.value.code;
 
     this.authService.verifyOtp(phone, code).subscribe({
-      next: (res) => {
+      next: () => {
         this.loading.set(false);
-        this.authService.setAccessToken(res.accessToken || 'demo_access_token_123');
         this.router.navigate(['/']);
       },
-      error: () => {
-        // Fallback for prototype testing: grant demo access token
+      error: (err) => {
         this.loading.set(false);
-        this.authService.setAccessToken('demo_access_token_123');
-        this.router.navigate(['/']);
+        this.errorMessage.set(err?.error?.message || 'کد وارد شده اشتباه یا منقضی شده است');
       },
     });
   }
