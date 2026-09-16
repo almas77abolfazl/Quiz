@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { UserRole } from '@quiz/contracts';
 import { AuthService } from './core/services/auth.service';
 
 @Component({
@@ -19,6 +20,10 @@ export class App implements OnInit {
   readonly isStaff = this.authService.isStaff;
   readonly user = this.authService.user;
   readonly userRole = this.authService.userRole;
+  readonly canAccessQuestions = computed(() => {
+    const role = this.userRole();
+    return role === UserRole.ROOT_ADMIN || role === UserRole.CONTENT_SPECIALIST;
+  });
 
   ngOnInit(): void {
     if (!this.authService.isInitialized()) {

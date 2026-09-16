@@ -1,17 +1,187 @@
 <div class="questions-page">
   <div class="page-header">
-    <h2>مدیریت سوالات</h2>
-    <p class="subtitle">ایجاد، ویرایش، تایید و انتشار سوالات رسمی کوییز</p>
-  </div>
-
-  <div class="placeholder-card">
-    <div class="placeholder-icon">📝</div>
-    <h3>مدیریت سوالات در فاز بعدی تکمیل خواهد شد</h3>
-    <p class="placeholder-desc">
-      تکمیل لیست سوالات، فرم‌های ایجاد و ویرایش، و انتشار سوالات در فاز بعدی پیاده‌سازی می‌گردد.
-    </p>
-    <div class="endpoint-info">
-      <code>نقطه پایانی انتشار تایید شده: PUT /api/questions/:id/publish</code>
+    <div class="header-main">
+      <h2>مدیریت سوالات</h2>
+      <p class="subtitle">ایجاد، ویرایش، تایید و انتشار سوالات رسمی کوییز</p>
+    </div>
+    <div class="header-stats">
+      <span class="total-badge">تعداد کل: {{ totalCount() }} سوال</span>
     </div>
   </div>
+
+  <div class="filters-card">
+    <form class="filters-grid" (submit)="onSearchSubmit($event)">
+      <div class="filter-group search-group">
+        <label for="search-input">جستجو</label>
+        <div class="search-input-wrapper">
+          <input
+            id="search-input"
+            type="text"
+            [value]="searchInput()"
+            (input)="onSearchInputChange($event)"
+            placeholder="جستجو در متن سوال..."
+          />
+          @if (searchInput()) {
+            <button type="button" class="btn-clear-search" (click)="clearFilters()">×</button>
+          }
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="category-select">دسته‌بندی</label>
+        <select id="category-select" [value]="categoryId()" (change)="onCategorySelect($event)">
+          <option value="">همه دسته‌بندی‌ها</option>
+          @for (cat of categories(); track cat.id) {
+            <option [value]="cat.id">{{ cat.title }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="difficulty-select">درجه سختی</label>
+        <select id="difficulty-select" [value]="difficulty()" (change)="onDifficultySelect($event)">
+          <option value="">همه دشواری‌ها</option>
+          @for (opt of difficultyOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="status-select">وضعیت</label>
+        <select id="status-select" [value]="status()" (change)="onStatusSelect($event)">
+          <option value="">همه وضعیت‌ها</option>
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        @if (hasActiveFilters()) {
+          <button type="button" class="btn-clear-filters" (click)="clearFilters()">
+            پاک‌سازی فیلترها
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+
+  @if (error()) {
+    <div class="state-card error-card">
+      <div class="state-icon">⚠️</div>
+      <p class="state-message">{{ error() }}</p>
+      <button class="btn-retry" (click)="retry()">تلاش مجدد</button>
+    </div>
+  } @else if (isLoading() && questions().length === 0) {
+    <div class="state-card loading-card">
+      <div class="spinner"></div>
+      <p class="state-message">در حال بارگذاری سوالات...</p>
+    </div>
+  } @else if (questions().length === 0) {
+    <div class="state-card empty-card">
+      <div class="state-icon">🔍</div>
+      <h3>هیچ سوالی یافت نشد</h3>
+      <p class="state-message">با فیلترهای انتخاب شده سوالی پیدا نشد.</p>
+      @if (hasActiveFilters()) {
+        <button class="btn-clear-filters" (click)="clearFilters()">پاک‌سازی فیلترها</button>
+      }
+    </div>
+  } @else {
+    <div class="table-container" [class.is-reloading]="isLoading()">
+      <!-- Desktop Table View -->
+      <div class="desktop-table-wrapper">
+        <table class="questions-table">
+          <thead>
+            <tr>
+              <th class="col-num">#</th>
+              <th class="col-text">متن سوال</th>
+              <th class="col-cat">دسته‌بندی</th>
+              <th class="col-diff">سختی</th>
+              <th class="col-status">وضعیت</th>
+              <th class="col-date">تاریخ ایجاد</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (q of questions(); track q.id; let idx = $index) {
+              <tr>
+                <td class="col-num">{{ (page() - 1) * limit() + idx + 1 }}</td>
+                <td class="col-text">
+                  <span class="question-text" [title]="q.text">{{ q.text }}</span>
+                </td>
+                <td class="col-cat">
+                  <span class="category-tag">{{ getCategoryName(q.categoryIds) }}</span>
+                </td>
+                <td class="col-diff">
+                  <span class="badge difficulty-badge" [attr.data-difficulty]="q.difficulty">
+                    {{ getDifficultyLabel(q.difficulty) }}
+                  </span>
+                </td>
+                <td class="col-status">
+                  <span class="badge status-badge" [attr.data-status]="q.status">
+                    {{ getStatusLabel(q.status) }}
+                  </span>
+                </td>
+                <td class="col-date">
+                  <span class="date-text">{{ q.createdAt | date: 'yyyy/MM/dd' }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Card List View -->
+      <div class="mobile-cards-wrapper">
+        @for (q of questions(); track q.id; let idx = $index) {
+          <div class="question-card">
+            <div class="card-header">
+              <span class="card-num">#{{ (page() - 1) * limit() + idx + 1 }}</span>
+              <span class="badge status-badge" [attr.data-status]="q.status">
+                {{ getStatusLabel(q.status) }}
+              </span>
+            </div>
+            <p class="card-text">{{ q.text }}</p>
+            <div class="card-meta">
+              <span class="category-tag">{{ getCategoryName(q.categoryIds) }}</span>
+              <span class="badge difficulty-badge" [attr.data-difficulty]="q.difficulty">
+                {{ getDifficultyLabel(q.difficulty) }}
+              </span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Pagination Footer -->
+      <div class="pagination-bar">
+        <div class="pageSize-selector">
+          <label for="limit-select">تعداد در صفحه:</label>
+          <select id="limit-select" [value]="limit()" (change)="onLimitSelect($event)">
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            class="btn-page"
+            [disabled]="!hasPreviousPage() || isLoading()"
+            (click)="onPageChange(page() - 1)"
+          >
+            قبلی
+          </button>
+          <span class="page-info"> صفحه {{ page() }} از {{ totalPages() || 1 }} </span>
+          <button
+            class="btn-page"
+            [disabled]="!hasNextPage() || isLoading()"
+            (click)="onPageChange(page() + 1)"
+          >
+            بعدی
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

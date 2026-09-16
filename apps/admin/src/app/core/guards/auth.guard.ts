@@ -44,3 +44,31 @@ export const unauthGuard: CanActivateFn = () => {
 
   return checkUnauth();
 };
+
+export const questionsGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  const checkAccess = (): boolean => {
+    if (!authService.isAuthenticated() || !authService.isStaff()) {
+      router.navigate(['/login'], {
+        queryParams: { returnUrl: state.url },
+      });
+      return false;
+    }
+
+    const role = authService.userRole();
+    if (role === 'ROOT_ADMIN' || role === 'CONTENT_SPECIALIST') {
+      return true;
+    }
+
+    router.navigate(['/dashboard']);
+    return false;
+  };
+
+  if (!authService.isInitialized()) {
+    return authService.restoreSession().pipe(map(() => checkAccess()));
+  }
+
+  return checkAccess();
+};
