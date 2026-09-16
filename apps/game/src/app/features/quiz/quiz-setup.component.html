@@ -34,7 +34,7 @@
           <span class="label">همه دسته‌ها (تصادفی)</span>
         </button>
 
-        @for (cat of categories(); track cat.id) {
+        @for (cat of apiCategories(); track cat.id) {
           <button
             type="button"
             class="cat-option-btn"
@@ -81,6 +81,14 @@
         <span class="value gold-text">{{ rewardSummaryText() }}</span>
       </div>
     </div>
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ errorMessage() }}</span>
+      </div>
+    }
 
     <!-- Start CTA -->
     <div class="action-footer">

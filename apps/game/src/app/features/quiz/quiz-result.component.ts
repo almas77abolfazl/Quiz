@@ -32,7 +32,10 @@ export class QuizResultComponent implements OnInit {
 
   ngOnInit(): void {
     const navState = history.state;
-    if (navState && navState.totalQuestions) {
+    if (
+      navState &&
+      (navState.totalQuestions !== undefined || navState.correctCount !== undefined)
+    ) {
       this.correctCount.set(navState.correctCount || 0);
       this.totalQuestions.set(navState.totalQuestions || 5);
       this.earnedCoins.set(navState.earnedCoins || 0);

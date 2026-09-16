@@ -2,7 +2,6 @@ import {
   Component,
   ChangeDetectionStrategy,
   OnInit,
-  OnDestroy,
   inject,
   signal,
   computed,
@@ -10,8 +9,8 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppShellComponent } from '../../shared/ui/app-shell.component';
 import { DifficultyChipComponent } from '../../shared/ui/difficulty-chip.component';
-import { GameFacade } from '../../core/data/game.facade';
-import { Difficulty } from '@quiz/contracts';
+import { SoloQuizApiService } from '../../core/services/solo-quiz-api.service';
+import { Difficulty, CategorySummaryDto } from '@quiz/contracts';
 import { DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -22,17 +21,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppShellComponent, DifficultyChipComponent],
 })
-export class QuizSetupComponent implements OnInit, OnDestroy {
+export class QuizSetupComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly gameFacade = inject(GameFacade);
+  private readonly soloQuizApi = inject(SoloQuizApiService);
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly categories = this.gameFacade.categories;
+  readonly apiCategories = signal<CategorySummaryDto[]>([]);
   readonly selectedCategoryId = signal<string>('ALL');
   readonly selectedDifficulty = signal<Difficulty>(Difficulty.MEDIUM);
   readonly loading = signal<boolean>(false);
-  private startTimer: ReturnType<typeof setTimeout> | null = null;
+  readonly errorMessage = signal<string | null>(null);
 
   readonly difficulties = [
     { value: Difficulty.EASY, rewardText: '۱ امتیاز فصل + ۱ سکه' },
@@ -44,7 +43,7 @@ export class QuizSetupComponent implements OnInit, OnDestroy {
   readonly selectedCategoryTitle = computed(() => {
     const catId = this.selectedCategoryId();
     if (catId === 'ALL') return 'همه دسته‌ها (تصادفی)';
-    const cat = this.categories().find((c) => c.id === catId);
+    const cat = this.apiCategories().find((c) => c.id === catId);
     return cat ? cat.title : 'انتخاب نشده';
   });
 
@@ -64,6 +63,7 @@ export class QuizSetupComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
+    this.loadCategories();
     this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       if (params['categoryId']) {
         this.selectedCategoryId.set(params['categoryId']);
@@ -71,31 +71,54 @@ export class QuizSetupComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    if (this.startTimer !== null) {
-      clearTimeout(this.startTimer);
-      this.startTimer = null;
-    }
+  loadCategories(): void {
+    this.soloQuizApi
+      .getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (cats) => this.apiCategories.set(cats),
+        error: () => {},
+      });
   }
 
   selectCategory(id: string): void {
     this.selectedCategoryId.set(id);
+    this.errorMessage.set(null);
   }
 
   selectDifficulty(diff: Difficulty): void {
     this.selectedDifficulty.set(diff);
+    this.errorMessage.set(null);
   }
 
   startQuiz(): void {
     this.loading.set(true);
-    this.startTimer = setTimeout(() => {
-      this.router.navigate(['/quiz/play'], {
-        queryParams: {
-          categoryId: this.selectedCategoryId(),
-          difficulty: this.selectedDifficulty(),
+    this.errorMessage.set(null);
+
+    const catId = this.selectedCategoryId();
+    const diff = this.selectedDifficulty();
+
+    this.soloQuizApi
+      .startQuiz(catId, diff)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (session) => {
+          this.loading.set(false);
+          this.router.navigate(['/quiz/play'], {
+            state: { session },
+          });
+        },
+        error: (err) => {
+          this.loading.set(false);
+          if (err?.status === 400 || err?.error?.message?.includes('No questions')) {
+            this.errorMessage.set(
+              'سؤالی برای این دسته و سطح سختی یافت نشد. لطفاً دسته یا سطح دیگری انتخاب کنید.',
+            );
+          } else {
+            this.errorMessage.set('خطا در برقراری ارتباط با سرور. لطفاً مجدداً تلاش کنید.');
+          }
         },
       });
-    }, 400);
   }
 
   goHome(): void {

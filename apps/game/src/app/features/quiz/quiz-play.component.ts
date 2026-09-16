@@ -6,20 +6,27 @@ import {
   inject,
   signal,
   computed,
+  DestroyRef,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TimerRingComponent } from '../../shared/ui/timer-ring.component';
 import { OptionButtonComponent, OptionState } from '../../shared/ui/option-button.component';
 import { DifficultyChipComponent } from '../../shared/ui/difficulty-chip.component';
 import { ConfirmDialogComponent } from '../../shared/ui/confirm-dialog.component';
-import { GameFacade } from '../../core/data/game.facade';
-import { GameQuestion } from '../../core/data/game-data-source.interface';
-import { Difficulty } from '@quiz/contracts';
+import {
+  SoloQuizApiService,
+  StartQuizResponse,
+  QuizSessionQuestionResponse,
+} from '../../core/services/solo-quiz-api.service';
+import { PlayerQuestionDto, AnswerFeedbackDto } from '@quiz/contracts';
 
 export interface UserAnswerRecord {
-  question: GameQuestion;
-  selectedIndex: number | null;
+  question: PlayerQuestionDto;
+  selectedOptionId: string | null;
+  selectedOptionText: string | null;
   isCorrect: boolean;
+  feedback?: AnswerFeedbackDto;
 }
 
 @Component({
@@ -36,38 +43,50 @@ export interface UserAnswerRecord {
 })
 export class QuizPlayComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
-  private readonly route = inject(ActivatedRoute);
-  private readonly gameFacade = inject(GameFacade);
+  private readonly soloQuizApi = inject(SoloQuizApiService);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly questions = signal<GameQuestion[]>([]);
+  readonly quizSession = signal<StartQuizResponse | null>(null);
+  readonly questions = signal<QuizSessionQuestionResponse[]>([]);
   readonly currentIndex = signal<number>(0);
   readonly secondsLeft = signal<number>(30);
   private timerRef: ReturnType<typeof setInterval> | null = null;
 
-  readonly selectedOptionIndex = signal<number | null>(null);
+  readonly selectedOptionId = signal<string | null>(null);
   readonly answered = signal<boolean>(false);
+  readonly isSubmitting = signal<boolean>(false);
   readonly isAnswerCorrect = signal<boolean>(false);
-  readonly currentCorrectIndex = signal<number | null>(null);
+  readonly correctOptionId = signal<string | null>(null);
+  readonly submissionError = signal<string | null>(null);
+  readonly pendingRetryOptionId = signal<string | null | undefined>(undefined);
+
+  readonly isFinishing = signal<boolean>(false);
+  readonly finishError = signal<string | null>(null);
 
   readonly userAnswers = signal<UserAnswerRecord[]>([]);
   readonly confirmQuit = signal<boolean>(false);
+  readonly hasSessionError = signal<boolean>(false);
 
-  readonly currentQuestion = computed<GameQuestion | undefined>(() => {
+  readonly currentQuizQuestion = computed<QuizSessionQuestionResponse | undefined>(() => {
     const list = this.questions();
     const idx = this.currentIndex();
     return list[idx];
   });
 
-  ngOnInit(): void {
-    const queryParams = this.route.snapshot.queryParams;
-    const categoryId = queryParams['categoryId'];
-    const difficulty = queryParams['difficulty'] as Difficulty | undefined;
+  readonly currentQuestion = computed<PlayerQuestionDto | undefined>(() => {
+    return this.currentQuizQuestion()?.question;
+  });
 
-    const loadedQuestions = this.gameFacade.getQuestions(categoryId, difficulty);
-    this.questions.set(
-      loadedQuestions.length > 0 ? loadedQuestions : this.gameFacade.getQuestions(),
-    );
-    this.startQuestionTimer();
+  ngOnInit(): void {
+    const navState = history.state;
+    if (navState && navState.session && navState.session.questions?.length > 0) {
+      this.quizSession.set(navState.session);
+      this.questions.set(navState.session.questions);
+      this.currentIndex.set(0);
+      this.startQuestionTimer();
+    } else {
+      this.hasSessionError.set(true);
+    }
   }
 
   ngOnDestroy(): void {
@@ -79,51 +98,91 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
     return labels[idx] || '';
   }
 
-  getOptionState(idx: number): OptionState {
+  getOptionState(optionId: string): OptionState {
     if (!this.answered()) {
-      return this.selectedOptionIndex() === idx ? 'SELECTED' : 'DEFAULT';
+      return this.selectedOptionId() === optionId ? 'SELECTED' : 'DEFAULT';
     }
 
-    const correct = this.currentCorrectIndex();
-    if (idx === correct) {
+    const correctId = this.correctOptionId();
+    if (optionId === correctId) {
       return 'CORRECT';
     }
-    if (this.selectedOptionIndex() === idx && idx !== correct) {
+    if (this.selectedOptionId() === optionId && optionId !== correctId) {
       return 'INCORRECT';
     }
     return 'DISABLED';
   }
 
-  selectOption(index: number): void {
-    if (this.answered()) return;
+  selectOption(optionId: string): void {
+    if (this.answered() || this.isSubmitting()) return;
 
     this.stopTimer();
-    const q = this.currentQuestion();
-    if (!q) return;
+    this.selectedOptionId.set(optionId);
+    this.submissionError.set(null);
+    this.sendAnswerSubmit(optionId);
+  }
 
-    const validation = this.gameFacade.validateAnswer(q.id, index);
-    this.selectedOptionIndex.set(index);
-    this.answered.set(true);
-    this.isAnswerCorrect.set(validation.isCorrect);
-    this.currentCorrectIndex.set(validation.correctIndex);
+  retrySubmit(): void {
+    const optionId = this.pendingRetryOptionId();
+    this.submissionError.set(null);
+    this.sendAnswerSubmit(optionId === undefined ? undefined : optionId);
+  }
 
-    this.userAnswers.update((answers) => [
-      ...answers,
-      {
-        question: q,
-        selectedIndex: index,
-        isCorrect: validation.isCorrect,
-      },
-    ]);
+  private sendAnswerSubmit(optionId?: string | null): void {
+    const session = this.quizSession();
+    const q = this.currentQuizQuestion();
+    if (!session || !q) return;
+
+    this.isSubmitting.set(true);
+    this.pendingRetryOptionId.set(optionId);
+
+    const selectedOptId = optionId || undefined;
+
+    this.soloQuizApi
+      .submitAnswer(session.id, q.questionId, selectedOptId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isSubmitting.set(false);
+          this.answered.set(true);
+          this.isAnswerCorrect.set(res.isCorrect);
+          this.correctOptionId.set(res.correctOptionId);
+          this.submissionError.set(null);
+          this.pendingRetryOptionId.set(undefined);
+
+          const selectedOptText = q.question.options.find((o) => o.id === optionId)?.text || null;
+
+          this.userAnswers.update((answers) => [
+            ...answers,
+            {
+              question: q.question,
+              selectedOptionId: optionId || null,
+              selectedOptionText: selectedOptText,
+              isCorrect: res.isCorrect,
+              feedback: res.feedback,
+            },
+          ]);
+        },
+        error: () => {
+          this.isSubmitting.set(false);
+          // Do NOT mark as answered or wrong! Show retry button instead.
+          this.submissionError.set(
+            'خطا در برقراری ارتباط با سرور هنگام ثبت پاسخ. لطفاً دوباره تلاش کنید.',
+          );
+        },
+      });
   }
 
   private startQuestionTimer(): void {
     this.stopTimer();
     this.secondsLeft.set(30);
     this.answered.set(false);
-    this.selectedOptionIndex.set(null);
+    this.selectedOptionId.set(null);
+    this.isSubmitting.set(false);
     this.isAnswerCorrect.set(false);
-    this.currentCorrectIndex.set(null);
+    this.correctOptionId.set(null);
+    this.submissionError.set(null);
+    this.pendingRetryOptionId.set(undefined);
 
     this.timerRef = setInterval(() => {
       if (this.secondsLeft() > 0) {
@@ -136,23 +195,9 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
 
   private handleTimeout(): void {
     this.stopTimer();
-    const q = this.currentQuestion();
-    this.answered.set(true);
-    this.selectedOptionIndex.set(null);
-    this.isAnswerCorrect.set(false);
-
-    if (q) {
-      const validation = this.gameFacade.validateAnswer(q.id, -1);
-      this.currentCorrectIndex.set(validation.correctIndex);
-      this.userAnswers.update((answers) => [
-        ...answers,
-        {
-          question: q,
-          selectedIndex: null,
-          isCorrect: false,
-        },
-      ]);
-    }
+    if (this.answered() || this.isSubmitting()) return;
+    this.selectedOptionId.set(null);
+    this.sendAnswerSubmit(undefined);
   }
 
   private stopTimer(): void {
@@ -167,29 +212,48 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
       this.currentIndex.update((i) => i + 1);
       this.startQuestionTimer();
     } else {
-      // Finished all questions
-      const answers = this.userAnswers();
-      const correctCount = answers.filter((a) => a.isCorrect).length;
-      const earnedCoins = correctCount * 1 + 2;
-      const earnedPoints = correctCount * 2;
+      this.finishGameSession();
+    }
+  }
 
-      this.gameFacade.addCoins(earnedCoins);
-      this.gameFacade.addSeasonPoints(earnedPoints);
+  finishGameSession(): void {
+    const session = this.quizSession();
+    if (!session) return;
 
-      this.router.navigate(['/quiz/result'], {
-        state: {
-          correctCount,
-          totalQuestions: this.questions().length,
-          earnedCoins,
-          earnedPoints,
-          userAnswers: answers,
+    this.isFinishing.set(true);
+    this.finishError.set(null);
+
+    this.soloQuizApi
+      .finishQuiz(session.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isFinishing.set(false);
+          const earnedPoints = res.correctAnswers * 10;
+          this.router.navigate(['/quiz/result'], {
+            state: {
+              correctCount: res.correctAnswers,
+              totalQuestions: res.totalQuestions,
+              earnedCoins: res.coinsEarned,
+              earnedPoints,
+              userAnswers: this.userAnswers(),
+            },
+          });
+        },
+        error: () => {
+          this.isFinishing.set(false);
+          this.finishError.set('خطا در ثبت و محاسبه نتیجه نهایی. لطفاً مجدداً تلاش کنید.');
         },
       });
-    }
   }
 
   quitGame(): void {
     this.stopTimer();
     this.router.navigate(['/']);
+  }
+
+  goToSetup(): void {
+    this.stopTimer();
+    this.router.navigate(['/quiz']);
   }
 }

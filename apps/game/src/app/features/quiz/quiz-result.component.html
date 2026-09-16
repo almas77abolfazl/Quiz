@@ -43,10 +43,8 @@
             <span class="recap-badge">{{ item.isCorrect ? '✓' : '✕' }}</span>
             <div class="recap-info">
               <span class="q-title">سؤال {{ $index + 1 }}: {{ item.question.text }}</span>
-              @if (item.selectedIndex !== null && item.selectedIndex !== undefined) {
-                <span class="q-answer"
-                  >پاسخ شما: {{ item.question.options[item.selectedIndex] }}</span
-                >
+              @if (item.selectedOptionText) {
+                <span class="q-answer">پاسخ شما: {{ item.selectedOptionText }}</span>
               } @else {
                 <span class="q-answer timeout">بدون پاسخ (زمان تمام شد)</span>
               }

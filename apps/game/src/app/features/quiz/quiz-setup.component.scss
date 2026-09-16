@@ -166,6 +166,19 @@
   color: var(--gold-light);
 }
 
+.error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #fca5a5;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
 .action-footer {
   margin-top: 0.5rem;
 }

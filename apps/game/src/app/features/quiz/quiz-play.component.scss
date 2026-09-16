@@ -124,16 +124,17 @@
 
 .question-image-box {
   margin-top: 1rem;
-  padding: 1.5rem;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px dashed var(--surface-border);
   border-radius: var(--radius-md);
+  overflow: hidden;
+  max-height: 200px;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  color: var(--text-muted);
-  font-size: 0.85rem;
+}
+
+.question-img {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: cover;
 }
 
 .feedback-banner {
@@ -155,6 +156,80 @@
     background: var(--error-surface);
     border: 1px solid var(--error-border);
     color: #f87171;
+  }
+}
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid #ef4444;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  color: #fca5a5;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.btn-retry {
+  background: #ef4444;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: #dc2626;
+  }
+}
+
+.session-error-container {
+  padding: 2rem 1.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.error-card {
+  background: var(--surface-card);
+  border: 1px solid var(--surface-border-bright);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+
+  .error-icon {
+    font-size: 2.5rem;
+  }
+  h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: var(--text-main);
+  }
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .btn-primary {
+    margin-top: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
   }
 }
 
@@ -182,9 +257,14 @@
   transition: all var(--transition-fast);
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 0 25px rgba(99, 102, 241, 0.6);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
 
