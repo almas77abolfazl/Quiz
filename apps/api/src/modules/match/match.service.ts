@@ -105,7 +105,12 @@ export class MatchService {
     });
   }
 
-  async submitAnswer(matchId: string, userId: string, matchQuestionId: string, selectedOptionId?: string) {
+  async submitAnswer(
+    matchId: string,
+    userId: string,
+    matchQuestionId: string,
+    selectedOptionId?: string,
+  ) {
     const participant = await this.prisma.matchParticipant.findFirst({
       where: { matchId, userId },
     });
@@ -174,10 +179,7 @@ export class MatchService {
 
     if (!match) throw new NotFoundException('Match not found');
 
-    const totalAnswers = match.questions.reduce(
-      (acc, q) => acc + q.answers.length,
-      0,
-    );
+    const totalAnswers = match.questions.reduce((acc, q) => acc + q.answers.length, 0);
 
     if (totalAnswers < match.participants.length * TOTAL_ROUNDS) {
       return match;
@@ -246,6 +248,13 @@ export class MatchService {
         participants: { include: { user: true } },
       },
     });
+  }
+
+  async isParticipant(matchId: string, userId: string): Promise<boolean> {
+    const count = await this.prisma.matchParticipant.count({
+      where: { matchId, userId },
+    });
+    return count > 0;
   }
 
   private shuffleArray<T>(array: T[]): T[] {

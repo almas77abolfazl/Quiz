@@ -9,9 +9,33 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
+import {
+  MatchSocketClientEvents,
+  MatchSocketServerEvents,
+  MatchSocketErrorCode,
+  MatchSocketErrorPayload,
+  MatchQuestionOptionClient,
+} from '@quiz/contracts';
 import { MatchService } from './match.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MatchStatus, AnswerStatus } from '@quiz/contracts';
+import {
+  JoinMatchmakingSocketDto,
+  SubmitAnswerSocketDto,
+  ReconnectMatchSocketDto,
+  LeaveMatchSocketDto,
+} from './dto/match-socket.dto';
+
+export interface AuthenticatedSocketData {
+  user?: {
+    userId: string;
+    role: string;
+  };
+  eventTimestamps?: number[];
+}
 
 @WebSocketGateway({
   cors: { origin: process.env.CORS_ORIGIN?.split(',') ?? '*' },
@@ -20,33 +44,123 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   @WebSocketServer()
   server!: Server;
 
+  // Track active authenticated socket connections: userId -> Set of socket IDs
+  private readonly userSockets = new Map<string, Set<string>>();
+
   constructor(
     private readonly matchService: MatchService,
     private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   afterInit(server: Server) {
-    console.log('MatchGateway initialized');
+    server.use(async (socket: Socket & { data: AuthenticatedSocketData }, next) => {
+      try {
+        const token = this.extractToken(socket);
+        if (!token) {
+          const err = new Error(MatchSocketErrorCode.UNAUTHORIZED);
+          (err as any).data = {
+            code: MatchSocketErrorCode.UNAUTHORIZED,
+            message: 'Authentication token missing',
+          } satisfies MatchSocketErrorPayload;
+          return next(err);
+        }
+
+        const secret = this.configService.getOrThrow<string>('JWT_SECRET');
+        const payload = await this.jwtService.verifyAsync<{ sub: string; role: string }>(token, {
+          secret,
+        });
+
+        if (!payload?.sub) {
+          const err = new Error(MatchSocketErrorCode.UNAUTHORIZED);
+          (err as any).data = {
+            code: MatchSocketErrorCode.UNAUTHORIZED,
+            message: 'Invalid authentication token payload',
+          } satisfies MatchSocketErrorPayload;
+          return next(err);
+        }
+
+        // Attach authenticated identity exclusively derived from token to socket.data
+        socket.data.user = {
+          userId: payload.sub,
+          role: payload.role || 'PLAYER',
+        };
+
+        return next();
+      } catch {
+        const err = new Error(MatchSocketErrorCode.UNAUTHORIZED);
+        (err as any).data = {
+          code: MatchSocketErrorCode.UNAUTHORIZED,
+          message: 'Authentication token invalid or expired',
+        } satisfies MatchSocketErrorPayload;
+        return next(err);
+      }
+    });
   }
 
-  handleConnection(client: Socket) {
-    console.log(`Client connected: ${client.id}`);
+  handleConnection(client: Socket & { data: AuthenticatedSocketData }) {
+    const user = client.data.user;
+    if (!user || !user.userId) {
+      this.emitError(client, MatchSocketErrorCode.UNAUTHORIZED, 'Unauthorized connection');
+      client.disconnect(true);
+      return;
+    }
+
+    const userId = user.userId;
+    if (!this.userSockets.has(userId)) {
+      this.userSockets.set(userId, new Set());
+    }
+    this.userSockets.get(userId)!.add(client.id);
+
+    // Join room for this authenticated user
+    client.join(`user:${userId}`);
   }
 
-  handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+  handleDisconnect(client: Socket & { data: AuthenticatedSocketData }) {
+    const userId = client.data.user?.userId;
+    if (userId) {
+      const set = this.userSockets.get(userId);
+      if (set) {
+        set.delete(client.id);
+        if (set.size === 0) {
+          this.userSockets.delete(userId);
+        }
+      }
+    }
   }
 
-  @SubscribeMessage('join_matchmaking')
+  // Public helper methods for testing / state verification
+  getUserSocketCount(userId: string): number {
+    return this.userSockets.get(userId)?.size ?? 0;
+  }
+
+  @SubscribeMessage(MatchSocketClientEvents.JOIN_MATCHMAKING)
   async handleJoinMatchmaking(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { userId: string; categoryId?: string; difficulty?: string },
+    @ConnectedSocket() client: Socket & { data: AuthenticatedSocketData },
+    @MessageBody() rawPayload: unknown,
   ) {
-    const match = await this.matchService.joinMatchmaking(
-      data.userId,
-      data.categoryId,
-      data.difficulty as any,
-    );
+    if (!this.checkThrottling(client)) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.RATE_LIMIT_EXCEEDED,
+        'Rate limit exceeded',
+      );
+    }
+
+    const validation = await this.validatePayload(JoinMatchmakingSocketDto, rawPayload, client);
+    if (validation.error) return validation.error;
+    const dto = validation.dto!;
+
+    // Derived exclusively from authenticated socket identity
+    const userId = client.data.user!.userId;
+
+    const match = await this.matchService.joinMatchmaking(userId, dto.categoryId, dto.difficulty);
+
+    if (match) {
+      // Join this socket to the match room
+      client.join(`match:${match.id}`);
+    }
 
     if (match && match.participants.length === 2) {
       const started = await this.matchService.startMatch(match.id);
@@ -58,8 +172,12 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       const participantB = started.participants[1];
       const firstQuestion = started.questions[0];
 
+      // Ensure sockets for both users join the match room
+      this.joinUserSocketsToRoom(participantA.userId, `match:${started.id}`);
+      this.joinUserSocketsToRoom(participantB.userId, `match:${started.id}`);
+
       if (participantA && participantB && firstQuestion) {
-        this.server.to(participantA.user.id).emit('match_found', {
+        this.server.to(`user:${participantA.userId}`).emit(MatchSocketServerEvents.MATCH_FOUND, {
           matchId: started.id,
           opponent: {
             userId: participantB.user.id,
@@ -68,7 +186,7 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
           },
         });
 
-        this.server.to(participantB.user.id).emit('match_found', {
+        this.server.to(`user:${participantB.userId}`).emit(MatchSocketServerEvents.MATCH_FOUND, {
           matchId: started.id,
           opponent: {
             userId: participantA.user.id,
@@ -77,18 +195,14 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
           },
         });
 
-        this.server.to(started.id).emit('round_start', {
+        const sanitizedQuestion = this.sanitizeQuestionPayload(
+          firstQuestion,
+          started.questions.length,
+        );
+
+        this.server.to(`match:${started.id}`).emit(MatchSocketServerEvents.ROUND_START, {
           matchId: started.id,
-          question: {
-            id: firstQuestion.question.id,
-            text: firstQuestion.question.text,
-            options: firstQuestion.question.options.map((o) => ({
-              id: o.id,
-              text: o.text,
-            })),
-            position: firstQuestion.position,
-            totalRounds: started.questions.length,
-          },
+          question: sanitizedQuestion,
         });
       }
     }
@@ -96,20 +210,53 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     return { status: 'queued', matchId: match?.id };
   }
 
-  @SubscribeMessage('submit_answer')
+  @SubscribeMessage(MatchSocketClientEvents.SUBMIT_ANSWER)
   async handleSubmitAnswer(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() data: { matchId: string; userId: string; matchQuestionId: string; selectedOptionId?: string },
+    @ConnectedSocket() client: Socket & { data: AuthenticatedSocketData },
+    @MessageBody() rawPayload: unknown,
   ) {
-    const result = await this.matchService.submitAnswer(
-      data.matchId,
-      data.userId,
-      data.matchQuestionId,
-      data.selectedOptionId,
-    );
+    if (!this.checkThrottling(client)) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.RATE_LIMIT_EXCEEDED,
+        'Rate limit exceeded',
+      );
+    }
+
+    const validation = await this.validatePayload(SubmitAnswerSocketDto, rawPayload, client);
+    if (validation.error) return validation.error;
+    const dto = validation.dto!;
+
+    const userId = client.data.user!.userId;
+
+    // Verify user is a participant in the match
+    const isParticipant = await this.matchService.isParticipant(dto.matchId, userId);
+    if (!isParticipant) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        'Authenticated user is not a participant in this match',
+      );
+    }
+
+    let result;
+    try {
+      result = await this.matchService.submitAnswer(
+        dto.matchId,
+        userId,
+        dto.matchQuestionId,
+        dto.selectedOptionId,
+      );
+    } catch (err: any) {
+      const code =
+        err.status === 400
+          ? MatchSocketErrorCode.ALREADY_ANSWERED
+          : MatchSocketErrorCode.INVALID_PAYLOAD;
+      return this.emitError(client, code, err.message || 'Failed to submit answer');
+    }
 
     const match = await this.prisma.match.findFirst({
-      where: { id: data.matchId },
+      where: { id: dto.matchId },
       include: {
         questions: { include: { question: { include: { options: true } } } },
         participants: { include: { user: true } },
@@ -118,18 +265,19 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     if (!match) return result;
 
-    const matchQuestion = match.questions.find((q) => q.id === data.matchQuestionId);
+    const matchQuestion = match.questions.find((q) => q.id === dto.matchQuestionId);
     if (!matchQuestion) return result;
 
     const answers = await this.prisma.matchAnswer.findMany({
-      where: { matchQuestionId: data.matchQuestionId },
+      where: { matchQuestionId: dto.matchQuestionId },
     });
 
     if (answers.length === 2) {
       const participantA = match.participants[0];
       const participantB = match.participants[1];
 
-      this.server.to(data.matchId).emit('round_result', {
+      this.server.to(`match:${dto.matchId}`).emit(MatchSocketServerEvents.ROUND_RESULT, {
+        matchId: dto.matchId,
         yourScore: participantA.score,
         opponentScore: participantB.score,
         roundIndex: matchQuestion.position,
@@ -145,12 +293,12 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     const allAnswered = await Promise.all(allAnsweredPromises);
     if (allAnswered.every((v) => v)) {
-      const completed = await this.matchService.completeMatch(data.matchId);
+      const completed = await this.matchService.completeMatch(dto.matchId);
       if (completed) {
         const participantA = completed.participants[0];
         const participantB = completed.participants[1];
 
-        this.server.to(data.matchId).emit('match_end', {
+        this.server.to(`match:${dto.matchId}`).emit(MatchSocketServerEvents.MATCH_END, {
           matchId: completed.id,
           winnerId: participantA.isWinner ? participantA.userId : participantB.userId,
           yourScore: participantA.score,
@@ -161,5 +309,185 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
 
     return result;
+  }
+
+  @SubscribeMessage(MatchSocketClientEvents.RECONNECT_MATCH)
+  async handleReconnectMatch(
+    @ConnectedSocket() client: Socket & { data: AuthenticatedSocketData },
+    @MessageBody() rawPayload: unknown,
+  ) {
+    if (!this.checkThrottling(client)) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.RATE_LIMIT_EXCEEDED,
+        'Rate limit exceeded',
+      );
+    }
+
+    const validation = await this.validatePayload(ReconnectMatchSocketDto, rawPayload, client);
+    if (validation.error) return validation.error;
+    const dto = validation.dto!;
+
+    const userId = client.data.user!.userId;
+
+    const isParticipant = await this.matchService.isParticipant(dto.matchId, userId);
+    if (!isParticipant) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        'Authenticated user is not a participant in this match',
+      );
+    }
+
+    client.join(`match:${dto.matchId}`);
+
+    const match = await this.prisma.match.findFirst({
+      where: { id: dto.matchId },
+      include: {
+        participants: { include: { user: true } },
+        questions: { include: { question: { include: { options: true } } } },
+      },
+    });
+
+    if (!match) {
+      return this.emitError(client, MatchSocketErrorCode.MATCH_NOT_FOUND, 'Match not found');
+    }
+
+    return {
+      status: 'reconnected',
+      matchId: match.id,
+      matchStatus: match.status,
+    };
+  }
+
+  @SubscribeMessage(MatchSocketClientEvents.LEAVE_MATCH)
+  async handleLeaveMatch(
+    @ConnectedSocket() client: Socket & { data: AuthenticatedSocketData },
+    @MessageBody() rawPayload: unknown,
+  ) {
+    if (!this.checkThrottling(client)) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.RATE_LIMIT_EXCEEDED,
+        'Rate limit exceeded',
+      );
+    }
+
+    const validation = await this.validatePayload(LeaveMatchSocketDto, rawPayload, client);
+    if (validation.error) return validation.error;
+    const dto = validation.dto!;
+
+    const userId = client.data.user!.userId;
+
+    const isParticipant = await this.matchService.isParticipant(dto.matchId, userId);
+    if (!isParticipant) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        'Authenticated user is not a participant in this match',
+      );
+    }
+
+    client.leave(`match:${dto.matchId}`);
+    return { status: 'left', matchId: dto.matchId };
+  }
+
+  private extractToken(socket: Socket): string | null {
+    const authHeader =
+      socket.handshake.auth?.token ||
+      socket.handshake.auth?.authorization ||
+      socket.handshake.headers?.authorization;
+
+    if (typeof authHeader === 'string' && authHeader.trim().length > 0) {
+      return authHeader.replace(/^Bearer\s+/i, '').trim();
+    }
+    return null;
+  }
+
+  private joinUserSocketsToRoom(userId: string, room: string) {
+    const socketIds = this.userSockets.get(userId);
+    if (socketIds) {
+      for (const socketId of socketIds) {
+        const targetSocket = this.server.sockets.sockets.get(socketId);
+        targetSocket?.join(room);
+      }
+    }
+  }
+
+  private sanitizeQuestionPayload(firstQuestion: any, totalRounds: number) {
+    const options: MatchQuestionOptionClient[] = firstQuestion.question.options.map((o: any) => ({
+      id: o.id,
+      text: o.text,
+    }));
+
+    return {
+      matchQuestionId: firstQuestion.id,
+      questionId: firstQuestion.question.id,
+      text: firstQuestion.question.text,
+      options,
+      position: firstQuestion.position,
+      totalRounds,
+    };
+  }
+
+  private async validatePayload<T extends object>(
+    dtoClass: new () => T,
+    rawPayload: unknown,
+    client: Socket,
+  ): Promise<{ dto?: T; error?: { error: MatchSocketErrorPayload } }> {
+    if (!rawPayload || typeof rawPayload !== 'object') {
+      const error = this.emitError(
+        client,
+        MatchSocketErrorCode.INVALID_PAYLOAD,
+        'Payload must be an object',
+      );
+      return { error };
+    }
+
+    const instance = plainToInstance(dtoClass, rawPayload);
+    const errors = await validate(instance);
+
+    if (errors.length > 0) {
+      const error = this.emitError(
+        client,
+        MatchSocketErrorCode.INVALID_PAYLOAD,
+        'Invalid payload parameters',
+        errors.map((e) => Object.values(e.constraints || {})).flat(),
+      );
+      return { error };
+    }
+
+    return { dto: instance };
+  }
+
+  private checkThrottling(
+    client: Socket & { data: AuthenticatedSocketData },
+    maxEventsPerSec = 10,
+  ): boolean {
+    const now = Date.now();
+    const windowMs = 1000;
+    if (!client.data.eventTimestamps) {
+      client.data.eventTimestamps = [];
+    }
+    const timestamps = client.data.eventTimestamps;
+    while (timestamps.length > 0 && timestamps[0] <= now - windowMs) {
+      timestamps.shift();
+    }
+    if (timestamps.length >= maxEventsPerSec) {
+      return false;
+    }
+    timestamps.push(now);
+    return true;
+  }
+
+  private emitError(
+    client: Socket,
+    code: MatchSocketErrorCode,
+    message: string,
+    details?: unknown,
+  ): { error: MatchSocketErrorPayload } {
+    const payload: MatchSocketErrorPayload = { code, message, details };
+    client.emit(MatchSocketServerEvents.ERROR, payload);
+    return { error: payload };
   }
 }
