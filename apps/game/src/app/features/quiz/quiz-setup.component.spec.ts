@@ -65,6 +65,9 @@ describe('QuizSetupComponent', () => {
       status: GameStatus.ACTIVE,
       startedAt: new Date().toISOString(),
       questions: [],
+      containsRepeats: false,
+      unseenQuestionsRemaining: 5,
+      eligibleQuestionCount: 10,
     };
 
     soloQuizApiMock.startQuiz.mockReturnValue(of(mockSession));
@@ -79,12 +82,14 @@ describe('QuizSetupComponent', () => {
 
   it('should display error message on empty session or API error', () => {
     soloQuizApiMock.startQuiz.mockReturnValue(
-      throwError(() => ({ status: 400, error: { message: 'No questions available' } })),
+      throwError(() => ({ status: 400, error: { message: 'Fewer than 5 published questions' } })),
     );
 
     component.startQuiz();
 
-    expect(component.errorMessage()).toContain('سؤالی برای این دسته و سطح سختی یافت نشد');
+    expect(component.errorMessage()).toContain(
+      'تعداد سؤالات موجود برای این دسته و سطح سختی کمتر از ۵ سؤال است',
+    );
     expect(component.loading()).toBe(false);
   });
 });

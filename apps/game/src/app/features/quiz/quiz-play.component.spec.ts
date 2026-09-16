@@ -21,6 +21,9 @@ describe('QuizPlayComponent (Phase 5D UX Correction)', () => {
     difficulty: Difficulty.MEDIUM,
     status: GameStatus.ACTIVE,
     startedAt: new Date(nowMs).toISOString(),
+    containsRepeats: false,
+    unseenQuestionsRemaining: 5,
+    eligibleQuestionCount: 10,
     questions: [
       {
         id: 'sq-1',
@@ -287,5 +290,17 @@ describe('QuizPlayComponent (Phase 5D UX Correction)', () => {
 
     expect(soloQuizApiMock.advanceQuiz).not.toHaveBeenCalled();
     expect(soloQuizApiMock.finishQuiz).not.toHaveBeenCalled();
+  });
+
+  it('9. Renders repeat notice banner when containsRepeats is true', () => {
+    component.quizSession.set({
+      ...sampleSession,
+      containsRepeats: true,
+    });
+    fixture.detectChanges();
+
+    const bannerEl = fixture.nativeElement.querySelector('.repeat-notice-banner');
+    expect(bannerEl).toBeTruthy();
+    expect(bannerEl.textContent).toContain('برخی از سؤالات این کوییز تکراری هستند');
   });
 });

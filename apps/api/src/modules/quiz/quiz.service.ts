@@ -63,16 +63,57 @@ export class QuizService {
       where.difficulty = dto.difficulty;
     }
 
-    const questions = await this.prisma.question.findMany({
+    const eligibleQuestions = await this.prisma.question.findMany({
       where,
       include: { options: { orderBy: { sortOrder: 'asc' } } },
     });
 
-    if (questions.length === 0) {
-      throw new BadRequestException('No questions available for the selected criteria');
+    const eligibleQuestionCount = eligibleQuestions.length;
+    if (eligibleQuestionCount < QUESTION_COUNT) {
+      throw new BadRequestException(
+        'Fewer than 5 published questions are available for the selected criteria',
+      );
     }
 
-    const selected = this.shuffleArray(questions).slice(0, QUESTION_COUNT);
+    const userSeenSessionQuestions = await this.prisma.quizSessionQuestion.findMany({
+      where: {
+        quizSession: {
+          userId,
+        },
+      },
+      select: {
+        questionId: true,
+      },
+    });
+
+    const seenQuestionIds = new Set(userSeenSessionQuestions.map((sq) => sq.questionId));
+
+    const unseenQuestions = eligibleQuestions.filter((q) => !seenQuestionIds.has(q.id));
+    const seenQuestions = eligibleQuestions.filter((q) => seenQuestionIds.has(q.id));
+
+    const unseenCount = unseenQuestions.length;
+    let selected: typeof eligibleQuestions = [];
+    let containsRepeats = false;
+    let unseenQuestionsRemaining = 0;
+
+    if (unseenCount >= QUESTION_COUNT) {
+      const shuffledUnseen = this.shuffleArray(unseenQuestions);
+      selected = shuffledUnseen.slice(0, QUESTION_COUNT);
+      containsRepeats = false;
+      unseenQuestionsRemaining = unseenCount - QUESTION_COUNT;
+    } else if (unseenCount >= 1) {
+      const shuffledUnseen = this.shuffleArray(unseenQuestions);
+      const shuffledSeen = this.shuffleArray(seenQuestions);
+      const neededFromSeen = QUESTION_COUNT - unseenCount;
+      selected = [...shuffledUnseen, ...shuffledSeen.slice(0, neededFromSeen)];
+      containsRepeats = true;
+      unseenQuestionsRemaining = 0;
+    } else {
+      const shuffledEligible = this.shuffleArray(eligibleQuestions);
+      selected = shuffledEligible.slice(0, QUESTION_COUNT);
+      containsRepeats = true;
+      unseenQuestionsRemaining = 0;
+    }
 
     const now = new Date();
     const quizSession = await this.prisma.quizSession.create({
@@ -118,6 +159,9 @@ export class QuizService {
           ? quizSession.startedAt.toISOString()
           : quizSession.startedAt,
       questions: quizSession.questions.map((sq) => this.mapToQuizSessionQuestionDto(sq)),
+      containsRepeats,
+      unseenQuestionsRemaining,
+      eligibleQuestionCount,
     };
   }
 

@@ -51,6 +51,16 @@
           <app-difficulty-chip [difficulty]="q.difficulty" />
         </div>
 
+        <!-- Repeat Notice Banner -->
+        @if (quizSession()?.containsRepeats) {
+          <div class="repeat-notice-banner">
+            <span class="notice-icon">ℹ️</span>
+            <span class="notice-text">
+              توجه: به دلیل اتمام یا محدود بودن سؤالات جدید، برخی از سؤالات این کوییز تکراری هستند.
+            </span>
+          </div>
+        }
+
         <!-- Question Card -->
         <div class="question-card">
           <h2 class="question-text">{{ q.text }}</h2>

@@ -44,6 +44,9 @@ describe('SoloQuizApiService', () => {
       status: GameStatus.ACTIVE,
       startedAt: new Date().toISOString(),
       questions: [],
+      containsRepeats: false,
+      unseenQuestionsRemaining: 5,
+      eligibleQuestionCount: 10,
     };
 
     service.startQuiz('cat1', Difficulty.MEDIUM).subscribe((res) => {

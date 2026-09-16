@@ -25,6 +25,9 @@ export interface StartQuizResponseDto {
   status: GameStatus;
   startedAt: string;
   questions: readonly QuizSessionQuestionDto[];
+  containsRepeats: boolean;
+  unseenQuestionsRemaining: number;
+  eligibleQuestionCount: number;
 }
 
 export interface SubmitAnswerRequestDto {

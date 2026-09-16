@@ -110,9 +110,13 @@ export class QuizSetupComponent implements OnInit {
         },
         error: (err) => {
           this.loading.set(false);
-          if (err?.status === 400 || err?.error?.message?.includes('No questions')) {
+          if (
+            err?.status === 400 ||
+            err?.error?.message?.includes('No questions') ||
+            err?.error?.message?.includes('Fewer than 5')
+          ) {
             this.errorMessage.set(
-              'سؤالی برای این دسته و سطح سختی یافت نشد. لطفاً دسته یا سطح دیگری انتخاب کنید.',
+              'تعداد سؤالات موجود برای این دسته و سطح سختی کمتر از ۵ سؤال است. لطفاً دسته یا سطح دیگری انتخاب کنید.',
             );
           } else {
             this.errorMessage.set('خطا در برقراری ارتباط با سرور. لطفاً مجدداً تلاش کنید.');

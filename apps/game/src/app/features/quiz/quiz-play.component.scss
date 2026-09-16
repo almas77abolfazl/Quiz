@@ -105,6 +105,19 @@
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
+.repeat-notice-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #fbbf24;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .question-card {
   background: var(--surface-card);
   border: 1.5px solid var(--surface-border-bright);

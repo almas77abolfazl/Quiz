@@ -31,6 +31,7 @@ describe('QuizService Timing & Result Integrity (Phase 5C & 5D)', () => {
         update: jest.fn(),
       },
       quizSessionQuestion: {
+        findMany: jest.fn().mockResolvedValue([]),
         update: jest.fn(),
         updateMany: jest.fn(),
       },
@@ -52,10 +53,7 @@ describe('QuizService Timing & Result Integrity (Phase 5C & 5D)', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        QuizService,
-        { provide: PrismaService, useValue: prisma },
-      ],
+      providers: [QuizService, { provide: PrismaService, useValue: prisma }],
     }).compile();
 
     service = module.get<QuizService>(QuizService);
