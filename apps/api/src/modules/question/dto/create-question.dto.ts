@@ -1,4 +1,5 @@
-import { IsOptional, IsString, IsEnum, IsArray, MinLength, MaxLength, IsInt, IsBoolean } from 'class-validator';
+import { IsOptional, IsString, IsEnum, IsArray, MinLength, MaxLength, IsInt, IsBoolean, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { Difficulty, QuestionStatus } from '@quiz/contracts';
 
 export class QuestionOptionDto {
@@ -77,4 +78,10 @@ export class UpdateQuestionDto {
   @IsArray()
   @IsString({ each: true })
   tagIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => QuestionOptionDto)
+  questionOptions?: QuestionOptionDto[];
 }

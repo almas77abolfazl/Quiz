@@ -122,14 +122,53 @@ export class QuestionService {
     return question;
   }
 
+  private validatePublishInvariants(data: {
+    explanation?: string | null;
+    options?: Array<{ isCorrect: boolean }>;
+    categoryIds?: string[];
+  }): void {
+    const hasExplanation = Boolean(data.explanation && data.explanation.trim().length > 0);
+    const options = data.options ?? [];
+    const correctCount = options.filter((o) => o.isCorrect).length;
+    const categoryIds = data.categoryIds ?? [];
+
+    if (options.length !== 4 || correctCount !== 1 || !hasExplanation || categoryIds.length < 1) {
+      throw new BadRequestException(
+        'Published questions must have exactly four options, one correct option, an explanation, and at least one category',
+      );
+    }
+  }
+
   async update(id: string, dto: UpdateQuestionDto, actorRole?: string) {
     const existing = await this.prisma.question.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        options: true,
+        categories: true,
+      },
     });
     if (!existing) throw new NotFoundException('Question not found');
 
+    if (actorRole === UserRole.CONTENT_SPECIALIST) {
+      if (existing.status === QuestionStatus.PUBLISHED || existing.status === QuestionStatus.ARCHIVED) {
+        throw new ForbiddenException('Content Specialists cannot edit published or archived questions');
+      }
+      if (dto.status === QuestionStatus.PUBLISHED) {
+        throw new ForbiddenException('Only Root Admin can publish questions');
+      }
+    }
+
     if (dto.status === QuestionStatus.PUBLISHED && actorRole !== UserRole.ROOT_ADMIN) {
       throw new ForbiddenException('Only Root Admin can publish questions');
+    }
+
+    const targetStatus = dto.status ?? existing.status;
+    if (targetStatus === QuestionStatus.PUBLISHED) {
+      this.validatePublishInvariants({
+        explanation: dto.explanation !== undefined ? dto.explanation : existing.explanation,
+        options: dto.questionOptions !== undefined ? dto.questionOptions : existing.options,
+        categoryIds: dto.categoryIds !== undefined ? dto.categoryIds : existing.categories.map((c) => c.categoryId),
+      });
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
@@ -139,6 +178,17 @@ export class QuestionService {
       if (dto.imageKey !== undefined) data.imageKey = dto.imageKey;
       if (dto.difficulty !== undefined) data.difficulty = dto.difficulty;
       if (dto.status !== undefined) data.status = dto.status;
+
+      if (dto.questionOptions && dto.questionOptions.length > 0) {
+        await tx.questionOption.deleteMany({ where: { questionId: id } });
+        data.options = {
+          create: dto.questionOptions.map((opt) => ({
+            text: opt.text,
+            sortOrder: opt.sortOrder,
+            isCorrect: opt.isCorrect,
+          })),
+        };
+      }
 
       if (dto.categoryIds) {
         await tx.questionCategory.deleteMany({ where: { questionId: id } });
@@ -173,8 +223,18 @@ export class QuestionService {
 
     const question = await this.prisma.question.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        options: true,
+        categories: true,
+      },
     });
     if (!question) throw new NotFoundException('Question not found');
+
+    this.validatePublishInvariants({
+      explanation: question.explanation,
+      options: question.options,
+      categoryIds: question.categories.map((c) => c.categoryId),
+    });
 
     return this.prisma.question.update({
       where: { id },

@@ -72,3 +72,5 @@ export const questionsGuard: CanActivateFn = (route, state) => {
 
   return checkAccess();
 };
+
+export const contentGuard = questionsGuard;

@@ -8,24 +8,35 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   AdminQuestionDto,
   QuestionPaginationMetaDto,
   Difficulty,
   QuestionStatus,
+  UserRole,
 } from '@quiz/contracts';
 import { AdminApiService, Category } from '../../core/services/admin-api.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-questions',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './questions.component.html',
   styleUrl: './questions.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuestionsComponent implements OnInit, OnDestroy {
   private readonly api = inject(AdminApiService);
+  readonly authService = inject(AuthService);
+  private readonly fb = inject(FormBuilder);
+
+  // User Role State
+  readonly userRole = this.authService.userRole;
+  readonly isRootAdmin = computed(() => this.userRole() === UserRole.ROOT_ADMIN);
+  readonly isContentSpecialist = computed(() => this.userRole() === UserRole.CONTENT_SPECIALIST);
+  readonly QuestionStatus = QuestionStatus;
 
   // Filter & Pagination Signals
   readonly page = signal<number>(1);
@@ -42,6 +53,32 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   readonly categories = signal<Category[]>([]);
   readonly isLoading = signal<boolean>(true);
   readonly error = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
+
+  // Details Modal State
+  readonly detailsQuestion = signal<AdminQuestionDto | null>(null);
+
+  // Create / Edit Form Modal State
+  readonly isFormModalOpen = signal<boolean>(false);
+  readonly editingQuestion = signal<AdminQuestionDto | null>(null);
+  readonly isSaving = signal<boolean>(false);
+  readonly formError = signal<string | null>(null);
+
+  // Form definition
+  questionForm: FormGroup = this.fb.group({
+    text: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(2000)]],
+    explanation: ['', [Validators.required, Validators.minLength(5)]],
+    difficulty: [Difficulty.EASY, [Validators.required]],
+    imageKey: [''],
+    categoryIds: [[], [Validators.required]],
+    correctOptionIndex: [0, [Validators.required]],
+    options: this.fb.array([
+      this.fb.group({ text: ['', Validators.required] }),
+      this.fb.group({ text: ['', Validators.required] }),
+      this.fb.group({ text: ['', Validators.required] }),
+      this.fb.group({ text: ['', Validators.required] }),
+    ]),
+  });
 
   // Stale request tracking counter
   private requestId = 0;
@@ -86,6 +123,10 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     [QuestionStatus.ARCHIVED]: 'بایگانیشده',
   };
 
+  get optionsFormArray(): FormArray {
+    return this.questionForm.get('options') as FormArray;
+  }
+
   ngOnInit(): void {
     this.loadCategories();
     this.loadQuestions();
@@ -100,9 +141,7 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   loadCategories(): void {
     this.api.getCategories().subscribe({
       next: (data) => this.categories.set(data),
-      error: () => {
-        // Categories load failure can gracefully fallback to empty array
-      },
+      error: () => {},
     });
   }
 
@@ -137,6 +176,243 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           this.isLoading.set(false);
         },
       });
+  }
+
+  // Permission Checks
+  canEditQuestion(q: AdminQuestionDto): boolean {
+    if (this.isRootAdmin()) return true;
+    if (this.isContentSpecialist()) {
+      return q.status === QuestionStatus.DRAFT || q.status === QuestionStatus.PENDING_REVIEW;
+    }
+    return false;
+  }
+
+  canPublishQuestion(q: AdminQuestionDto): boolean {
+    return (
+      this.isRootAdmin() &&
+      (q.status === QuestionStatus.DRAFT || q.status === QuestionStatus.PENDING_REVIEW)
+    );
+  }
+
+  canSubmitForReview(q: AdminQuestionDto): boolean {
+    return q.status === QuestionStatus.DRAFT;
+  }
+
+  // Details Modal
+  viewDetails(q: AdminQuestionDto): void {
+    this.detailsQuestion.set(q);
+  }
+
+  closeDetails(): void {
+    this.detailsQuestion.set(null);
+  }
+
+  // Create / Edit Form Modal
+  openCreateModal(): void {
+    this.editingQuestion.set(null);
+    this.formError.set(null);
+
+    const defaultCategory = this.categories().length > 0 ? [this.categories()[0].id] : [];
+
+    this.questionForm.reset({
+      text: '',
+      explanation: '',
+      difficulty: Difficulty.EASY,
+      imageKey: '',
+      categoryIds: defaultCategory,
+      correctOptionIndex: 0,
+    });
+
+    const opts = this.optionsFormArray;
+    for (let i = 0; i < 4; i++) {
+      opts.at(i).patchValue({ text: '' });
+    }
+
+    this.isFormModalOpen.set(true);
+  }
+
+  openEditModal(q: AdminQuestionDto): void {
+    if (!this.canEditQuestion(q)) {
+      this.showSuccess('ویرایش سوالات منتشرشده تنها توسط مدیر ارشد امکان‌پذیر است.');
+      return;
+    }
+
+    this.editingQuestion.set(q);
+    this.formError.set(null);
+
+    const correctIndex = q.options.findIndex((opt) => opt.isCorrect);
+
+    this.questionForm.patchValue({
+      text: q.text,
+      explanation: q.explanation || '',
+      difficulty: q.difficulty,
+      imageKey: q.imageUrl || '',
+      categoryIds: [...q.categoryIds],
+      correctOptionIndex: correctIndex >= 0 ? correctIndex : 0,
+    });
+
+    const opts = this.optionsFormArray;
+    for (let i = 0; i < 4; i++) {
+      const optData = q.options[i];
+      opts.at(i).patchValue({ text: optData ? optData.text : '' });
+    }
+
+    this.isFormModalOpen.set(true);
+  }
+
+  closeFormModal(): void {
+    this.isFormModalOpen.set(false);
+    this.editingQuestion.set(null);
+    this.formError.set(null);
+  }
+
+  toggleCategorySelection(catId: string): void {
+    const current = (this.questionForm.get('categoryIds')?.value as string[]) || [];
+    let updated: string[];
+    if (current.includes(catId)) {
+      updated = current.filter((id) => id !== catId);
+    } else {
+      updated = [...current, catId];
+    }
+    this.questionForm.patchValue({ categoryIds: updated });
+    this.questionForm.get('categoryIds')?.markAsTouched();
+  }
+
+  isCategorySelected(catId: string): boolean {
+    const current = (this.questionForm.get('categoryIds')?.value as string[]) || [];
+    return current.includes(catId);
+  }
+
+  saveQuestion(targetStatus?: QuestionStatus): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      this.formError.set(
+        'لطفاً تمام فیلدهای الزامی (متن سوال، توضیحات، ۴ گزینه و دسته‌بندی) را تکمیل کنید.',
+      );
+      return;
+    }
+
+    const formValue = this.questionForm.value;
+    const catIds = formValue.categoryIds as string[];
+
+    if (!catIds || catIds.length === 0) {
+      this.formError.set('انتخاب حداقل یک دسته‌بندی الزامی است.');
+      return;
+    }
+
+    const rawOptions = formValue.options as Array<{ text: string }>;
+    const emptyOption = rawOptions.some((opt) => !opt.text || !opt.text.trim());
+    if (emptyOption) {
+      this.formError.set('وارد کردن متن برای هر ۴ گزینه الزامی است.');
+      return;
+    }
+
+    const correctIndex = Number(formValue.correctOptionIndex);
+
+    const questionOptions = rawOptions.map((opt, idx) => ({
+      text: opt.text.trim(),
+      sortOrder: idx + 1,
+      isCorrect: idx === correctIndex,
+    }));
+
+    this.isSaving.set(true);
+    this.formError.set(null);
+
+    const editing = this.editingQuestion();
+
+    if (editing) {
+      const updatePayload: any = {
+        text: formValue.text.trim(),
+        explanation: formValue.explanation.trim(),
+        difficulty: formValue.difficulty,
+        imageKey: formValue.imageKey?.trim() || null,
+        categoryIds: catIds,
+        questionOptions,
+      };
+
+      if (targetStatus) {
+        updatePayload.status = targetStatus;
+      }
+
+      this.api.updateQuestion(editing.id, updatePayload).subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.closeFormModal();
+          this.showSuccess('سوال با موفقیت بروزرسانی شد.');
+          this.loadQuestions();
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          const msg = err.error?.message || 'خطا در ویرایش سوال.';
+          this.formError.set(Array.isArray(msg) ? msg.join('، ') : msg);
+        },
+      });
+    } else {
+      const createPayload = {
+        text: formValue.text.trim(),
+        explanation: formValue.explanation.trim(),
+        difficulty: formValue.difficulty,
+        imageKey: formValue.imageKey?.trim() || null,
+        categoryIds: catIds,
+        questionOptions,
+      };
+
+      this.api.createQuestion(createPayload).subscribe({
+        next: (created) => {
+          if (targetStatus && targetStatus !== QuestionStatus.DRAFT) {
+            this.api.updateQuestion(created.id, { status: targetStatus }).subscribe({
+              next: () => {
+                this.isSaving.set(false);
+                this.closeFormModal();
+                this.showSuccess('سوال با موفقیت ثبت شد.');
+                this.loadQuestions();
+              },
+              error: (err) => {
+                this.isSaving.set(false);
+                const msg = err.error?.message || 'سوال ایجاد شد اما تغییر وضعیت با خطا مواجه شد.';
+                this.formError.set(Array.isArray(msg) ? msg.join('، ') : msg);
+              },
+            });
+          } else {
+            this.isSaving.set(false);
+            this.closeFormModal();
+            this.showSuccess('سوال جدید با موفقیت ثبت شد.');
+            this.loadQuestions();
+          }
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          const msg = err.error?.message || 'خطا در ایجاد سوال.';
+          this.formError.set(Array.isArray(msg) ? msg.join('، ') : msg);
+        },
+      });
+    }
+  }
+
+  submitForReview(q: AdminQuestionDto): void {
+    this.api.updateQuestion(q.id, { status: QuestionStatus.PENDING_REVIEW }).subscribe({
+      next: () => {
+        this.showSuccess('سوال جهت بررسی ارسال شد.');
+        this.loadQuestions();
+      },
+      error: (err) => {
+        const msg = err.error?.message || 'خطا در ارسال برای بررسی.';
+        this.error.set(Array.isArray(msg) ? msg.join('، ') : msg);
+      },
+    });
+  }
+
+  publishQuestion(q: AdminQuestionDto): void {
+    this.api.publishQuestion(q.id).subscribe({
+      next: () => {
+        this.showSuccess('سوال با موفقیت منتشر شد.');
+        this.loadQuestions();
+      },
+      error: (err) => {
+        const msg = err.error?.message || 'خطا در انتشار سوال.';
+        this.error.set(Array.isArray(msg) ? msg.join('، ') : msg);
+      },
+    });
   }
 
   onSearchInputChange(event: Event): void {
@@ -233,5 +509,10 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
   getStatusLabel(status: QuestionStatus): string {
     return this.statusLabels[status] || status;
+  }
+
+  private showSuccess(msg: string): void {
+    this.successMessage.set(msg);
+    setTimeout(() => this.successMessage.set(null), 4000);
   }
 }

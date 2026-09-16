@@ -4,10 +4,18 @@
       <h2>مدیریت سوالات</h2>
       <p class="subtitle">ایجاد، ویرایش، تایید و انتشار سوالات رسمی کوییز</p>
     </div>
-    <div class="header-stats">
+    <div class="header-actions">
       <span class="total-badge">تعداد کل: {{ totalCount() }} سوال</span>
+      <button class="btn btn-primary" (click)="openCreateModal()">+ افزودن سوال جدید</button>
     </div>
   </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      <span>{{ successMessage() }}</span>
+      <button class="alert-close" (click)="successMessage.set(null)">×</button>
+    </div>
+  }
 
   <div class="filters-card">
     <form class="filters-grid" (submit)="onSearchSubmit($event)">
@@ -100,6 +108,7 @@
               <th class="col-diff">سختی</th>
               <th class="col-status">وضعیت</th>
               <th class="col-date">تاریخ ایجاد</th>
+              <th class="col-actions">عملیات</th>
             </tr>
           </thead>
           <tbody>
@@ -125,6 +134,47 @@
                 <td class="col-date">
                   <span class="date-text">{{ q.createdAt | date: 'yyyy/MM/dd' }}</span>
                 </td>
+                <td class="col-actions">
+                  <div class="action-buttons">
+                    <button
+                      class="btn-icon btn-view"
+                      title="مشاهده جزئیات"
+                      (click)="viewDetails(q)"
+                    >
+                      👁️
+                    </button>
+
+                    @if (canEditQuestion(q)) {
+                      <button
+                        class="btn-icon btn-edit-action"
+                        title="ویرایش"
+                        (click)="openEditModal(q)"
+                      >
+                        ✏️
+                      </button>
+                    }
+
+                    @if (canSubmitForReview(q)) {
+                      <button
+                        class="btn-action-sm btn-review"
+                        title="ارسال جهت بررسی"
+                        (click)="submitForReview(q)"
+                      >
+                        📤 بررسی
+                      </button>
+                    }
+
+                    @if (canPublishQuestion(q)) {
+                      <button
+                        class="btn-action-sm btn-publish"
+                        title="انتشار سوال"
+                        (click)="publishQuestion(q)"
+                      >
+                        🚀 انتشار
+                      </button>
+                    }
+                  </div>
+                </td>
               </tr>
             }
           </tbody>
@@ -147,6 +197,27 @@
               <span class="badge difficulty-badge" [attr.data-difficulty]="q.difficulty">
                 {{ getDifficultyLabel(q.difficulty) }}
               </span>
+            </div>
+            <div class="card-actions">
+              <button class="btn-icon btn-view" (click)="viewDetails(q)">👁️ مشاهده</button>
+
+              @if (canEditQuestion(q)) {
+                <button class="btn-icon btn-edit-action" (click)="openEditModal(q)">
+                  ✏️ ویرایش
+                </button>
+              }
+
+              @if (canSubmitForReview(q)) {
+                <button class="btn-action-sm btn-review" (click)="submitForReview(q)">
+                  📤 ارسال جهت بررسی
+                </button>
+              }
+
+              @if (canPublishQuestion(q)) {
+                <button class="btn-action-sm btn-publish" (click)="publishQuestion(q)">
+                  🚀 انتشار
+                </button>
+              }
             </div>
           </div>
         }
@@ -181,6 +252,228 @@
             بعدی
           </button>
         </div>
+      </div>
+    </div>
+  }
+
+  <!-- Read-Only Details Modal -->
+  @if (detailsQuestion()) {
+    <div class="modal-backdrop" (click)="closeDetails()">
+      <div class="modal-card modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>جزئیات سوال</h3>
+          <button class="btn-close" (click)="closeDetails()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="details-badges">
+            <span class="badge status-badge" [attr.data-status]="detailsQuestion()?.status">
+              {{ getStatusLabel(detailsQuestion()!.status) }}
+            </span>
+            <span
+              class="badge difficulty-badge"
+              [attr.data-difficulty]="detailsQuestion()?.difficulty"
+            >
+              {{ getDifficultyLabel(detailsQuestion()!.difficulty) }}
+            </span>
+            <span class="category-tag">{{ getCategoryName(detailsQuestion()!.categoryIds) }}</span>
+          </div>
+
+          <div class="details-section">
+            <label class="details-label">متن سوال:</label>
+            <p class="details-content question-full-text">{{ detailsQuestion()?.text }}</p>
+          </div>
+
+          <div class="details-section">
+            <label class="details-label">پاسخ تشریحی / توضیحات:</label>
+            <p class="details-content explanation-text">
+              {{ detailsQuestion()?.explanation || 'بدون توضیحات' }}
+            </p>
+          </div>
+
+          @if (detailsQuestion()?.imageUrl) {
+            <div class="details-section">
+              <label class="details-label">آدرس / کلید تصویر:</label>
+              <code class="image-key-code">{{ detailsQuestion()?.imageUrl }}</code>
+            </div>
+          }
+
+          <div class="details-section">
+            <label class="details-label">گزینه‌ها (پاسخ صحیح با علامت ✅ مشخص شده است):</label>
+            <div class="options-list">
+              @for (opt of detailsQuestion()?.options; track opt.id || opt.sortOrder) {
+                <div class="option-item" [class.is-correct]="opt.isCorrect">
+                  <span class="option-num">{{ opt.sortOrder }}-</span>
+                  <span class="option-text">{{ opt.text }}</span>
+                  @if (opt.isCorrect) {
+                    <span class="correct-badge">✅ گزینه صحیح</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeDetails()">بستن</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Create / Edit Form Modal -->
+  @if (isFormModalOpen()) {
+    <div class="modal-backdrop" (click)="closeFormModal()">
+      <div class="modal-card modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingQuestion() ? 'ویرایش سوال' : 'ایجاد سوال جدید' }}</h3>
+          <button class="btn-close" (click)="closeFormModal()">×</button>
+        </div>
+
+        <form [formGroup]="questionForm" class="modal-body">
+          @if (formError()) {
+            <div class="alert alert-danger">{{ formError() }}</div>
+          }
+
+          <div class="form-group">
+            <label for="q-text">متن سوال <span class="required">*</span></label>
+            <textarea
+              id="q-text"
+              rows="3"
+              formControlName="text"
+              placeholder="متن سوال را وارد کنید..."
+              [class.is-invalid]="
+                questionForm.get('text')?.invalid && questionForm.get('text')?.touched
+              "
+            ></textarea>
+            @if (questionForm.get('text')?.invalid && questionForm.get('text')?.touched) {
+              <span class="error-msg">متن سوال الزامی است (حداقل ۱۰ کاراکتر).</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="q-explanation">توضیحات و پاسخ تشریحی <span class="required">*</span></label>
+            <textarea
+              id="q-explanation"
+              rows="2"
+              formControlName="explanation"
+              placeholder="پاسخ تشریحی و دلیل صحّت گزینه صحیح..."
+              [class.is-invalid]="
+                questionForm.get('explanation')?.invalid && questionForm.get('explanation')?.touched
+              "
+            ></textarea>
+            @if (
+              questionForm.get('explanation')?.invalid && questionForm.get('explanation')?.touched
+            ) {
+              <span class="error-msg">وارد کردن توضیحات و پاسخ تشریحی الزامی است.</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label for="q-difficulty">درجه سختی <span class="required">*</span></label>
+              <select id="q-difficulty" formControlName="difficulty">
+                @for (opt of difficultyOptions; track opt.value) {
+                  <option [value]="opt.value">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group flex-1">
+              <label for="q-imageKey">کلید/آدرس تصویر (اختیاری)</label>
+              <input
+                id="q-imageKey"
+                type="text"
+                formControlName="imageKey"
+                placeholder="مثال: questions/q101.jpg"
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>دسته‌بندی‌ها <span class="required">*</span></label>
+            <div class="categories-checkbox-grid">
+              @for (cat of categories(); track cat.id) {
+                <label class="category-checkbox-item">
+                  <input
+                    type="checkbox"
+                    [checked]="isCategorySelected(cat.id)"
+                    (change)="toggleCategorySelection(cat.id)"
+                  />
+                  <span>{{ cat.title }}</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label
+              >گزینه‌ها (دقیقا ۴ گزینه، و گزینه صحیح را انتخاب کنید)
+              <span class="required">*</span></label
+            >
+            <div formArrayName="options" class="options-form-grid">
+              @for (optGroup of optionsFormArray.controls; track $index) {
+                <div [formGroupName]="$index" class="option-form-row">
+                  <label class="radio-correct-label" [title]="'علامت‌گذاری به عنوان گزینه صحیح'">
+                    <input
+                      type="radio"
+                      formControlName="correctOptionIndex"
+                      [value]="$index"
+                      [name]="'correctOptionGroup'"
+                      [checked]="questionForm.get('correctOptionIndex')?.value === $index"
+                      (change)="questionForm.patchValue({ correctOptionIndex: $index })"
+                    />
+                    <span>گزینه {{ $index + 1 }}</span>
+                  </label>
+                  <input
+                    type="text"
+                    formControlName="text"
+                    [placeholder]="'متن گزینه ' + ($index + 1)"
+                    [class.is-invalid]="
+                      optGroup.get('text')?.invalid && optGroup.get('text')?.touched
+                    "
+                  />
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeFormModal()">
+              انصراف
+            </button>
+
+            <!-- Save as Draft button -->
+            <button
+              type="button"
+              class="btn btn-secondary"
+              [disabled]="isSaving()"
+              (click)="saveQuestion(QuestionStatus.DRAFT)"
+            >
+              ذخیره پیش‌نویس
+            </button>
+
+            <!-- Submit for Review button -->
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="isSaving()"
+              (click)="saveQuestion(QuestionStatus.PENDING_REVIEW)"
+            >
+              ارسال جهت بررسی
+            </button>
+
+            <!-- Direct Publish button (Root Admin only) -->
+            @if (isRootAdmin()) {
+              <button
+                type="button"
+                class="btn btn-success"
+                [disabled]="isSaving()"
+                (click)="saveQuestion(QuestionStatus.PUBLISHED)"
+              >
+                انتشار مستقیم 🚀
+              </button>
+            }
+          </div>
+        </form>
       </div>
     </div>
   }

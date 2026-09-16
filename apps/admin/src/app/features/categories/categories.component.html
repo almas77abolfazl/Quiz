@@ -4,10 +4,15 @@
       <h2>مدیریت دسته‌بندی‌ها</h2>
       <p class="subtitle">لیست دسته‌بندی‌های رسمی ثبت شده در سیستم</p>
     </div>
-    <button class="btn btn-disabled" disabled title="ایجاد دسته جدید در فاز بعدی فعال خواهد شد">
-      + افزودن دسته (به‌زودی)
-    </button>
+    <button class="btn btn-primary" (click)="openCreateModal()">+ افزودن دسته‌بندی جدید</button>
   </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      <span>{{ successMessage() }}</span>
+      <button class="alert-close" (click)="successMessage.set(null)">×</button>
+    </div>
+  }
 
   @if (isLoading()) {
     <div class="state-container loading-state">
@@ -22,14 +27,17 @@
   } @else if (categories().length === 0) {
     <div class="state-container empty-state">
       <p>هیچ دسته‌بندی یافت نشد.</p>
+      <button class="btn btn-primary" (click)="openCreateModal()">ایجاد اولین دسته‌بندی</button>
     </div>
   } @else {
-    <div class="table-card">
+    <!-- Desktop Table View -->
+    <div class="table-card desktop-view">
       <table class="data-table">
         <thead>
           <tr>
             <th>عنوان</th>
             <th>توضیحات</th>
+            <th>کلید تصویر</th>
             <th>وضعیت</th>
             <th>تاریخ ایجاد</th>
             <th>عملیات</th>
@@ -40,27 +48,166 @@
             <tr>
               <td class="font-bold">{{ cat.title }}</td>
               <td class="text-secondary">{{ cat.description || '---' }}</td>
+              <td class="text-secondary" dir="ltr">{{ cat.coverKey || '---' }}</td>
               <td>
-                @if (cat.isActive) {
-                  <span class="badge badge-success">فعال</span>
-                } @else {
-                  <span class="badge badge-secondary">غیرفعال</span>
-                }
-              </td>
-              <td class="text-secondary" dir="ltr">{{ cat.createdAt | date: 'yyyy-MM-dd' }}</td>
-              <td>
-                <button
-                  class="btn-action btn-disabled"
-                  disabled
-                  title="ویرایش و حذف در فاز بعدی فعال خواهد شد"
+                <span
+                  class="badge"
+                  [class.badge-success]="cat.isActive"
+                  [class.badge-secondary]="!cat.isActive"
                 >
-                  ویرایش / حذف (به‌زودی)
+                  {{ cat.isActive ? 'فعال' : 'غیرفعال' }}
+                </span>
+              </td>
+              <td class="text-secondary" dir="ltr">{{ cat.createdAt | date: 'yyyy/MM/dd' }}</td>
+              <td class="actions-cell">
+                <button class="btn-action btn-edit" (click)="openEditModal(cat)">ویرایش</button>
+                <button
+                  class="btn-action"
+                  [class.btn-warning]="cat.isActive"
+                  [class.btn-success]="!cat.isActive"
+                  (click)="toggleCategoryStatus(cat)"
+                >
+                  {{ cat.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی' }}
+                </button>
+                <button class="btn-action btn-danger" (click)="confirmDeleteCategory(cat)">
+                  حذف
                 </button>
               </td>
             </tr>
           }
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile Cards View -->
+    <div class="mobile-cards-container">
+      @for (cat of categories(); track cat.id) {
+        <div class="category-card">
+          <div class="card-header">
+            <h3 class="card-title">{{ cat.title }}</h3>
+            <span
+              class="badge"
+              [class.badge-success]="cat.isActive"
+              [class.badge-secondary]="!cat.isActive"
+            >
+              {{ cat.isActive ? 'فعال' : 'غیرفعال' }}
+            </span>
+          </div>
+          @if (cat.description) {
+            <p class="card-desc">{{ cat.description }}</p>
+          }
+          <div class="card-actions">
+            <button class="btn-action btn-edit" (click)="openEditModal(cat)">ویرایش</button>
+            <button
+              class="btn-action"
+              [class.btn-warning]="cat.isActive"
+              [class.btn-success]="!cat.isActive"
+              (click)="toggleCategoryStatus(cat)"
+            >
+              {{ cat.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی' }}
+            </button>
+            <button class="btn-action btn-danger" (click)="confirmDeleteCategory(cat)">حذف</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Create/Edit Category Modal -->
+  @if (isModalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingCategory() ? 'ویرایش دسته‌بندی' : 'افزودن دسته‌بندی جدید' }}</h3>
+          <button class="btn-close" (click)="closeModal()">×</button>
+        </div>
+
+        <form [formGroup]="categoryForm" (ngSubmit)="saveCategory()" class="modal-body">
+          @if (formError()) {
+            <div class="alert alert-danger">{{ formError() }}</div>
+          }
+
+          <div class="form-group">
+            <label for="cat-title">عنوان دسته‌بندی <span class="required">*</span></label>
+            <input
+              id="cat-title"
+              type="text"
+              formControlName="title"
+              placeholder="مثال: اطلاعات عمومی، ورزش..."
+              [class.is-invalid]="
+                categoryForm.get('title')?.invalid && categoryForm.get('title')?.touched
+              "
+            />
+            @if (categoryForm.get('title')?.invalid && categoryForm.get('title')?.touched) {
+              <span class="error-msg">وارد کردن عنوان دسته‌بندی الزامی است.</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="cat-desc">توضیحات</label>
+            <textarea
+              id="cat-desc"
+              rows="3"
+              formControlName="description"
+              placeholder="توضیحات مختصر درباره این دسته..."
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="cat-cover">کلید/آدرس تصویر (اختیاری)</label>
+            <input
+              id="cat-cover"
+              type="text"
+              formControlName="coverKey"
+              placeholder="مثال: categories/general.png"
+            />
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="isActive" />
+              <span>دسته‌بندی فعال باشد</span>
+            </label>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()">انصراف</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+              {{ isSaving() ? 'در حال ذخیره...' : 'ذخیره دسته‌بندی' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (deletingCategory()) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal-card modal-confirm" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>تایید حذف دسته‌بندی</h3>
+          <button class="btn-close" (click)="cancelDelete()">×</button>
+        </div>
+        <div class="modal-body">
+          <p>
+            آیا از حذف دسته‌بندی «<strong>{{ deletingCategory()?.title }}</strong
+            >» اطمینان دارید؟
+          </p>
+          <p class="text-secondary small">این عمل قابل بازگشت نیست.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelDelete()">انصراف</button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            [disabled]="isDeleting()"
+            (click)="executeDeleteCategory()"
+          >
+            {{ isDeleting() ? 'در حال حذف...' : 'حذف قطعی' }}
+          </button>
+        </div>
+      </div>
     </div>
   }
 </div>

@@ -7,8 +7,8 @@
 
       <nav class="nav-links">
         <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">داشبورد</a>
-        <a routerLink="/categories" routerLinkActive="active" class="nav-item">دسته‌بندی‌ها</a>
-        @if (canAccessQuestions()) {
+        @if (canAccessContent()) {
+          <a routerLink="/categories" routerLinkActive="active" class="nav-item">دسته‌بندی‌ها</a>
           <a routerLink="/questions" routerLinkActive="active" class="nav-item">سوالات</a>
         }
       </nav>

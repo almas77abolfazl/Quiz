@@ -20,7 +20,7 @@ export class App implements OnInit {
   readonly isStaff = this.authService.isStaff;
   readonly user = this.authService.user;
   readonly userRole = this.authService.userRole;
-  readonly canAccessQuestions = computed(() => {
+  readonly canAccessContent = computed(() => {
     const role = this.userRole();
     return role === UserRole.ROOT_ADMIN || role === UserRole.CONTENT_SPECIALIST;
   });

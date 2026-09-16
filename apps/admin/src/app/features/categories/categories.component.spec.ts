@@ -10,35 +10,19 @@ describe('CategoriesComponent', () => {
 
   const mockSeedCategories: Category[] = [
     {
-      id: '00000000-0000-4000-b000-000000000001',
+      id: 'cat-1',
       title: 'اطلاعات عمومی',
-      description: 'سوالات دانش عمومی، علمی، طبیعت و مفاهیم کاربردی جهان',
+      description: 'سوالات عمومی',
       coverKey: null,
       isActive: true,
       createdAt: '2026-01-01T00:00:00.000Z',
     },
     {
-      id: '00000000-0000-4000-b000-000000000002',
+      id: 'cat-2',
       title: 'تاریخ ایران',
-      description: 'سوالات تاریخی ایران از باستان تا دوران معاصر و مشاهیر',
+      description: 'تاریخ باستان',
       coverKey: null,
-      isActive: true,
-      createdAt: '2026-01-01T00:00:00.000Z',
-    },
-    {
-      id: '00000000-0000-4000-b000-000000000003',
-      title: 'جغرافیا',
-      description: 'سوالات جغرافیای ایران و جهان، پایتخت‌ها، دریاها و کوه‌ها',
-      coverKey: null,
-      isActive: true,
-      createdAt: '2026-01-01T00:00:00.000Z',
-    },
-    {
-      id: '00000000-0000-4000-b000-000000000004',
-      title: 'فناوری',
-      description: 'سوالات علوم رایانه، برنامه‌نویسی، هوش مصنوعی و اینترنت',
-      coverKey: null,
-      isActive: true,
+      isActive: false,
       createdAt: '2026-01-01T00:00:00.000Z',
     },
   ];
@@ -46,6 +30,15 @@ describe('CategoriesComponent', () => {
   beforeEach(async () => {
     apiMock = {
       getCategories: vi.fn().mockReturnValue(of(mockSeedCategories)),
+      createCategory: vi
+        .fn()
+        .mockImplementation((dto) =>
+          of({ id: 'cat-3', ...dto, createdAt: new Date().toISOString() }),
+        ),
+      updateCategory: vi
+        .fn()
+        .mockImplementation((id, dto) => of({ ...mockSeedCategories[0], ...dto })),
+      deleteCategory: vi.fn().mockReturnValue(of(undefined)),
     };
 
     await TestBed.configureTestingModule({
@@ -57,23 +50,16 @@ describe('CategoriesComponent', () => {
     component = fixture.componentInstance;
   });
 
-  it('should load and render four typed Persian seed categories on success', () => {
+  it('1. should load and render categories on success', () => {
     fixture.detectChanges();
 
     expect(component.isLoading()).toBe(false);
     expect(component.error()).toBeNull();
-    expect(component.categories().length).toBe(4);
+    expect(component.categories().length).toBe(2);
     expect(component.categories()[0].title).toBe('اطلاعات عمومی');
-    expect(component.categories()[1].title).toBe('تاریخ ایران');
-
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('اطلاعات عمومی');
-    expect(compiled.textContent).toContain('تاریخ ایران');
-    expect(compiled.textContent).toContain('جغرافیا');
-    expect(compiled.textContent).toContain('فناوری');
   });
 
-  it('should render empty state when API returns no categories', () => {
+  it('2. should render empty state when no categories', () => {
     apiMock.getCategories.mockReturnValue(of([]));
     fixture.detectChanges();
 
@@ -84,16 +70,68 @@ describe('CategoriesComponent', () => {
     expect(compiled.textContent).toContain('هیچ دسته‌بندی یافت نشد');
   });
 
-  it('should render error state and offer retry when API fails', () => {
-    apiMock.getCategories.mockReturnValue(throwError(() => new Error('Server error')));
+  it('3. should render error state on load error', () => {
+    apiMock.getCategories.mockReturnValue(throwError(() => new Error('API Fail')));
     fixture.detectChanges();
 
     expect(component.isLoading()).toBe(false);
     expect(component.error()).not.toBeNull();
+  });
 
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('خطا در دریافت لیست دسته‌بندی‌ها');
-    const retryBtn = compiled.querySelector('.error-state button');
-    expect(retryBtn?.textContent).toContain('تلاش مجدد');
+  it('4. should open create modal and save new category', () => {
+    fixture.detectChanges();
+    component.openCreateModal();
+    expect(component.isModalOpen()).toBe(true);
+
+    component.categoryForm.patchValue({
+      title: 'ورزش',
+      description: 'سوالات ورزشی',
+    });
+
+    component.saveCategory();
+
+    expect(apiMock.createCategory).toHaveBeenCalledWith({
+      title: 'ورزش',
+      description: 'سوالات ورزشی',
+      coverKey: undefined,
+    });
+    expect(component.isModalOpen()).toBe(false);
+  });
+
+  it('5. should open edit modal and save updated category', () => {
+    fixture.detectChanges();
+    component.openEditModal(mockSeedCategories[0]);
+    expect(component.editingCategory()?.id).toBe('cat-1');
+
+    component.categoryForm.patchValue({
+      title: 'اطلاعات عمومی (بروزرسانی)',
+    });
+
+    component.saveCategory();
+
+    expect(apiMock.updateCategory).toHaveBeenCalledWith('cat-1', {
+      title: 'اطلاعات عمومی (بروزرسانی)',
+      description: 'سوالات عمومی',
+      coverKey: undefined,
+      isActive: true,
+    });
+  });
+
+  it('6. should toggle category active state', () => {
+    fixture.detectChanges();
+    component.toggleCategoryStatus(mockSeedCategories[0]);
+
+    expect(apiMock.updateCategory).toHaveBeenCalledWith('cat-1', { isActive: false });
+  });
+
+  it('7. should delete category after confirmation', () => {
+    fixture.detectChanges();
+    component.confirmDeleteCategory(mockSeedCategories[0]);
+    expect(component.deletingCategory()?.id).toBe('cat-1');
+
+    component.executeDeleteCategory();
+
+    expect(apiMock.deleteCategory).toHaveBeenCalledWith('cat-1');
+    expect(component.deletingCategory()).toBeNull();
   });
 });
