@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Difficulty, GameStatus, AnswerStatus } from '@quiz/contracts';
 
-describe('QuizPlayComponent (Phase 5D)', () => {
+describe('QuizPlayComponent (Phase 5D UX Correction)', () => {
   let component: QuizPlayComponent;
   let fixture: ComponentFixture<QuizPlayComponent>;
   let soloQuizApiMock: any;
@@ -99,7 +99,7 @@ describe('QuizPlayComponent (Phase 5D)', () => {
     expect(component.secondsLeft()).toBeLessThanOrEqual(30);
   });
 
-  it('2. After answer response, automatic advance is triggered after 1.5s feedback', () => {
+  it('2. After answer response, automatic advance is triggered in background after 1.5s feedback', () => {
     const mockSubmitRes = {
       status: AnswerStatus.CORRECT,
       isCorrect: true,
@@ -143,22 +143,23 @@ describe('QuizPlayComponent (Phase 5D)', () => {
     expect(component.answered()).toBe(false);
   });
 
-  it('3. Manual next CTA click cancels pending auto-advance and advances immediately', () => {
-    const mockSubmitRes = {
-      status: AnswerStatus.CORRECT,
-      isCorrect: true,
-      correctOptionId: 'opt-a',
-      feedback: {
-        questionId: 'q-10',
-        selectedOptionId: 'opt-a',
-        correctOptionId: 'opt-a',
-        isCorrect: true,
-        timedOut: false,
-        explanation: null,
-        earnedSeasonPoints: 1,
-        earnedCoins: 1,
-      },
-    };
+  it('3. Duplicate advance calls are prevented while advance is in progress', () => {
+    component.isAdvancing.set(true);
+
+    component.advanceToNextQuestion();
+
+    expect(soloQuizApiMock.advanceQuiz).not.toHaveBeenCalled();
+  });
+
+  it('4. Network failure on advance shows advance error banner with retry button', () => {
+    soloQuizApiMock.advanceQuiz.mockReturnValue(
+      throwError(() => new Error('Advance network error')),
+    );
+
+    component.advanceToNextQuestion();
+
+    expect(component.isAdvancing()).toBe(false);
+    expect(component.advanceError()).toContain('خطا در دریافت سؤال بعدی');
 
     const mockAdvanceRes = {
       question: {
@@ -171,22 +172,17 @@ describe('QuizPlayComponent (Phase 5D)', () => {
       },
       isCompleted: false,
     };
-
-    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
     soloQuizApiMock.advanceQuiz.mockReturnValue(of(mockAdvanceRes));
 
-    component.selectOption('opt-a');
+    // Retry advance
+    component.advanceToNextQuestion();
 
-    // Click next CTA manually before 1.5s
-    component.goToNextQuestion();
-
-    expect(soloQuizApiMock.advanceQuiz).toHaveBeenCalledTimes(1);
-
-    vi.advanceTimersByTime(1500); // 1.5s passes, auto advance should NOT fire again
-    expect(soloQuizApiMock.advanceQuiz).toHaveBeenCalledTimes(1);
+    expect(soloQuizApiMock.advanceQuiz).toHaveBeenCalledTimes(2);
+    expect(component.currentIndex()).toBe(1);
+    expect(component.advanceError()).toBeNull();
   });
 
-  it('4. Network failure on submission does not freeze/reset deadline, does not mark answer wrong locally, shows retry state', () => {
+  it('5. Network failure on submission does not freeze/reset deadline, does not mark answer wrong locally, shows retry state', () => {
     soloQuizApiMock.submitAnswer.mockReturnValue(throwError(() => new Error('Network error')));
 
     component.selectOption('opt-b');
@@ -197,7 +193,7 @@ describe('QuizPlayComponent (Phase 5D)', () => {
     expect(component.secondsLeft()).toBeGreaterThan(0);
   });
 
-  it('5. Timeout response displays timeout message', () => {
+  it('6. Timeout response displays timeout message', () => {
     const mockTimeoutRes = {
       status: AnswerStatus.TIMED_OUT,
       isCorrect: false,
@@ -223,7 +219,7 @@ describe('QuizPlayComponent (Phase 5D)', () => {
     expect(component.isAnswerCorrect()).toBe(false);
   });
 
-  it('6. Final question automatically finishes session exactly once', () => {
+  it('7. Final question automatically finishes session exactly once', () => {
     component.currentIndex.set(1); // Set to final question
 
     const mockSubmitRes = {
@@ -264,7 +260,7 @@ describe('QuizPlayComponent (Phase 5D)', () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/quiz/result'], expect.any(Object));
   });
 
-  it('7. Component destruction cleans up all timers and timeouts', () => {
+  it('8. Component destruction cleans up all timers and timeouts', () => {
     const mockSubmitRes = {
       status: AnswerStatus.CORRECT,
       isCorrect: true,
