@@ -229,13 +229,14 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (res) => {
           this.isFinishing.set(false);
-          const earnedPoints = res.correctAnswers * 10;
           this.router.navigate(['/quiz/result'], {
             state: {
               correctCount: res.correctAnswers,
+              incorrectCount: res.incorrectAnswers,
+              timedOutCount: res.timedOutAnswers,
               totalQuestions: res.totalQuestions,
               earnedCoins: res.coinsEarned,
-              earnedPoints,
+              earnedPoints: res.seasonPointsEarned,
               userAnswers: this.userAnswers(),
             },
           });

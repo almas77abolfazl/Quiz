@@ -21,6 +21,8 @@ export class QuizResultComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly correctCount = signal<number>(0);
+  readonly incorrectCount = signal<number>(0);
+  readonly timedOutCount = signal<number>(0);
   readonly totalQuestions = signal<number>(5);
   readonly earnedCoins = signal<number>(0);
   readonly earnedPoints = signal<number>(0);
@@ -37,6 +39,8 @@ export class QuizResultComponent implements OnInit {
       (navState.totalQuestions !== undefined || navState.correctCount !== undefined)
     ) {
       this.correctCount.set(navState.correctCount || 0);
+      this.incorrectCount.set(navState.incorrectCount || 0);
+      this.timedOutCount.set(navState.timedOutCount || 0);
       this.totalQuestions.set(navState.totalQuestions || 5);
       this.earnedCoins.set(navState.earnedCoins || 0);
       this.earnedPoints.set(navState.earnedPoints || 0);

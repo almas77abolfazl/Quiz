@@ -192,11 +192,14 @@ describe('QuizPlayComponent', () => {
     expect(component.submissionError()).toBeNull();
   });
 
-  it('5. Finish session: should call finish endpoint and navigate to result', () => {
+  it('5. Finish session: should call finish endpoint and navigate to result using authoritative API values', () => {
     const mockFinishRes = {
       correctAnswers: 2,
+      incorrectAnswers: 0,
+      timedOutAnswers: 0,
       totalQuestions: 2,
-      coinsEarned: 70,
+      coinsEarned: 4,
+      seasonPointsEarned: 3,
     };
 
     soloQuizApiMock.finishQuiz.mockReturnValue(of(mockFinishRes));
@@ -207,9 +210,11 @@ describe('QuizPlayComponent', () => {
     expect(routerMock.navigate).toHaveBeenCalledWith(['/quiz/result'], {
       state: {
         correctCount: 2,
+        incorrectCount: 0,
+        timedOutCount: 0,
         totalQuestions: 2,
-        earnedCoins: 70,
-        earnedPoints: 20,
+        earnedCoins: 4,
+        earnedPoints: 3, // authoritative seasonPointsEarned from API (not 2 * 10)
         userAnswers: component.userAnswers(),
       },
     });

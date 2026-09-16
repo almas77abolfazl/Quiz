@@ -373,8 +373,8 @@ model QuizSessionQuestion {
   questionId        String
   selectedOptionId  String?
   position          Int
-  startsAt          DateTime
-  deadlineAt        DateTime
+  startsAt          DateTime?
+  deadlineAt        DateTime?
   answeredAt        DateTime?
   status            AnswerStatus   @default(PENDING)
   hintUsed          String?
