@@ -19,15 +19,10 @@ import {
   StartQuizResponse,
   QuizSessionQuestionResponse,
 } from '../../core/services/solo-quiz-api.service';
-import { PlayerQuestionDto, AnswerFeedbackDto } from '@quiz/contracts';
+import { PlayerQuestionDto, AnswerStatus } from '@quiz/contracts';
+import { UserAnswerRecord } from './models/quiz.models';
 
-export interface UserAnswerRecord {
-  question: PlayerQuestionDto;
-  selectedOptionId: string | null;
-  selectedOptionText: string | null;
-  isCorrect: boolean;
-  feedback?: AnswerFeedbackDto;
-}
+export type { UserAnswerRecord };
 
 @Component({
   selector: 'app-quiz-play',
@@ -50,18 +45,24 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
   readonly questions = signal<QuizSessionQuestionResponse[]>([]);
   readonly currentIndex = signal<number>(0);
   readonly secondsLeft = signal<number>(30);
-  private timerRef: ReturnType<typeof setInterval> | null = null;
+
+  private countdownTimerRef: ReturnType<typeof setInterval> | null = null;
+  private autoAdvanceTimeoutRef: ReturnType<typeof setTimeout> | null = null;
 
   readonly selectedOptionId = signal<string | null>(null);
   readonly answered = signal<boolean>(false);
   readonly isSubmitting = signal<boolean>(false);
-  readonly isAnswerCorrect = signal<boolean>(false);
-  readonly correctOptionId = signal<string | null>(null);
-  readonly submissionError = signal<string | null>(null);
-  readonly pendingRetryOptionId = signal<string | null | undefined>(undefined);
-
+  readonly isAdvancing = signal<boolean>(false);
   readonly isFinishing = signal<boolean>(false);
+
+  readonly isAnswerCorrect = signal<boolean>(false);
+  readonly isAnswerTimedOut = signal<boolean>(false);
+  readonly correctOptionId = signal<string | null>(null);
+
+  readonly submissionError = signal<string | null>(null);
+  readonly advanceError = signal<string | null>(null);
   readonly finishError = signal<string | null>(null);
+  readonly pendingRetryOptionId = signal<string | null | undefined>(undefined);
 
   readonly userAnswers = signal<UserAnswerRecord[]>([]);
   readonly confirmQuit = signal<boolean>(false);
@@ -83,14 +84,15 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
       this.quizSession.set(navState.session);
       this.questions.set(navState.session.questions);
       this.currentIndex.set(0);
-      this.startQuestionTimer();
+      this.startDeadlineCountdown();
     } else {
       this.hasSessionError.set(true);
     }
   }
 
   ngOnDestroy(): void {
-    this.stopTimer();
+    this.stopCountdownTimer();
+    this.clearAutoAdvanceTimeout();
   }
 
   getOptionLabel(idx: number): string {
@@ -114,9 +116,8 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
   }
 
   selectOption(optionId: string): void {
-    if (this.answered() || this.isSubmitting()) return;
+    if (this.answered() || this.isSubmitting() || this.isAdvancing() || this.isFinishing()) return;
 
-    this.stopTimer();
     this.selectedOptionId.set(optionId);
     this.submissionError.set(null);
     this.sendAnswerSubmit(optionId);
@@ -146,6 +147,7 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
           this.isSubmitting.set(false);
           this.answered.set(true);
           this.isAnswerCorrect.set(res.isCorrect);
+          this.isAnswerTimedOut.set(res.status === AnswerStatus.TIMED_OUT);
           this.correctOptionId.set(res.correctOptionId);
           this.submissionError.set(null);
           this.pendingRetryOptionId.set(undefined);
@@ -162,10 +164,12 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
               feedback: res.feedback,
             },
           ]);
+
+          this.scheduleAutoAdvance();
         },
         error: () => {
           this.isSubmitting.set(false);
-          // Do NOT mark as answered or wrong! Show retry button instead.
+          // Do NOT mark as answered or wrong locally!
           this.submissionError.set(
             'خطا در برقراری ارتباط با سرور هنگام ثبت پاسخ. لطفاً دوباره تلاش کنید.',
           );
@@ -173,53 +177,124 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
       });
   }
 
-  private startQuestionTimer(): void {
-    this.stopTimer();
-    this.secondsLeft.set(30);
-    this.answered.set(false);
-    this.selectedOptionId.set(null);
-    this.isSubmitting.set(false);
-    this.isAnswerCorrect.set(false);
-    this.correctOptionId.set(null);
-    this.submissionError.set(null);
-    this.pendingRetryOptionId.set(undefined);
+  private startDeadlineCountdown(): void {
+    this.stopCountdownTimer();
+    this.updateSecondsLeft();
+    this.countdownTimerRef = setInterval(() => {
+      this.updateSecondsLeft();
+    }, 200);
+  }
 
-    this.timerRef = setInterval(() => {
-      if (this.secondsLeft() > 0) {
-        this.secondsLeft.update((s) => s - 1);
-      } else {
-        this.handleTimeout();
-      }
-    }, 1000);
+  private updateSecondsLeft(): void {
+    const q = this.currentQuizQuestion();
+    if (!q || !q.deadlineAt) {
+      this.secondsLeft.set(30);
+      return;
+    }
+
+    const deadlineMs = new Date(q.deadlineAt).getTime();
+    const remainingMs = deadlineMs - Date.now();
+    const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+    this.secondsLeft.set(remainingSec);
+
+    if (remainingSec === 0 && !this.answered() && !this.isSubmitting()) {
+      this.handleTimeout();
+    }
   }
 
   private handleTimeout(): void {
-    this.stopTimer();
     if (this.answered() || this.isSubmitting()) return;
     this.selectedOptionId.set(null);
     this.sendAnswerSubmit(undefined);
   }
 
-  private stopTimer(): void {
-    if (this.timerRef !== null) {
-      clearInterval(this.timerRef);
-      this.timerRef = null;
+  private stopCountdownTimer(): void {
+    if (this.countdownTimerRef !== null) {
+      clearInterval(this.countdownTimerRef);
+      this.countdownTimerRef = null;
     }
   }
 
-  goToNextQuestion(): void {
+  private scheduleAutoAdvance(): void {
+    this.clearAutoAdvanceTimeout();
+    this.autoAdvanceTimeoutRef = setTimeout(() => {
+      this.handleAutoAdvance();
+    }, 1500);
+  }
+
+  private handleAutoAdvance(): void {
+    this.clearAutoAdvanceTimeout();
     if (this.currentIndex() < this.questions().length - 1) {
-      this.currentIndex.update((i) => i + 1);
-      this.startQuestionTimer();
+      this.advanceToNextQuestion();
     } else {
       this.finishGameSession();
     }
   }
 
+  private clearAutoAdvanceTimeout(): void {
+    if (this.autoAdvanceTimeoutRef !== null) {
+      clearTimeout(this.autoAdvanceTimeoutRef);
+      this.autoAdvanceTimeoutRef = null;
+    }
+  }
+
+  goToNextQuestion(): void {
+    this.clearAutoAdvanceTimeout();
+    if (this.isAdvancing() || this.isFinishing()) return;
+
+    if (this.currentIndex() < this.questions().length - 1) {
+      this.advanceToNextQuestion();
+    } else {
+      this.finishGameSession();
+    }
+  }
+
+  advanceToNextQuestion(): void {
+    const session = this.quizSession();
+    if (!session || this.isAdvancing()) return;
+
+    this.isAdvancing.set(true);
+    this.advanceError.set(null);
+
+    this.soloQuizApi
+      .advanceQuiz(session.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.isAdvancing.set(false);
+          const nextIndex = this.currentIndex() + 1;
+
+          this.questions.update((list) => {
+            const updated = [...list];
+            updated[nextIndex] = res.question;
+            return updated;
+          });
+
+          this.currentIndex.set(nextIndex);
+          this.answered.set(false);
+          this.selectedOptionId.set(null);
+          this.isSubmitting.set(false);
+          this.isAnswerCorrect.set(false);
+          this.isAnswerTimedOut.set(false);
+          this.correctOptionId.set(null);
+          this.submissionError.set(null);
+          this.advanceError.set(null);
+          this.pendingRetryOptionId.set(undefined);
+
+          this.startDeadlineCountdown();
+        },
+        error: () => {
+          this.isAdvancing.set(false);
+          this.advanceError.set('خطا در دریافت سؤال بعدی. لطفاً مجدداً تلاش کنید.');
+        },
+      });
+  }
+
   finishGameSession(): void {
     const session = this.quizSession();
-    if (!session) return;
+    if (!session || this.isFinishing()) return;
 
+    this.clearAutoAdvanceTimeout();
     this.isFinishing.set(true);
     this.finishError.set(null);
 
@@ -249,12 +324,14 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
   }
 
   quitGame(): void {
-    this.stopTimer();
+    this.stopCountdownTimer();
+    this.clearAutoAdvanceTimeout();
     this.router.navigate(['/']);
   }
 
   goToSetup(): void {
-    this.stopTimer();
+    this.stopCountdownTimer();
+    this.clearAutoAdvanceTimeout();
     this.router.navigate(['/quiz']);
   }
 }

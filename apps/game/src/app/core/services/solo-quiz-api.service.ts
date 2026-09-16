@@ -6,6 +6,7 @@ import {
   CategorySummaryDto,
   StartQuizResponseDto,
   SubmitAnswerResponseDto,
+  AdvanceQuizResponseDto,
   FinishQuizResponseDto,
   QuizSessionQuestionDto,
 } from '@quiz/contracts';
@@ -13,6 +14,7 @@ import {
 export type QuizSessionQuestionResponse = QuizSessionQuestionDto;
 export type StartQuizResponse = StartQuizResponseDto;
 export type SubmitAnswerResponse = SubmitAnswerResponseDto;
+export type AdvanceQuizResponse = AdvanceQuizResponseDto;
 export type FinishQuizResponse = FinishQuizResponseDto;
 
 @Injectable({ providedIn: 'root' })
@@ -44,6 +46,10 @@ export class SoloQuizApiService {
       body.selectedOptionId = selectedOptionId;
     }
     return this.http.post<SubmitAnswerResponseDto>(`/api/quiz/${quizSessionId}/answer`, body);
+  }
+
+  advanceQuiz(quizSessionId: string): Observable<AdvanceQuizResponseDto> {
+    return this.http.post<AdvanceQuizResponseDto>(`/api/quiz/${quizSessionId}/advance`, {});
   }
 
   finishQuiz(quizSessionId: string): Observable<FinishQuizResponseDto> {

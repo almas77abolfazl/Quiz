@@ -10,7 +10,9 @@ import {
   AnswerFeedbackDto,
   StartQuizResponseDto,
   SubmitAnswerResponseDto,
+  AdvanceQuizResponseDto,
   FinishQuizResponseDto,
+  QuizSessionQuestionDto,
 } from '@quiz/contracts';
 import { mapToPlayerQuestionDto } from '../question/question.mapper';
 
@@ -83,7 +85,9 @@ export class QuizService {
           create: selected.map((q, index) => {
             const isFirst = index === 0;
             const startsAt = isFirst ? now : null;
-            const deadlineAt = isFirst ? new Date(now.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000) : null;
+            const deadlineAt = isFirst
+              ? new Date(now.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000)
+              : null;
             return {
               questionId: q.id,
               position: index + 1,
@@ -109,15 +113,11 @@ export class QuizService {
       categoryId: quizSession.categoryId,
       difficulty: quizSession.difficulty as Difficulty | null,
       status: quizSession.status as GameStatus,
-      startedAt: quizSession.startedAt instanceof Date ? quizSession.startedAt.toISOString() : quizSession.startedAt,
-      questions: quizSession.questions.map((sq) => ({
-        id: sq.id,
-        questionId: sq.questionId,
-        position: sq.position,
-        startsAt: sq.startsAt ? (sq.startsAt instanceof Date ? sq.startsAt.toISOString() : sq.startsAt) : null,
-        deadlineAt: sq.deadlineAt ? (sq.deadlineAt instanceof Date ? sq.deadlineAt.toISOString() : sq.deadlineAt) : null,
-        question: mapToPlayerQuestionDto(sq.question),
-      })),
+      startedAt:
+        quizSession.startedAt instanceof Date
+          ? quizSession.startedAt.toISOString()
+          : quizSession.startedAt,
+      questions: quizSession.questions.map((sq) => this.mapToQuizSessionQuestionDto(sq)),
     };
   }
 
@@ -157,14 +157,17 @@ export class QuizService {
       const prevQuestion = session.questions.find((q) => q.position === quizQuestion.position - 1);
       const prevStartsAt = prevQuestion?.startsAt ?? session.startedAt;
       const prevDeadlineAt =
-        prevQuestion?.deadlineAt ?? new Date(prevStartsAt.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000);
+        prevQuestion?.deadlineAt ??
+        new Date(prevStartsAt.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000);
       startsAt = prevQuestion?.answeredAt ?? prevDeadlineAt;
       deadlineAt = new Date(startsAt.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000);
     }
 
     const isTimedOut = now > deadlineAt;
     const correctOption = quizQuestion.question.options.find((opt) => opt.isCorrect);
-    const isCorrectOption = dto.selectedOptionId ? correctOption?.id === dto.selectedOptionId : false;
+    const isCorrectOption = dto.selectedOptionId
+      ? correctOption?.id === dto.selectedOptionId
+      : false;
 
     let status = AnswerStatus.PENDING;
     if (isTimedOut) {
@@ -188,18 +191,6 @@ export class QuizService {
         question: { include: { options: { orderBy: { sortOrder: 'asc' } } } },
       },
     });
-
-    const nextQuestion = session.questions.find((q) => q.position === quizQuestion.position + 1);
-    if (nextQuestion && !nextQuestion.startsAt) {
-      const nextDeadline = new Date(now.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000);
-      await this.prisma.quizSessionQuestion.update({
-        where: { id: nextQuestion.id },
-        data: {
-          startsAt: now,
-          deadlineAt: nextDeadline,
-        },
-      });
-    }
 
     const correctOptionId = correctOption?.id ?? '';
     const isAnswerCorrect = updated.status === AnswerStatus.CORRECT;
@@ -228,6 +219,63 @@ export class QuizService {
     };
   }
 
+  async advanceQuiz(userId: string, quizSessionId: string): Promise<AdvanceQuizResponseDto> {
+    const session = await this.prisma.quizSession.findFirst({
+      where: { id: quizSessionId, userId, status: GameStatus.ACTIVE },
+      include: {
+        questions: {
+          orderBy: { position: 'asc' },
+          include: { question: { include: { options: { orderBy: { sortOrder: 'asc' } } } } },
+        },
+      },
+    });
+
+    if (!session) {
+      throw new NotFoundException('Quiz session not found');
+    }
+
+    const currentUnanswered = session.questions.find((q) => q.answeredAt === null);
+    if (!currentUnanswered) {
+      const lastQ = session.questions[session.questions.length - 1];
+      return {
+        question: this.mapToQuizSessionQuestionDto(lastQ),
+        isCompleted: true,
+      };
+    }
+
+    if (currentUnanswered.startsAt !== null) {
+      return {
+        question: this.mapToQuizSessionQuestionDto(currentUnanswered),
+        isCompleted: false,
+      };
+    }
+
+    const prevQuestion = session.questions.find(
+      (q) => q.position === currentUnanswered.position - 1,
+    );
+    if (prevQuestion && prevQuestion.answeredAt === null) {
+      throw new BadRequestException('Previous question is not yet answered');
+    }
+
+    const now = new Date();
+    const deadlineAt = new Date(now.getTime() + QUESTION_TIME_LIMIT_SECONDS * 1000);
+    const updated = await this.prisma.quizSessionQuestion.update({
+      where: { id: currentUnanswered.id },
+      data: {
+        startsAt: now,
+        deadlineAt,
+      },
+      include: {
+        question: { include: { options: { orderBy: { sortOrder: 'asc' } } } },
+      },
+    });
+
+    return {
+      question: this.mapToQuizSessionQuestionDto(updated),
+      isCompleted: false,
+    };
+  }
+
   async finishQuiz(userId: string, quizSessionId: string): Promise<FinishQuizResponseDto> {
     const session = await this.prisma.quizSession.findFirst({
       where: { id: quizSessionId, userId, status: GameStatus.ACTIVE },
@@ -238,6 +286,11 @@ export class QuizService {
 
     if (!session) {
       throw new NotFoundException('Quiz session not found');
+    }
+
+    const unanswered = session.questions.filter((q) => q.answeredAt === null);
+    if (unanswered.length > 0) {
+      throw new BadRequestException('Quiz is not yet complete');
     }
 
     let correctCount = 0;
@@ -265,16 +318,6 @@ export class QuizService {
     const coinsEarned = coinsFromAnswers + GAME_COMPLETION_BONUS_COINS;
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.quizSessionQuestion.updateMany({
-        where: {
-          quizSessionId,
-          status: AnswerStatus.PENDING,
-        },
-        data: {
-          status: AnswerStatus.TIMED_OUT,
-        },
-      });
-
       await tx.quizSession.update({
         where: { id: quizSessionId },
         data: { status: GameStatus.COMPLETED, completedAt: new Date() },
@@ -323,6 +366,25 @@ export class QuizService {
         completedAt: true,
       },
     });
+  }
+
+  private mapToQuizSessionQuestionDto(sq: any): QuizSessionQuestionDto {
+    return {
+      id: sq.id,
+      questionId: sq.questionId,
+      position: sq.position,
+      startsAt: sq.startsAt
+        ? sq.startsAt instanceof Date
+          ? sq.startsAt.toISOString()
+          : sq.startsAt
+        : null,
+      deadlineAt: sq.deadlineAt
+        ? sq.deadlineAt instanceof Date
+          ? sq.deadlineAt.toISOString()
+          : sq.deadlineAt
+        : null,
+      question: mapToPlayerQuestionDto(sq.question),
+    };
   }
 
   private shuffleArray<T>(array: T[]): T[] {

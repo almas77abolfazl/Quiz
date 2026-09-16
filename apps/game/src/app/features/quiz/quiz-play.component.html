@@ -75,7 +75,7 @@
               {{
                 isAnswerCorrect()
                   ? 'پاسخ شما درست بود!'
-                  : secondsLeft() === 0
+                  : isAnswerTimedOut()
                     ? 'زمان تمام شد!'
                     : 'پاسخ شما نادرست بود!'
               }}
@@ -92,6 +92,17 @@
           </div>
         }
 
+        <!-- Advance Error Banner with Retry -->
+        @if (advanceError()) {
+          <div class="error-banner">
+            <span class="error-icon">⚠️</span>
+            <span class="error-text">{{ advanceError() }}</span>
+            <button type="button" class="btn-retry" (click)="advanceToNextQuestion()">
+              تلاش مجدد 🔄
+            </button>
+          </div>
+        }
+
         <!-- 4 Option Buttons -->
         <div class="options-grid">
           @for (opt of q.options; track opt.id; let i = $index) {
@@ -99,7 +110,7 @@
               [label]="getOptionLabel(i)"
               [text]="opt.text"
               [state]="getOptionState(opt.id)"
-              [disabled]="answered() || isSubmitting()"
+              [disabled]="answered() || isSubmitting() || isAdvancing() || isFinishing()"
               (clicked)="selectOption(opt.id)"
             />
           }
@@ -122,11 +133,11 @@
             <button
               type="button"
               class="btn-next-question"
-              [disabled]="isFinishing()"
+              [disabled]="isAdvancing() || isFinishing()"
               (click)="goToNextQuestion()"
             >
-              @if (isFinishing()) {
-                <span>در حال ثبت نتیجه...</span>
+              @if (isAdvancing() || isFinishing()) {
+                <span>در حال انتقال...</span>
               } @else if (currentIndex() < questions().length - 1) {
                 <span>سؤال بعدی &larr;</span>
               } @else {

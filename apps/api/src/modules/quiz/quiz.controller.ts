@@ -39,6 +39,12 @@ export class QuizController {
     return this.quizService.finishQuiz(request.user.userId, quizSessionId);
   }
 
+  @Post(':id/advance')
+  @UseGuards(AccessTokenGuard)
+  advance(@Param('id') quizSessionId: string, @Req() request: AuthenticatedRequest) {
+    return this.quizService.advanceQuiz(request.user.userId, quizSessionId);
+  }
+
   @Get('history')
   @UseGuards(AccessTokenGuard)
   history(@Req() request: AuthenticatedRequest) {

@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppShellComponent } from '../../shared/ui/app-shell.component';
-import { UserAnswerRecord } from './quiz-play.component';
+import { UserAnswerRecord } from './models/quiz.models';
 
 @Component({
   selector: 'app-quiz-result',

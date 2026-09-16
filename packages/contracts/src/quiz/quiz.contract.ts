@@ -39,6 +39,11 @@ export interface SubmitAnswerResponseDto {
   feedback: AnswerFeedbackDto;
 }
 
+export interface AdvanceQuizResponseDto {
+  question: QuizSessionQuestionDto;
+  isCompleted: boolean;
+}
+
 export interface FinishQuizResponseDto {
   correctAnswers: number;
   incorrectAnswers: number;
@@ -47,4 +52,3 @@ export interface FinishQuizResponseDto {
   coinsEarned: number;
   seasonPointsEarned: number;
 }
-

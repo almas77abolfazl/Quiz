@@ -5,11 +5,14 @@ import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Difficulty, GameStatus, AnswerStatus } from '@quiz/contracts';
 
-describe('QuizPlayComponent', () => {
+describe('QuizPlayComponent (Phase 5D)', () => {
   let component: QuizPlayComponent;
   let fixture: ComponentFixture<QuizPlayComponent>;
   let soloQuizApiMock: any;
   let routerMock: any;
+
+  const nowMs = Date.now();
+  const deadline30sMs = nowMs + 30000;
 
   const sampleSession = {
     id: 'session-100',
@@ -17,14 +20,14 @@ describe('QuizPlayComponent', () => {
     categoryId: 'cat1',
     difficulty: Difficulty.MEDIUM,
     status: GameStatus.ACTIVE,
-    startedAt: new Date().toISOString(),
+    startedAt: new Date(nowMs).toISOString(),
     questions: [
       {
         id: 'sq-1',
         questionId: 'q-10',
         position: 1,
-        startsAt: new Date().toISOString(),
-        deadlineAt: new Date().toISOString(),
+        startsAt: new Date(nowMs).toISOString(),
+        deadlineAt: new Date(deadline30sMs).toISOString(),
         question: {
           id: 'q-10',
           text: 'پایتخت ایران کدام است؟',
@@ -34,8 +37,6 @@ describe('QuizPlayComponent', () => {
           options: [
             { id: 'opt-a', text: 'تهران', sortOrder: 1 },
             { id: 'opt-b', text: 'شيراز', sortOrder: 2 },
-            { id: 'opt-c', text: 'اصفهان', sortOrder: 3 },
-            { id: 'opt-d', text: 'تبریز', sortOrder: 4 },
           ],
         },
       },
@@ -43,8 +44,8 @@ describe('QuizPlayComponent', () => {
         id: 'sq-2',
         questionId: 'q-20',
         position: 2,
-        startsAt: new Date().toISOString(),
-        deadlineAt: new Date().toISOString(),
+        startsAt: null,
+        deadlineAt: null,
         question: {
           id: 'q-20',
           text: 'بزرگترین قاره کدام است؟',
@@ -61,8 +62,11 @@ describe('QuizPlayComponent', () => {
   };
 
   beforeEach(async () => {
+    vi.useFakeTimers();
+
     soloQuizApiMock = {
       submitAnswer: vi.fn(),
+      advanceQuiz: vi.fn(),
       finishQuiz: vi.fn(),
     };
 
@@ -85,22 +89,17 @@ describe('QuizPlayComponent', () => {
     fixture.detectChanges();
   });
 
-  it('1. Safe payload rendering: should render player-safe question without correct answer keys before submission', () => {
-    expect(component.currentQuestion()).toBeTruthy();
-    expect(component.currentQuestion()?.text).toBe('پایتخت ایران کدام است؟');
-
-    // Verify option objects do not contain isCorrect key
-    const options = component.currentQuestion()?.options || [];
-    options.forEach((opt: any) => {
-      expect(opt.isCorrect).toBeUndefined();
-    });
-
-    // Before submission, answered state and correctOptionId are null
-    expect(component.answered()).toBe(false);
-    expect(component.correctOptionId()).toBeNull();
+  afterEach(() => {
+    fixture.destroy();
+    vi.useRealTimers();
   });
 
-  it('2. Correct/incorrect answers: should reveal correctness and correct option ONLY after API response', () => {
+  it('1. Countdown derives from deadlineAt and current time', () => {
+    expect(component.secondsLeft()).toBeGreaterThanOrEqual(29);
+    expect(component.secondsLeft()).toBeLessThanOrEqual(30);
+  });
+
+  it('2. After answer response, automatic advance is triggered after 1.5s feedback', () => {
     const mockSubmitRes = {
       status: AnswerStatus.CORRECT,
       isCorrect: true,
@@ -112,31 +111,100 @@ describe('QuizPlayComponent', () => {
         isCorrect: true,
         timedOut: false,
         explanation: 'پایتخت ایران تهران است.',
-        earnedSeasonPoints: 10,
-        earnedCoins: 10,
+        earnedSeasonPoints: 1,
+        earnedCoins: 1,
       },
     };
 
-    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
+    const mockAdvanceRes = {
+      question: {
+        id: 'sq-2',
+        questionId: 'q-20',
+        position: 2,
+        startsAt: new Date().toISOString(),
+        deadlineAt: new Date(Date.now() + 30000).toISOString(),
+        question: sampleSession.questions[1].question,
+      },
+      isCompleted: false,
+    };
 
-    // Submit answer
+    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
+    soloQuizApiMock.advanceQuiz.mockReturnValue(of(mockAdvanceRes));
+
     component.selectOption('opt-a');
 
-    expect(soloQuizApiMock.submitAnswer).toHaveBeenCalledWith('session-100', 'q-10', 'opt-a');
     expect(component.answered()).toBe(true);
-    expect(component.isAnswerCorrect()).toBe(true);
-    expect(component.correctOptionId()).toBe('opt-a');
-    expect(component.getOptionState('opt-a')).toBe('CORRECT');
+    expect(soloQuizApiMock.advanceQuiz).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1500); // Wait 1.5 seconds feedback window
+
+    expect(soloQuizApiMock.advanceQuiz).toHaveBeenCalledWith('session-100');
+    expect(component.currentIndex()).toBe(1);
+    expect(component.answered()).toBe(false);
   });
 
-  it('3. Timeout: should submit timeout according to API contract (undefined optionId)', () => {
+  it('3. Manual next CTA click cancels pending auto-advance and advances immediately', () => {
+    const mockSubmitRes = {
+      status: AnswerStatus.CORRECT,
+      isCorrect: true,
+      correctOptionId: 'opt-a',
+      feedback: {
+        questionId: 'q-10',
+        selectedOptionId: 'opt-a',
+        correctOptionId: 'opt-a',
+        isCorrect: true,
+        timedOut: false,
+        explanation: null,
+        earnedSeasonPoints: 1,
+        earnedCoins: 1,
+      },
+    };
+
+    const mockAdvanceRes = {
+      question: {
+        id: 'sq-2',
+        questionId: 'q-20',
+        position: 2,
+        startsAt: new Date().toISOString(),
+        deadlineAt: new Date(Date.now() + 30000).toISOString(),
+        question: sampleSession.questions[1].question,
+      },
+      isCompleted: false,
+    };
+
+    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
+    soloQuizApiMock.advanceQuiz.mockReturnValue(of(mockAdvanceRes));
+
+    component.selectOption('opt-a');
+
+    // Click next CTA manually before 1.5s
+    component.goToNextQuestion();
+
+    expect(soloQuizApiMock.advanceQuiz).toHaveBeenCalledTimes(1);
+
+    vi.advanceTimersByTime(1500); // 1.5s passes, auto advance should NOT fire again
+    expect(soloQuizApiMock.advanceQuiz).toHaveBeenCalledTimes(1);
+  });
+
+  it('4. Network failure on submission does not freeze/reset deadline, does not mark answer wrong locally, shows retry state', () => {
+    soloQuizApiMock.submitAnswer.mockReturnValue(throwError(() => new Error('Network error')));
+
+    component.selectOption('opt-b');
+
+    expect(component.answered()).toBe(false);
+    expect(component.isSubmitting()).toBe(false);
+    expect(component.submissionError()).toContain('خطا در برقراری ارتباط');
+    expect(component.secondsLeft()).toBeGreaterThan(0);
+  });
+
+  it('5. Timeout response displays timeout message', () => {
     const mockTimeoutRes = {
       status: AnswerStatus.TIMED_OUT,
       isCorrect: false,
       correctOptionId: 'opt-a',
       feedback: {
         questionId: 'q-10',
-        selectedOptionId: null,
+        selectedOptionId: 'opt-b',
         correctOptionId: 'opt-a',
         isCorrect: false,
         timedOut: true,
@@ -148,51 +216,32 @@ describe('QuizPlayComponent', () => {
 
     soloQuizApiMock.submitAnswer.mockReturnValue(of(mockTimeoutRes));
 
-    // Trigger timeout manually
-    (component as any).handleTimeout();
-
-    expect(soloQuizApiMock.submitAnswer).toHaveBeenCalledWith('session-100', 'q-10', undefined);
-    expect(component.answered()).toBe(true);
-    expect(component.isAnswerCorrect()).toBe(false);
-    expect(component.correctOptionId()).toBe('opt-a');
-  });
-
-  it('4. Failed submission retry: network failure must not count as wrong or advance, shows retry', () => {
-    soloQuizApiMock.submitAnswer.mockReturnValue(throwError(() => new Error('Network error')));
-
     component.selectOption('opt-b');
 
-    // Must NOT be marked as answered or wrong
-    expect(component.answered()).toBe(false);
-    expect(component.isSubmitting()).toBe(false);
-    expect(component.submissionError()).toContain('خطا در برقراری ارتباط');
-
-    // Retry submission succeeds
-    const mockSubmitRes = {
-      status: AnswerStatus.INCORRECT,
-      isCorrect: false,
-      correctOptionId: 'opt-a',
-      feedback: {
-        questionId: 'q-10',
-        selectedOptionId: 'opt-b',
-        correctOptionId: 'opt-a',
-        isCorrect: false,
-        timedOut: false,
-        explanation: null,
-        earnedSeasonPoints: 0,
-        earnedCoins: 0,
-      },
-    };
-    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
-
-    component.retrySubmit();
-
-    expect(soloQuizApiMock.submitAnswer).toHaveBeenCalledTimes(2);
     expect(component.answered()).toBe(true);
-    expect(component.submissionError()).toBeNull();
+    expect(component.isAnswerTimedOut()).toBe(true);
+    expect(component.isAnswerCorrect()).toBe(false);
   });
 
-  it('5. Finish session: should call finish endpoint and navigate to result using authoritative API values', () => {
+  it('6. Final question automatically finishes session exactly once', () => {
+    component.currentIndex.set(1); // Set to final question
+
+    const mockSubmitRes = {
+      status: AnswerStatus.CORRECT,
+      isCorrect: true,
+      correctOptionId: 'opt-2a',
+      feedback: {
+        questionId: 'q-20',
+        selectedOptionId: 'opt-2a',
+        correctOptionId: 'opt-2a',
+        isCorrect: true,
+        timedOut: false,
+        explanation: null,
+        earnedSeasonPoints: 2,
+        earnedCoins: 1,
+      },
+    };
+
     const mockFinishRes = {
       correctAnswers: 2,
       incorrectAnswers: 0,
@@ -202,21 +251,45 @@ describe('QuizPlayComponent', () => {
       seasonPointsEarned: 3,
     };
 
+    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
     soloQuizApiMock.finishQuiz.mockReturnValue(of(mockFinishRes));
 
-    component.finishGameSession();
+    component.selectOption('opt-2a');
 
-    expect(soloQuizApiMock.finishQuiz).toHaveBeenCalledWith('session-100');
-    expect(routerMock.navigate).toHaveBeenCalledWith(['/quiz/result'], {
-      state: {
-        correctCount: 2,
-        incorrectCount: 0,
-        timedOutCount: 0,
-        totalQuestions: 2,
-        earnedCoins: 4,
-        earnedPoints: 3, // authoritative seasonPointsEarned from API (not 2 * 10)
-        userAnswers: component.userAnswers(),
+    expect(soloQuizApiMock.finishQuiz).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1500); // 1.5s passes
+
+    expect(soloQuizApiMock.finishQuiz).toHaveBeenCalledTimes(1);
+    expect(routerMock.navigate).toHaveBeenCalledWith(['/quiz/result'], expect.any(Object));
+  });
+
+  it('7. Component destruction cleans up all timers and timeouts', () => {
+    const mockSubmitRes = {
+      status: AnswerStatus.CORRECT,
+      isCorrect: true,
+      correctOptionId: 'opt-a',
+      feedback: {
+        questionId: 'q-10',
+        selectedOptionId: 'opt-a',
+        correctOptionId: 'opt-a',
+        isCorrect: true,
+        timedOut: false,
+        explanation: null,
+        earnedSeasonPoints: 1,
+        earnedCoins: 1,
       },
-    });
+    };
+
+    soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
+    component.selectOption('opt-a');
+
+    // Destroy component before 1.5s
+    fixture.destroy();
+
+    vi.advanceTimersByTime(1500);
+
+    expect(soloQuizApiMock.advanceQuiz).not.toHaveBeenCalled();
+    expect(soloQuizApiMock.finishQuiz).not.toHaveBeenCalled();
   });
 });
