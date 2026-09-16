@@ -1,261 +1,263 @@
 <app-shell>
   <div class="home-hub">
-    <!-- Hero Section: Quick Play Focal Point -->
-    <section class="hero-quick-play">
-      <div class="hero-content">
-        <div class="hero-badge">
-          <svg
-            class="hero-icon"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M7 2v11h3v9l7-12h-4l4-8z" />
-          </svg>
-          <span>شروع سریع فصلی</span>
-        </div>
-        <h1 class="hero-title">آماده چالش اطلاعات عمومی هستی؟</h1>
-        <p class="hero-subtitle">۵ سؤال، ۳۰ ثانیه زمان، کسب سکه و امتیاز فصل</p>
-
-        <button type="button" class="btn-quick-play" (click)="quickPlay()">
-          <svg
-            class="play-icon"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M8 5v14l11-7z" />
-          </svg>
-          <span class="play-text">شروع بازی سریع</span>
-        </button>
+    @if (isLoading() && !playerHomeStore.summary()) {
+      <div class="home-loading" style="padding: 2rem; text-align: center">
+        <p>در حال دریافت اطلاعات...</p>
       </div>
-    </section>
-
-    <!-- Desktop 2-Column Grid Layout Wrapper -->
-    <div class="home-grid">
-      <!-- Main Column -->
-      <div class="main-column">
-        <!-- Game Modes Section -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title">حالت‌های بازی</h2>
+    } @else if (loadError() && !playerHomeStore.summary()) {
+      <div class="home-error" style="padding: 2rem; text-align: center">
+        <p style="color: #ef4444; margin-bottom: 1rem">{{ loadError() }}</p>
+        <button type="button" class="btn-quick-play" (click)="reloadSummary()">تلاش مجدد</button>
+      </div>
+    } @else {
+      <!-- Hero Section: Quick Play Focal Point -->
+      <section class="hero-quick-play">
+        <div class="hero-content">
+          <div class="hero-badge">
+            <svg
+              class="hero-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M7 2v11h3v9l7-12h-4l4-8z" />
+            </svg>
+            <span>شروع سریع فصلی</span>
           </div>
+          <h1 class="hero-title">آماده چالش اطلاعات عمومی هستی؟</h1>
+          <p class="hero-subtitle">
+            ۵ سؤال، ۳۰ ثانیه زمان | سهمیه رتبه‌بندی امروز: {{ dailyQuota().remaining }} از
+            {{ dailyQuota().limit }}
+          </p>
 
-          <div class="modes-grid">
-            <!-- Mode 1: Solo -->
-            <button type="button" class="mode-card primary-mode" (click)="goToQuiz()">
-              <div class="mode-icon-wrapper">
-                <svg
-                  class="mode-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
-                  />
-                </svg>
-              </div>
-              <div class="mode-info">
-                <h3 class="mode-name">تک‌نفره</h3>
-                <p class="mode-desc">پاسخ به ۵ سؤال و دریافت سکه مستقیم</p>
-              </div>
-              <span class="mode-arrow" aria-hidden="true">&larr;</span>
-            </button>
+          <button type="button" class="btn-quick-play" (click)="quickPlay()">
+            <svg
+              class="play-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            <span class="play-text">شروع بازی سریع</span>
+          </button>
+        </div>
+      </section>
 
-            <!-- Mode 2: 1v1 -->
-            <button type="button" class="mode-card accent-mode" (click)="goTo1v1()">
-              <div class="mode-icon-wrapper">
-                <svg
-                  class="mode-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M6 2v6h.01L7 20h10l.99-12H18V2H6zm10 4H8V4h8v2z" />
-                </svg>
-              </div>
-              <div class="mode-info">
-                <h3 class="mode-name">رقابت دو‌نفره (1v1)</h3>
-                <p class="mode-desc">مسابقه هم‌زمان با حریف واقعی آنلاین</p>
-              </div>
-              <span class="mode-arrow" aria-hidden="true">&larr;</span>
-            </button>
-
-            <!-- Mode 3: Group (Disabled) -->
-            <div class="mode-card disabled-mode">
-              <div class="mode-icon-wrapper">
-                <svg
-                  class="mode-icon"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
-                  />
-                </svg>
-              </div>
-              <div class="mode-info">
-                <div class="mode-title-row">
-                  <h3 class="mode-name">گروهی</h3>
-                  <span class="coming-soon-chip">به‌زودی</span>
-                </div>
-                <p class="mode-desc">لابی ۶ نفره و رقابت دوستانه</p>
-              </div>
+      <!-- Desktop 2-Column Grid Layout Wrapper -->
+      <div class="home-grid">
+        <!-- Main Column -->
+        <div class="main-column">
+          <!-- Game Modes Section -->
+          <section class="section">
+            <div class="section-header">
+              <h2 class="section-title">حالت‌های بازی</h2>
             </div>
-          </div>
-        </section>
 
-        <!-- Favorite Categories Section -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title">دسته‌های پیشنهادی</h2>
-            <button type="button" class="view-all-btn" (click)="goToQuiz()">مشاهده همه</button>
-          </div>
-
-          <div class="categories-scroll">
-            @for (cat of categories(); track cat.id) {
-              <button
-                type="button"
-                class="category-chip-card"
-                (click)="startQuizWithCategory(cat.id)"
-              >
-                <div class="cat-icon-frame">
+            <div class="modes-grid">
+              <!-- Mode 1: Solo -->
+              <button type="button" class="mode-card primary-mode" (click)="goToQuiz()">
+                <div class="mode-icon-wrapper">
                   <svg
-                    class="cat-icon"
+                    class="mode-icon"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="currentColor"
                     aria-hidden="true"
                   >
                     <path
-                      d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.8c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l2.25-2.25C9.56 19.64 10.74 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"
+                      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"
                     />
                   </svg>
                 </div>
-                <div class="cat-meta">
-                  <span class="cat-title">{{ cat.title }}</span>
-                  <span class="cat-count">{{ cat.questionCount }} سؤال</span>
+                <div class="mode-info">
+                  <h3 class="mode-name">تک‌نفره</h3>
+                  <p class="mode-desc">پاسخ به ۵ سؤال و دریافت سکه مستقیم</p>
                 </div>
+                <span class="mode-arrow" aria-hidden="true">&larr;</span>
               </button>
-            }
-          </div>
-        </section>
-      </div>
 
-      <!-- Side Column -->
-      <div class="side-column">
-        <!-- Monthly Season Countdown Card -->
-        <section class="season-countdown-card">
-          <div class="countdown-header">
-            <div class="season-title">
-              <svg
-                class="icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
-                />
-              </svg>
-              <span>فصل شهریور ۱۴۰۵</span>
+              <!-- Mode 2: 1v1 -->
+              <button type="button" class="mode-card accent-mode" (click)="goTo1v1()">
+                <div class="mode-icon-wrapper">
+                  <svg
+                    class="mode-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path d="M6 2v6h.01L7 20h10l.99-12H18V2H6zm10 4H8V4h8v2z" />
+                  </svg>
+                </div>
+                <div class="mode-info">
+                  <h3 class="mode-name">رقابت دو‌نفره (1v1)</h3>
+                  <p class="mode-desc">مسابقه هم‌زمان با حریف واقعی آنلاین</p>
+                </div>
+                <span class="mode-arrow" aria-hidden="true">&larr;</span>
+              </button>
+
+              <!-- Mode 3: Group (Disabled) -->
+              <div class="mode-card disabled-mode">
+                <div class="mode-icon-wrapper">
+                  <svg
+                    class="mode-icon"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"
+                    />
+                  </svg>
+                </div>
+                <div class="mode-info">
+                  <div class="mode-title-row">
+                    <h3 class="mode-name">گروهی</h3>
+                    <span class="coming-soon-chip">به‌زودی</span>
+                  </div>
+                  <p class="mode-desc">لابی ۶ نفره و رقابت دوستانه</p>
+                </div>
+              </div>
             </div>
-            <span class="timer-badge">۱۴ روز تا پایان فصل</span>
-          </div>
-          <div class="season-progress-bar">
-            <div class="progress-fill" style="width: 53%"></div>
-          </div>
-        </section>
+          </section>
 
-        <!-- Daily Missions Section -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title">مأموریت‌های روزانه</h2>
-            <span class="refresh-note">بازنشانی در ۲۴ ساعت</span>
-          </div>
+          <!-- Favorite Categories Section -->
+          <section class="section">
+            <div class="section-header">
+              <h2 class="section-title">دسته‌های فعال</h2>
+              <button type="button" class="view-all-btn" (click)="goToQuiz()">مشاهده همه</button>
+            </div>
 
-          <div class="missions-list">
-            @for (mission of dailyMissions(); track mission.id) {
-              <div class="mission-card" [class.completed]="mission.isCompleted">
-                <div class="mission-icon">
-                  @if (mission.isCompleted) {
+            <div class="categories-scroll">
+              @for (cat of categories(); track cat.id) {
+                <button
+                  type="button"
+                  class="category-chip-card"
+                  (click)="startQuizWithCategory(cat.id)"
+                >
+                  <div class="cat-icon-frame">
                     <svg
-                      class="check-icon"
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                    </svg>
-                  } @else {
-                    <svg
-                      class="pending-icon"
+                      class="cat-icon"
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
                       fill="currentColor"
                       aria-hidden="true"
                     >
                       <path
-                        d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"
+                        d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L4.35 19.8c-.39.39-.39 1.02 0 1.41.39.39 1.02.39 1.41 0l2.25-2.25C9.56 19.64 10.74 20 12 20c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"
                       />
                     </svg>
-                  }
-                </div>
-                <div class="mission-body">
-                  <span class="mission-text">{{ mission.title }}</span>
-                  <div class="mission-progress">
-                    <div class="bar">
-                      <div
-                        class="fill"
-                        [style.width.%]="(mission.currentProgress / mission.targetProgress) * 100"
-                      ></div>
-                    </div>
-                    <span class="count"
-                      >{{ mission.currentProgress }}/{{ mission.targetProgress }}</span
+                  </div>
+                  <div class="cat-meta">
+                    <span class="cat-title">{{ cat.title }}</span>
+                    <span class="cat-count">{{ cat.questionCount }} سؤال</span>
+                  </div>
+                </button>
+              } @empty {
+                <p class="empty-state-text" style="color: #a1a1aa; padding: 1rem 0">
+                  دسته‌ای یافت نشد.
+                </p>
+              }
+            </div>
+          </section>
+        </div>
+
+        <!-- Side Column -->
+        <div class="side-column">
+          <!-- Monthly Season Countdown Card -->
+          <section class="season-countdown-card">
+            <div class="countdown-header">
+              <div class="season-title">
+                <svg
+                  class="icon"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"
+                  />
+                </svg>
+                @if (season()) {
+                  <span
+                    >فصل {{ getJalaliMonthName(season()?.jalaliMonth) }}
+                    {{ season()?.jalaliYear }}</span
+                  >
+                } @else {
+                  <span>فصلی در حال حاضر فعال نیست</span>
+                }
+              </div>
+              @if (season()) {
+                <span class="timer-badge">
+                  امتیاز: {{ season()?.score }} | رتبه:
+                  {{ season()?.rank !== null ? season()?.rank : 'ثبت‌نشده' }}
+                </span>
+              }
+            </div>
+          </section>
+
+          <!-- Daily Missions Section (Clear "به‌زودی" state) -->
+          <section class="section">
+            <div class="section-header">
+              <h2 class="section-title">مأموریت‌های روزانه</h2>
+              <span class="coming-soon-chip">به‌زودی</span>
+            </div>
+            <div
+              class="coming-soon-card"
+              style="
+                padding: 1rem;
+                text-align: center;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.04);
+                color: #a1a1aa;
+              "
+            >
+              <span>سیستم مأموریت‌های روزانه به‌زودی فعال خواهد شد.</span>
+            </div>
+          </section>
+
+          <!-- Match History / Recent Solo Games Section -->
+          <section class="section">
+            <div class="section-header">
+              <h2 class="section-title">فعالیت‌های اخیر</h2>
+            </div>
+
+            <div class="activity-list">
+              @for (item of recentSoloGames(); track item.id) {
+                <div class="activity-card">
+                  <div class="activity-meta">
+                    <span class="activity-mode">{{ item.categoryTitle || 'کوییز تک‌نفره' }}</span>
+                    <span class="activity-time">{{ formatDate(item.completedAt) }}</span>
+                  </div>
+                  <div class="activity-score">
+                    <span class="score-text"
+                      >{{ item.correctAnswers }}/{{ item.totalQuestions }} پاسخ درست</span
                     >
+                    <span class="coins-earned">+{{ item.earnedCoins }} سکه</span>
+                    @if (item.earnedSeasonPoints > 0) {
+                      <span class="points-earned" style="margin-right: 0.5rem; color: #fbbf24"
+                        >+{{ item.earnedSeasonPoints }} امتیاز</span
+                      >
+                    }
                   </div>
                 </div>
-                <div class="mission-reward">
-                  <span class="reward-pts">+{{ mission.rewardPoints }} امتیاز</span>
+              } @empty {
+                <div
+                  class="empty-activity"
+                  style="padding: 1rem; text-align: center; color: #a1a1aa"
+                >
+                  <span>هنوز بازی تک‌نفره‌ای انجام نداده‌اید.</span>
                 </div>
-              </div>
-            }
-          </div>
-        </section>
-
-        <!-- Match History / Activity Section -->
-        <section class="section">
-          <div class="section-header">
-            <h2 class="section-title">فعالیت‌های اخیر</h2>
-          </div>
-
-          <div class="activity-list">
-            @for (item of matchHistory(); track item.id) {
-              <div class="activity-card">
-                <div class="activity-meta">
-                  <span class="activity-mode">{{
-                    item.mode === '1V1' ? 'رقابت 1v1' : 'کوییز تک‌نفره'
-                  }}</span>
-                  <span class="activity-time">{{ item.dateText }}</span>
-                </div>
-                <div class="activity-score">
-                  <span class="score-text">{{ item.scoreText }}</span>
-                  <span class="coins-earned">+{{ item.earnedCoins }} سکه</span>
-                </div>
-              </div>
-            }
-          </div>
-        </section>
+              }
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+    }
   </div>
 </app-shell>

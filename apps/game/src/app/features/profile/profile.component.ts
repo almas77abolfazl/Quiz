@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, computed } from '@angular/c
 import { Router } from '@angular/router';
 import { AppShellComponent } from '../../shared/ui/app-shell.component';
 import { AuthService } from '../../core/services/auth.service';
-import { GameFacade } from '../../core/data/game.facade';
+import { PlayerHomeStore } from '../../core/services/player-home.store';
 
 export interface DemoAchievement {
   id: string;
@@ -23,10 +23,11 @@ export interface DemoAchievement {
 export class ProfileComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly gameFacade = inject(GameFacade);
+  private readonly playerHomeStore = inject(PlayerHomeStore);
 
-  readonly user = this.gameFacade.user;
-  readonly matchHistory = this.gameFacade.matchHistory;
+  readonly user = this.playerHomeStore.user;
+  readonly seasonRank = this.playerHomeStore.seasonRank;
+  readonly recentSoloGames = this.playerHomeStore.recentSoloGames;
 
   readonly achievements: DemoAchievement[] = [
     {

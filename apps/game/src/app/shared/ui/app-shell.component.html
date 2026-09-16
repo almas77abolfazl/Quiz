@@ -3,10 +3,10 @@
 
   <div class="app-frame">
     <app-top-bar
-      [displayName]="user().displayName"
+      [displayName]="user().displayName || ''"
       [coins]="user().coins"
-      [seasonPoints]="user().seasonPoints"
-      [seasonRank]="user().seasonRank"
+      [seasonPoints]="seasonPoints()"
+      [seasonRank]="seasonRank()"
       [dailyStreak]="user().dailyStreak"
       (profileClicked)="goToProfile()"
     />

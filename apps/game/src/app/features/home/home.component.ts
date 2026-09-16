@@ -1,7 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppShellComponent } from '../../shared/ui/app-shell.component';
-import { GameFacade } from '../../core/data/game.facade';
+import { PlayerHomeStore } from '../../core/services/player-home.store';
 
 @Component({
   selector: 'app-home',
@@ -10,13 +11,64 @@ import { GameFacade } from '../../core/data/game.facade';
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   private readonly router = inject(Router);
-  private readonly gameFacade = inject(GameFacade);
+  readonly playerHomeStore = inject(PlayerHomeStore);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly dailyMissions = this.gameFacade.dailyMissions;
-  readonly categories = this.gameFacade.categories;
-  readonly matchHistory = this.gameFacade.matchHistory;
+  readonly isLoading = this.playerHomeStore.isLoading;
+  readonly loadError = this.playerHomeStore.loadError;
+  readonly categories = this.playerHomeStore.categories;
+  readonly season = this.playerHomeStore.season;
+  readonly dailyQuota = this.playerHomeStore.dailyQuota;
+  readonly recentSoloGames = this.playerHomeStore.recentSoloGames;
+
+  ngOnInit(): void {
+    this.playerHomeStore
+      .ensureLoaded()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => {} });
+  }
+
+  reloadSummary(): void {
+    this.playerHomeStore
+      .loadHomeSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {},
+        error: () => {},
+      });
+  }
+
+  getJalaliMonthName(month?: number): string {
+    if (!month) return '';
+    const months = [
+      '',
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
+    ];
+    return months[month] || '';
+  }
+
+  formatDate(isoString: string): string {
+    if (!isoString) return '';
+    try {
+      const d = new Date(isoString);
+      return d.toLocaleDateString('fa-IR');
+    } catch {
+      return isoString;
+    }
+  }
 
   quickPlay(): void {
     this.router.navigate(['/quiz']);

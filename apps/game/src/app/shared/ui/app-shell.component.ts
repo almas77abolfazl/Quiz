@@ -1,8 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, OnInit, inject, DestroyRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TopBarComponent } from './top-bar.component';
 import { BottomNavComponent } from './bottom-nav.component';
-import { GameFacade } from '../../core/data/game.facade';
+import { PlayerHomeStore } from '../../core/services/player-home.store';
 
 @Component({
   selector: 'app-shell',
@@ -11,11 +12,21 @@ import { GameFacade } from '../../core/data/game.facade';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TopBarComponent, BottomNavComponent],
 })
-export class AppShellComponent {
+export class AppShellComponent implements OnInit {
   private readonly router = inject(Router);
-  private readonly gameFacade = inject(GameFacade);
+  private readonly playerHomeStore = inject(PlayerHomeStore);
+  private readonly destroyRef = inject(DestroyRef);
 
-  readonly user = this.gameFacade.user;
+  readonly user = this.playerHomeStore.user;
+  readonly seasonPoints = this.playerHomeStore.seasonPoints;
+  readonly seasonRank = this.playerHomeStore.seasonRank;
+
+  ngOnInit(): void {
+    this.playerHomeStore
+      .ensureLoaded()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({ error: () => {} });
+  }
 
   goToProfile(): void {
     this.router.navigate(['/profile']);

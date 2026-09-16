@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Get,
-  Patch,
-  Post,
-  Delete,
-  Body,
-  Param,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Post, Delete, Body, Param, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { AccessTokenGuard } from '../auth/access-token.guard';
@@ -17,6 +7,12 @@ import { AuthenticatedRequest } from '../auth/access-token.guard';
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get('me/home-summary')
+  @UseGuards(AccessTokenGuard)
+  getHomeSummary(@Req() request: AuthenticatedRequest) {
+    return this.userService.getHomeSummary(request.user.userId);
+  }
 
   @Get('me')
   @UseGuards(AccessTokenGuard)

@@ -8,22 +8,11 @@
       </div>
 
       <div class="user-meta">
-        <h1 class="display-name">{{ user().displayName }}</h1>
-        <span class="username" dir="ltr">&#64;{{ user().username }}</span>
+        <h1 class="display-name">{{ user().displayName || 'بازیکن' }}</h1>
+        <span class="username" dir="ltr">&#64;{{ user().username || 'player' }}</span>
         <button type="button" class="edit-profile-btn" (click)="editProfilePlaceholder()">
           ویرایش پروفایل
         </button>
-      </div>
-
-      <!-- Level & XP Progress Bar -->
-      <div class="level-progress-box">
-        <div class="level-header">
-          <span class="level-tag">سطح {{ user().level }}</span>
-          <span class="xp-count">{{ user().xp }} / {{ user().xpToNextLevel }} XP</span>
-        </div>
-        <div class="xp-bar">
-          <div class="xp-fill" [style.width.%]="(user().xp / user().xpToNextLevel) * 100"></div>
-        </div>
       </div>
     </div>
 
@@ -32,26 +21,10 @@
       <h2 class="section-title">آمار و عملکرد</h2>
       <div class="stats-grid">
         <div class="stat-card">
-          <span class="stat-icon">🎮</span>
-          <span class="stat-val">{{ user().totalGames }}</span>
-          <span class="stat-label">کل بازی‌ها</span>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-icon">✅</span>
-          <span class="stat-val">{{ user().totalCorrectAnswers }}</span>
-          <span class="stat-label">پاسخ‌های درست</span>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-icon">⚔️</span>
-          <span class="stat-val">{{ user().totalWins1v1 }}</span>
-          <span class="stat-label">بردهای 1v1</span>
-        </div>
-
-        <div class="stat-card">
           <span class="stat-icon">🏆</span>
-          <span class="stat-val">رتبه {{ user().seasonRank }}#</span>
+          <span class="stat-val">{{
+            seasonRank() > 0 ? 'رتبه ' + seasonRank() + '#' : 'ثبت‌نشده'
+          }}</span>
           <span class="stat-label">رتبه فصل</span>
         </div>
 
@@ -73,7 +46,7 @@
     <div class="section">
       <div class="section-header">
         <h2 class="section-title">نشان‌ها و افتخارات</h2>
-        <span class="count-badge">۳ از ۵ کسب‌شده</span>
+        <span class="count-badge">به‌زودی</span>
       </div>
 
       <div class="achievements-grid">
@@ -92,34 +65,26 @@
       </div>
     </div>
 
-    <!-- Match History List -->
+    <!-- Recent Solo Games List -->
     <div class="section">
-      <h2 class="section-title">تاریخچه آخرین مسابقات</h2>
+      <h2 class="section-title">تاریخچه کوییزهای تک‌نفره</h2>
       <div class="history-list">
-        @for (match of matchHistory(); track match.id) {
+        @for (game of recentSoloGames(); track game.id) {
           <div class="history-item">
-            <span class="mode-icon">{{ match.mode === '1V1' ? '⚔️' : '🎯' }}</span>
+            <span class="mode-icon">🎯</span>
             <div class="history-main">
-              <span class="h-title">
-                {{
-                  match.mode === '1V1'
-                    ? 'مسابقه دو‌نفره ' + (match.opponentName ? 'با ' + match.opponentName : '')
-                    : 'کوییز تک‌نفره'
-                }}
-              </span>
-              <span class="h-date">{{ match.dateText }}</span>
+              <span class="h-title">{{ game.categoryTitle || 'کوییز تک‌نفره' }}</span>
+              <span class="h-date">{{ game.completedAt }}</span>
             </div>
             <div class="history-result">
-              <span
-                class="res-tag"
-                [class.win]="match.result === 'WIN'"
-                [class.loss]="match.result === 'LOSS'"
-                [class.completed]="match.result === 'COMPLETED'"
-                >{{ match.scoreText }}</span
+              <span class="res-tag completed"
+                >{{ game.correctAnswers }}/{{ game.totalQuestions }} درست</span
               >
-              <span class="coins-earned">+{{ match.earnedCoins }} سکه</span>
+              <span class="coins-earned">+{{ game.earnedCoins }} سکه</span>
             </div>
           </div>
+        } @empty {
+          <p style="color: #a1a1aa; padding: 1rem 0">هنوز کوییزی انجام نشده است.</p>
         }
       </div>
     </div>

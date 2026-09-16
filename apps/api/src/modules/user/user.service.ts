@@ -1,10 +1,205 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  Optional,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import {
+  QuizService,
+  getProductDateKey,
+  getCoinsForDifficulty,
+  getSeasonPointsForDifficulty,
+} from '../quiz/quiz.service';
+import {
+  PlayerHomeSummaryDto,
+  PlayerHomeSummarySeasonDto,
+  PlayerHomeSummaryCategoryDto,
+  PlayerHomeRecentGameDto,
+  Difficulty,
+  AnswerStatus,
+  GameStatus,
+} from '@quiz/contracts';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly quizService?: QuizService,
+  ) {}
+
+  async getHomeSummary(userId: string): Promise<PlayerHomeSummaryDto> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, deletedAt: null },
+      select: {
+        id: true,
+        phone: true,
+        username: true,
+        displayName: true,
+        avatarKey: true,
+        coins: true,
+        dailyStreak: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // 1. Active Season
+    const activeSeason = await this.prisma.season.findFirst({
+      where: { isActive: true },
+    });
+
+    let seasonDto: PlayerHomeSummarySeasonDto | null = null;
+    if (activeSeason) {
+      const entry = await this.prisma.seasonEntry.findFirst({
+        where: { seasonId: activeSeason.id, userId },
+      });
+
+      let rank: number | null = null;
+      if (entry) {
+        const higherCount = await this.prisma.seasonEntry.count({
+          where: {
+            seasonId: activeSeason.id,
+            score: { gt: entry.score },
+          },
+        });
+        rank = higherCount + 1;
+      }
+
+      seasonDto = {
+        seasonId: activeSeason.id,
+        jalaliYear: activeSeason.jalaliYear,
+        jalaliMonth: activeSeason.jalaliMonth,
+        score: entry ? entry.score : 0,
+        rank,
+      };
+    }
+
+    // 2. Daily Quota
+    const limit = this.quizService ? this.quizService.getDailyRankedGameLimit() : 15;
+    const dateKey = getProductDateKey();
+    const usage = await this.prisma.dailyUsage.findUnique({
+      where: { userId_dateKey: { userId, dateKey } },
+    });
+    const used = usage?.soloRankedCount ?? 0;
+    const remaining = Math.max(0, limit - used);
+
+    // 3. Active Categories
+    const categories = await this.prisma.category.findMany({
+      where: { isActive: true, deletedAt: null },
+      orderBy: { title: 'asc' },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        coverKey: true,
+        _count: {
+          select: {
+            questions: {
+              where: {
+                question: {
+                  status: 'PUBLISHED',
+                  deletedAt: null,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const categoryDtos: PlayerHomeSummaryCategoryDto[] = categories.map((cat) => ({
+      id: cat.id,
+      title: cat.title,
+      description: cat.description,
+      coverKey: cat.coverKey,
+      questionCount: cat._count.questions,
+    }));
+
+    // 4. Recent Completed Solo Games
+    const recentSessions = await this.prisma.quizSession.findMany({
+      where: { userId, status: GameStatus.COMPLETED },
+      orderBy: { completedAt: 'desc' },
+      take: 10,
+      include: {
+        questions: {
+          include: {
+            question: {
+              select: { id: true, difficulty: true },
+            },
+          },
+        },
+      },
+    });
+
+    const categoryIds = Array.from(
+      new Set(recentSessions.map((s) => s.categoryId).filter((id): id is string => !!id)),
+    );
+
+    const catList =
+      categoryIds.length > 0
+        ? await this.prisma.category.findMany({
+            where: { id: { in: categoryIds } },
+            select: { id: true, title: true },
+          })
+        : [];
+    const catMap = new Map(catList.map((c) => [c.id, c.title]));
+
+    const recentSoloGames: PlayerHomeRecentGameDto[] = recentSessions.map((session) => {
+      let correctAnswers = 0;
+      let coinsFromAnswers = 0;
+      let seasonPointsFromAnswers = 0;
+
+      for (const q of session.questions) {
+        if (q.status === AnswerStatus.CORRECT) {
+          correctAnswers++;
+          const diff = q.question.difficulty as Difficulty;
+          coinsFromAnswers += getCoinsForDifficulty(diff);
+          seasonPointsFromAnswers += getSeasonPointsForDifficulty(diff);
+        }
+      }
+
+      const earnedCoins = coinsFromAnswers + 2;
+      const earnedSeasonPoints = session.isRanked ? seasonPointsFromAnswers : 0;
+      const completedAt = (session.completedAt ?? session.startedAt).toISOString();
+
+      return {
+        id: session.id,
+        categoryId: session.categoryId,
+        categoryTitle: session.categoryId ? (catMap.get(session.categoryId) ?? null) : null,
+        difficulty: session.difficulty as Difficulty | null,
+        correctAnswers,
+        totalQuestions: session.questions.length,
+        earnedCoins,
+        earnedSeasonPoints,
+        completedAt,
+      };
+    });
+
+    return {
+      user: {
+        id: user.id,
+        phone: user.phone,
+        username: user.username,
+        displayName: user.displayName,
+        avatarKey: user.avatarKey,
+        coins: user.coins,
+        dailyStreak: user.dailyStreak,
+      },
+      season: seasonDto,
+      dailyQuota: {
+        used,
+        limit,
+        remaining,
+      },
+      categories: categoryDtos,
+      recentSoloGames,
+    };
+  }
 
   async getProfile(userId: string) {
     const user = await this.prisma.user.findFirst({
