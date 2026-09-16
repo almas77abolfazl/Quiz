@@ -92,139 +92,140 @@ enum ReportStatus {
 }
 
 model User {
-  id                    String              @id @default(uuid())
-  phone                 String              @unique @db.VarChar(20)
-  username              String?             @unique @db.VarChar(32)
-  displayName           String?             @db.VarChar(48)
-  avatarKey             String?             @db.VarChar(100)
-  role                  UserRole            @default(PLAYER)
-  coins                 Int                 @default(0)
-  dailyStreak           Int                 @default(0)
-  lastDailyActivityAt   DateTime?
-  isSuspended           Boolean             @default(false)
-  suspendedUntil        DateTime?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  deletedAt             DateTime?
+  id                  String    @id @default(uuid())
+  phone               String    @unique @db.VarChar(20)
+  username            String?   @unique @db.VarChar(32)
+  displayName         String?   @db.VarChar(48)
+  avatarKey           String?   @db.VarChar(100)
+  role                UserRole  @default(PLAYER)
+  coins               Int       @default(0)
+  dailyStreak         Int       @default(0)
+  lastDailyActivityAt DateTime?
+  isSuspended         Boolean   @default(false)
+  suspendedUntil      DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
 
-  sessions              AuthSession[]
-  otpChallenges         OtpChallenge[]
-  usernameHistory       UsernameHistory[]
-  categoryFollows       CategoryFollow[]
-  seasonEntries         SeasonEntry[]
-  coinTransactions      CoinTransaction[]
-  quizSessions          QuizSession[]
-  matchParticipants     MatchParticipant[]
-  questionSuggestions   QuestionSuggestion[]
-  reportsCreated        Report[]            @relation("ReportCreator")
-  questionsAuthored     Question[]          @relation("QuestionAuthor")
-  questionsReviewed     Question[]          @relation("QuestionReviewer")
+  sessions            AuthSession[]
+  otpChallenges       OtpChallenge[]
+  usernameHistory     UsernameHistory[]
+  categoryFollows     CategoryFollow[]
+  seasonEntries       SeasonEntry[]
+  coinTransactions    CoinTransaction[]
+  quizSessions        QuizSession[]
+  matchParticipants   MatchParticipant[]
+  questionSuggestions QuestionSuggestion[]
+  reportsCreated      Report[]             @relation("ReportCreator")
+  questionsAuthored   Question[]           @relation("QuestionAuthor")
+  questionsReviewed   Question[]           @relation("QuestionReviewer")
+  dailyUsages         DailyUsage[]
 }
 
 model AuthSession {
-  id            String    @id @default(uuid())
-  userId        String
-  refreshTokenHash String @unique
-  expiresAt     DateTime
-  lastActiveAt  DateTime  @default(now())
-  revokedAt     DateTime?
-  createdAt     DateTime  @default(now())
+  id               String    @id @default(uuid())
+  userId           String
+  refreshTokenHash String    @unique
+  expiresAt        DateTime
+  lastActiveAt     DateTime  @default(now())
+  revokedAt        DateTime?
+  createdAt        DateTime  @default(now())
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, expiresAt])
 }
 
 model OtpChallenge {
-  id            String    @id @default(uuid())
-  userId        String
-  codeHash      String
-  expiresAt     DateTime
-  attempts      Int       @default(0)
-  consumedAt    DateTime?
-  createdAt     DateTime  @default(now())
+  id         String    @id @default(uuid())
+  userId     String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
 
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
 
 model UsernameHistory {
-  id          String    @id @default(uuid())
-  userId      String
-  username    String    @db.VarChar(32)
-  changedAt   DateTime  @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  username  String   @db.VarChar(32)
+  changedAt DateTime @default(now())
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, changedAt])
 }
 
 model Category {
-  id          String            @id @default(uuid())
-  title       String            @unique @db.VarChar(100)
+  id          String    @id @default(uuid())
+  title       String    @unique @db.VarChar(100)
   description String?
-  coverKey    String?           @db.VarChar(200)
-  isActive    Boolean           @default(true)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  coverKey    String?   @db.VarChar(200)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  questions   QuestionCategory[]
-  followers   CategoryFollow[]
+  questions QuestionCategory[]
+  followers CategoryFollow[]
 }
 
 model Tag {
-  id          String        @id @default(uuid())
-  title       String        @unique @db.VarChar(80)
-  createdAt   DateTime      @default(now())
+  id        String   @id @default(uuid())
+  title     String   @unique @db.VarChar(80)
+  createdAt DateTime @default(now())
 
-  questions   QuestionTag[]
+  questions QuestionTag[]
 }
 
 model CategoryFollow {
-  userId      String
-  categoryId  String
-  createdAt   DateTime  @default(now())
+  userId     String
+  categoryId String
+  createdAt  DateTime @default(now())
 
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([userId, categoryId])
 }
 
 model Question {
-  id              String          @id @default(uuid())
-  text            String          @db.Text
-  explanation     String          @db.Text
-  imageKey        String?         @db.VarChar(200)
-  difficulty      Difficulty
-  status          QuestionStatus  @default(DRAFT)
-  authoredById    String?
-  reviewedById    String?
-  publishedAt     DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  archivedAt      DateTime?
-  deletedAt       DateTime?
+  id           String         @id @default(uuid())
+  text         String         @db.Text
+  explanation  String         @db.Text
+  imageKey     String?        @db.VarChar(200)
+  difficulty   Difficulty
+  status       QuestionStatus @default(DRAFT)
+  authoredById String?
+  reviewedById String?
+  publishedAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  archivedAt   DateTime?
+  deletedAt    DateTime?
 
-  authoredBy      User?           @relation("QuestionAuthor", fields: [authoredById], references: [id])
-  reviewedBy      User?           @relation("QuestionReviewer", fields: [reviewedById], references: [id])
-  options         QuestionOption[]
-  categories      QuestionCategory[]
-  tags            QuestionTag[]
-  quizQuestions   QuizSessionQuestion[]
-  matchQuestions  MatchQuestion[]
+  authoredBy     User?                 @relation("QuestionAuthor", fields: [authoredById], references: [id])
+  reviewedBy     User?                 @relation("QuestionReviewer", fields: [reviewedById], references: [id])
+  options        QuestionOption[]
+  categories     QuestionCategory[]
+  tags           QuestionTag[]
+  quizQuestions  QuizSessionQuestion[]
+  matchQuestions MatchQuestion[]
 
   @@index([status, difficulty])
 }
 
 model QuestionOption {
-  id                String                @id @default(uuid())
-  questionId        String
-  text              String                @db.Text
-  sortOrder         Int
-  isCorrect         Boolean               @default(false)
+  id         String  @id @default(uuid())
+  questionId String
+  text       String  @db.Text
+  sortOrder  Int
+  isCorrect  Boolean @default(false)
 
   question          Question              @relation(fields: [questionId], references: [id], onDelete: Cascade)
   selectedInQuizzes QuizSessionQuestion[] @relation("QuizSelectedOption")
@@ -233,232 +234,248 @@ model QuestionOption {
 }
 
 model QuestionCategory {
-  questionId  String
-  categoryId  String
+  questionId String
+  categoryId String
 
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@id([questionId, categoryId])
   @@index([categoryId])
 }
 
 model QuestionTag {
-  questionId  String
-  tagId       String
+  questionId String
+  tagId      String
 
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([questionId, tagId])
   @@index([tagId])
 }
 
 model QuestionSuggestion {
-  id              String          @id @default(uuid())
-  authorId        String
-  text            String          @db.Text
-  options         Json
-  correctOption   Int
-  proposedLevel   Difficulty?
-  note            String?         @db.Text
-  status          QuestionStatus  @default(PENDING_REVIEW)
-  reviewedAt      DateTime?
-  reviewerNote    String?         @db.Text
-  publishedQuestionId String?     @unique
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id                  String         @id @default(uuid())
+  authorId            String
+  text                String         @db.Text
+  options             Json
+  correctOption       Int
+  proposedLevel       Difficulty?
+  note                String?        @db.Text
+  status              QuestionStatus @default(PENDING_REVIEW)
+  reviewedAt          DateTime?
+  reviewerNote        String?        @db.Text
+  publishedQuestionId String?        @unique
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
-  author          User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
 }
 
 model Season {
-  id              String        @id @default(uuid())
-  jalaliYear      Int
-  jalaliMonth     Int
-  startsAt        DateTime
-  endsAt          DateTime
-  isActive        Boolean       @default(false)
-  createdAt       DateTime      @default(now())
+  id          String   @id @default(uuid())
+  jalaliYear  Int
+  jalaliMonth Int
+  startsAt    DateTime
+  endsAt      DateTime
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
-  entries         SeasonEntry[]
-  prizes          SeasonPrize[]
+  entries SeasonEntry[]
+  prizes  SeasonPrize[]
 
   @@unique([jalaliYear, jalaliMonth])
 }
 
 model SeasonEntry {
-  id              String        @id @default(uuid())
-  seasonId        String
-  userId          String
-  score           Int           @default(0)
-  correctAnswers  Int           @default(0)
-  matchWins       Int           @default(0)
-  reachedScoreAt  DateTime?
-  rank            Int?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String    @id @default(uuid())
+  seasonId       String
+  userId         String
+  score          Int       @default(0)
+  correctAnswers Int       @default(0)
+  matchWins      Int       @default(0)
+  reachedScoreAt DateTime?
+  rank           Int?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  season          Season        @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  prizeClaim      PrizeClaim?
+  season     Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prizeClaim PrizeClaim?
 
   @@unique([seasonId, userId])
   @@index([seasonId, score])
 }
 
 model SeasonPrize {
-  id              String        @id @default(uuid())
-  seasonId        String
-  rank            Int
-  type            PrizeType
-  title           String        @db.VarChar(120)
-  description     String?       @db.Text
-  coinAmount      Int?
-  imageKey        String?       @db.VarChar(200)
+  id          String    @id @default(uuid())
+  seasonId    String
+  rank        Int
+  type        PrizeType
+  title       String    @db.VarChar(120)
+  description String?   @db.Text
+  coinAmount  Int?
+  imageKey    String?   @db.VarChar(200)
 
-  season          Season        @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  season Season @relation(fields: [seasonId], references: [id], onDelete: Cascade)
 
   @@unique([seasonId, rank, type])
 }
 
 model PrizeClaim {
-  id              String            @id @default(uuid())
-  seasonEntryId   String            @unique
-  status          PrizeClaimStatus  @default(PENDING)
-  internalNote    String?           @db.Text
-  fulfilledAt     DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id            String           @id @default(uuid())
+  seasonEntryId String           @unique
+  status        PrizeClaimStatus @default(PENDING)
+  internalNote  String?          @db.Text
+  fulfilledAt   DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
-  seasonEntry     SeasonEntry       @relation(fields: [seasonEntryId], references: [id], onDelete: Cascade)
+  seasonEntry SeasonEntry @relation(fields: [seasonEntryId], references: [id], onDelete: Cascade)
 }
 
 model CoinTransaction {
-  id              String              @id @default(uuid())
-  userId          String
-  amount          Int
-  type            CoinTransactionType
-  referenceType   String?             @db.VarChar(50)
-  referenceId     String?             @db.VarChar(100)
-  note            String?             @db.Text
-  createdAt       DateTime            @default(now())
+  id            String              @id @default(uuid())
+  userId        String
+  amount        Int
+  type          CoinTransactionType
+  referenceType String?             @db.VarChar(50)
+  referenceId   String?             @db.VarChar(100)
+  note          String?             @db.Text
+  createdAt     DateTime            @default(now())
 
-  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }
 
 model QuizSession {
-  id              String        @id @default(uuid())
+  id              String      @id @default(uuid())
   userId          String
   categoryId      String?
   difficulty      Difficulty?
-  status          GameStatus    @default(ACTIVE)
-  countedForDaily Boolean       @default(true)
-  startedAt       DateTime      @default(now())
+  status          GameStatus  @default(ACTIVE)
+  countedForDaily Boolean     @default(true)
+  isRanked        Boolean     @default(false)
+  startedAt       DateTime    @default(now())
   completedAt     DateTime?
 
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questions       QuizSessionQuestion[]
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questions QuizSessionQuestion[]
 
   @@index([userId, startedAt])
 }
 
 model QuizSessionQuestion {
-  id                String          @id @default(uuid())
-  quizSessionId     String
-  questionId        String
-  selectedOptionId  String?
-  position          Int
-  startsAt          DateTime?
-  deadlineAt        DateTime?
-  answeredAt        DateTime?
-  status            AnswerStatus   @default(PENDING)
-  hintUsed          String?
+  id               String       @id @default(uuid())
+  quizSessionId    String
+  questionId       String
+  selectedOptionId String?
+  position         Int
+  startsAt         DateTime?
+  deadlineAt       DateTime?
+  answeredAt       DateTime?
+  status           AnswerStatus @default(PENDING)
+  hintUsed         String?
 
-  quizSession       QuizSession     @relation(fields: [quizSessionId], references: [id], onDelete: Cascade)
-  question          Question        @relation(fields: [questionId], references: [id])
-  selectedOption    QuestionOption? @relation("QuizSelectedOption", fields: [selectedOptionId], references: [id])
+  quizSession    QuizSession     @relation(fields: [quizSessionId], references: [id], onDelete: Cascade)
+  question       Question        @relation(fields: [questionId], references: [id])
+  selectedOption QuestionOption? @relation("QuizSelectedOption", fields: [selectedOptionId], references: [id])
 
   @@unique([quizSessionId, position])
 }
 
 model Match {
-  id              String        @id @default(uuid())
-  categoryId      String?
-  difficulty      Difficulty?
-  status          MatchStatus   @default(WAITING)
-  startedAt       DateTime?
-  completedAt     DateTime?
-  createdAt       DateTime      @default(now())
+  id          String      @id @default(uuid())
+  categoryId  String?
+  difficulty  Difficulty?
+  status      MatchStatus @default(WAITING)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
 
-  participants    MatchParticipant[]
-  questions       MatchQuestion[]
+  participants MatchParticipant[]
+  questions    MatchQuestion[]
 
   @@index([status, createdAt])
 }
 
 model MatchParticipant {
-  id              String        @id @default(uuid())
-  matchId         String
-  userId          String
-  score           Int           @default(0)
-  coinReward      Int           @default(0)
-  isWinner        Boolean       @default(false)
+  id         String  @id @default(uuid())
+  matchId    String
+  userId     String
+  score      Int     @default(0)
+  coinReward Int     @default(0)
+  isWinner   Boolean @default(false)
 
-  match           Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  answers         MatchAnswer[]
+  match   Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers MatchAnswer[]
 
   @@unique([matchId, userId])
   @@index([userId])
 }
 
 model MatchQuestion {
-  id              String        @id @default(uuid())
-  matchId         String
-  questionId      String
-  position        Int
-  startsAt        DateTime
-  deadlineAt      DateTime
+  id         String   @id @default(uuid())
+  matchId    String
+  questionId String
+  position   Int
+  startsAt   DateTime
+  deadlineAt DateTime
 
-  match           Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  question        Question      @relation(fields: [questionId], references: [id])
-  answers         MatchAnswer[]
+  match    Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  question Question      @relation(fields: [questionId], references: [id])
+  answers  MatchAnswer[]
 
   @@unique([matchId, position])
 }
 
 model MatchAnswer {
-  id                  String          @id @default(uuid())
-  matchQuestionId     String
-  participantId       String
-  selectedOptionId    String?
-  answeredAt          DateTime?
-  status              AnswerStatus   @default(PENDING)
+  id               String       @id @default(uuid())
+  matchQuestionId  String
+  participantId    String
+  selectedOptionId String?
+  answeredAt       DateTime?
+  status           AnswerStatus @default(PENDING)
 
-  matchQuestion       MatchQuestion   @relation(fields: [matchQuestionId], references: [id], onDelete: Cascade)
-  participant         MatchParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  matchQuestion MatchQuestion    @relation(fields: [matchQuestionId], references: [id], onDelete: Cascade)
+  participant   MatchParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   @@unique([matchQuestionId, participantId])
 }
 
 model Report {
-  id              String            @id @default(uuid())
-  reporterId      String
-  targetType      ReportTargetType
-  targetId        String
-  reason          String            @db.Text
-  status          ReportStatus      @default(OPEN)
-  internalNote    String?           @db.Text
-  createdAt       DateTime          @default(now())
-  resolvedAt      DateTime?
+  id           String           @id @default(uuid())
+  reporterId   String
+  targetType   ReportTargetType
+  targetId     String
+  reason       String           @db.Text
+  status       ReportStatus     @default(OPEN)
+  internalNote String?          @db.Text
+  createdAt    DateTime         @default(now())
+  resolvedAt   DateTime?
 
-  reporter        User              @relation("ReportCreator", fields: [reporterId], references: [id], onDelete: Cascade)
+  reporter User @relation("ReportCreator", fields: [reporterId], references: [id], onDelete: Cascade)
 
   @@index([status, createdAt])
   @@index([targetType, targetId])
+}
+
+model DailyUsage {
+  id               String   @id @default(uuid())
+  userId           String
+  dateKey          String   @db.VarChar(10)
+  soloRankedCount  Int      @default(0)
+  matchRankedCount Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dateKey])
+  @@index([userId, dateKey])
 }

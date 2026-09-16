@@ -26,6 +26,10 @@ export class QuizResultComponent implements OnInit {
   readonly totalQuestions = signal<number>(5);
   readonly earnedCoins = signal<number>(0);
   readonly earnedPoints = signal<number>(0);
+  readonly isRankedGame = signal<boolean>(true);
+  readonly dailyRankedGamesUsed = signal<number>(0);
+  readonly dailyRankedGamesLimit = signal<number>(15);
+  readonly dailyRankedGamesRemaining = signal<number>(0);
   readonly userAnswers = signal<UserAnswerRecord[]>([]);
 
   readonly isHighPerformance = computed(
@@ -44,6 +48,10 @@ export class QuizResultComponent implements OnInit {
       this.totalQuestions.set(navState.totalQuestions || 5);
       this.earnedCoins.set(navState.earnedCoins || 0);
       this.earnedPoints.set(navState.earnedPoints || 0);
+      this.isRankedGame.set(navState.isRankedGame ?? true);
+      this.dailyRankedGamesUsed.set(navState.dailyRankedGamesUsed ?? 0);
+      this.dailyRankedGamesLimit.set(navState.dailyRankedGamesLimit ?? 15);
+      this.dailyRankedGamesRemaining.set(navState.dailyRankedGamesRemaining ?? 0);
       this.userAnswers.set(navState.userAnswers || []);
     }
   }

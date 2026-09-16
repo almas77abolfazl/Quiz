@@ -34,6 +34,34 @@
       </div>
     </div>
 
+    <!-- Ranked & Quota Status Card -->
+    <div class="ranked-info-card" [class.unranked]="!isRankedGame()">
+      <div class="ranked-header">
+        <span class="ranked-badge" [class.is-ranked]="isRankedGame()">
+          {{ isRankedGame() ? '🏆 بازی رتبه‌بندی فصل' : '🎮 بازی تمرینی (غیررتبه‌بندی)' }}
+        </span>
+      </div>
+      <p class="ranked-desc">
+        {{
+          isRankedGame()
+            ? 'امتیاز و پاسخ‌های صحیح این بازی در رتبه‌بندی ماهانه فصل شما محاسبه شد.'
+            : 'این بازی پس از اتمام سهمیه روزانه انجام شد. سکه اعطا گردید اما امتیاز فصل تغییری نکرد.'
+        }}
+      </p>
+      <div class="quota-progress">
+        <span>سهمیه بازی‌های رتبه‌بندی امروز:</span>
+        <strong
+          >{{ dailyRankedGamesRemaining() }} از {{ dailyRankedGamesLimit() }} باقی‌مانده</strong
+        >
+      </div>
+      @if (dailyRankedGamesRemaining() === 0) {
+        <div class="quota-notice">
+          ℹ️ سهمیه بازی‌های رتبه‌بندی امروز شما به پایان رسیده است. بازی‌های بعدی همچنان سکه اعطا
+          می‌کنند ولی در امتیاز و رتبه‌بندی فصل محاسبه نمی‌شوند.
+        </div>
+      }
+    </div>
+
     <!-- Answers Recap List -->
     <div class="section">
       <h2 class="section-title">خلاصه پاسخ‌های شما</h2>

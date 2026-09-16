@@ -105,8 +105,15 @@ describe('SoloQuizApiService', () => {
   it('should finish quiz session via POST /api/quiz/:id/finish', () => {
     const mockResponse = {
       correctAnswers: 4,
+      incorrectAnswers: 1,
+      timedOutAnswers: 0,
       totalQuestions: 5,
       coinsEarned: 90,
+      seasonPointsEarned: 8,
+      isRankedGame: true,
+      dailyRankedGamesUsed: 1,
+      dailyRankedGamesLimit: 15,
+      dailyRankedGamesRemaining: 14,
     };
 
     service.finishQuiz('session-123').subscribe((res) => {

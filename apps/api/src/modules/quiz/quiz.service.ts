@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { StartQuizDto } from './dto/start-quiz.dto';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
@@ -19,6 +20,16 @@ import { mapToPlayerQuestionDto } from '../question/question.mapper';
 const QUESTION_COUNT = 5;
 const QUESTION_TIME_LIMIT_SECONDS = 30;
 const GAME_COMPLETION_BONUS_COINS = 2;
+
+export function getProductDateKey(date: Date = new Date()): string {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tehran',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  return formatter.format(date);
+}
 
 export function getSeasonPointsForDifficulty(difficulty: Difficulty): number {
   switch (difficulty) {
@@ -52,7 +63,21 @@ export function getCoinsForDifficulty(difficulty: Difficulty): number {
 
 @Injectable()
 export class QuizService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly config?: ConfigService,
+  ) {}
+
+  getDailyRankedGameLimit(): number {
+    const raw = this.config?.get<string | number>('DAILY_RANKED_GAME_LIMIT');
+    if (raw !== undefined && raw !== null && raw !== '') {
+      const parsed = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed;
+      }
+    }
+    return 15;
+  }
 
   async startQuiz(userId: string, dto: StartQuizDto): Promise<StartQuizResponseDto> {
     const where: any = { status: 'PUBLISHED' };
@@ -340,7 +365,7 @@ export class QuizService {
     let correctCount = 0;
     let incorrectCount = 0;
     let timedOutCount = 0;
-    let seasonPointsEarned = 0;
+    let potentialSeasonPoints = 0;
     let coinsFromAnswers = 0;
 
     for (const q of session.questions) {
@@ -349,7 +374,7 @@ export class QuizService {
         const diff = q.question.difficulty as Difficulty;
         const points = getSeasonPointsForDifficulty(diff);
         const coins = getCoinsForDifficulty(diff);
-        seasonPointsEarned += points;
+        potentialSeasonPoints += points;
         coinsFromAnswers += coins;
       } else if (q.status === AnswerStatus.INCORRECT) {
         incorrectCount++;
@@ -360,11 +385,76 @@ export class QuizService {
 
     const totalQuestions = session.questions.length;
     const coinsEarned = coinsFromAnswers + GAME_COMPLETION_BONUS_COINS;
+    const limit = this.getDailyRankedGameLimit();
+    const dateKey = getProductDateKey();
 
-    await this.prisma.$transaction(async (tx) => {
+    let isRankedGame = false;
+    let seasonPointsEarned = 0;
+    let dailyRankedGamesUsed = 0;
+
+    await this.prisma.$transaction(async (tx: any) => {
+      if (tx.dailyUsage?.upsert) {
+        await tx.dailyUsage.upsert({
+          where: { userId_dateKey: { userId, dateKey } },
+          create: { userId, dateKey, soloRankedCount: 0, matchRankedCount: 0 },
+          update: {},
+        });
+      }
+
+      let currentCount = 0;
+      if (typeof tx.$queryRaw === 'function') {
+        try {
+          const lockedUsages = await tx.$queryRaw<Array<{ id: string; soloRankedCount: number }>>`
+            SELECT id, "soloRankedCount"
+            FROM "DailyUsage"
+            WHERE "userId" = ${userId} AND "dateKey" = ${dateKey}
+            FOR UPDATE
+          `;
+          if (lockedUsages && lockedUsages.length > 0) {
+            currentCount = lockedUsages[0].soloRankedCount;
+          } else if (tx.dailyUsage?.findUnique) {
+            const usage = await tx.dailyUsage.findUnique({
+              where: { userId_dateKey: { userId, dateKey } },
+            });
+            currentCount = usage?.soloRankedCount ?? 0;
+          }
+        } catch {
+          if (tx.dailyUsage?.findUnique) {
+            const usage = await tx.dailyUsage.findUnique({
+              where: { userId_dateKey: { userId, dateKey } },
+            });
+            currentCount = usage?.soloRankedCount ?? 0;
+          }
+        }
+      } else if (tx.dailyUsage?.findUnique) {
+        const usage = await tx.dailyUsage.findUnique({
+          where: { userId_dateKey: { userId, dateKey } },
+        });
+        currentCount = usage?.soloRankedCount ?? 0;
+      }
+
+      isRankedGame = currentCount < limit;
+
+      if (isRankedGame) {
+        dailyRankedGamesUsed = currentCount + 1;
+        seasonPointsEarned = potentialSeasonPoints;
+
+        if (tx.dailyUsage?.update) {
+          await tx.dailyUsage.update({
+            where: { userId_dateKey: { userId, dateKey } },
+            data: { soloRankedCount: { increment: 1 } },
+          });
+        }
+
+        await this.ensureSeasonEntry(tx, userId, correctCount, seasonPointsEarned);
+      } else {
+        dailyRankedGamesUsed = currentCount;
+        seasonPointsEarned = 0;
+      }
+
       await tx.quizSession.update({
         where: { id: quizSessionId },
-        data: { status: GameStatus.COMPLETED, completedAt: new Date() },
+        data: { status: GameStatus.COMPLETED, completedAt: new Date(), isRanked: isRankedGame },
       });
 
       await tx.user.update({
@@ -382,9 +472,9 @@ export class QuizService {
           note: `Completed quiz with ${correctCount}/${totalQuestions} correct answers`,
         },
       });
-
-      await this.ensureSeasonEntry(tx, userId, correctCount, seasonPointsEarned);
     });
+
+    const dailyRankedGamesRemaining = Math.max(0, limit - dailyRankedGamesUsed);
 
     return {
       correctAnswers: correctCount,
@@ -393,6 +483,10 @@ export class QuizService {
       totalQuestions,
       coinsEarned,
       seasonPointsEarned,
+      isRankedGame,
+      dailyRankedGamesUsed,
+      dailyRankedGamesLimit: limit,
+      dailyRankedGamesRemaining,
     };
   }
 

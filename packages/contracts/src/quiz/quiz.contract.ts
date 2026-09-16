@@ -54,4 +54,8 @@ export interface FinishQuizResponseDto {
   totalQuestions: number;
   coinsEarned: number;
   seasonPointsEarned: number;
+  isRankedGame: boolean;
+  dailyRankedGamesUsed: number;
+  dailyRankedGamesLimit: number;
+  dailyRankedGamesRemaining: number;
 }

@@ -312,6 +312,10 @@ export class QuizPlayComponent implements OnInit, OnDestroy {
               totalQuestions: res.totalQuestions,
               earnedCoins: res.coinsEarned,
               earnedPoints: res.seasonPointsEarned,
+              isRankedGame: res.isRankedGame,
+              dailyRankedGamesUsed: res.dailyRankedGamesUsed,
+              dailyRankedGamesLimit: res.dailyRankedGamesLimit,
+              dailyRankedGamesRemaining: res.dailyRankedGamesRemaining,
               userAnswers: this.userAnswers(),
             },
           });

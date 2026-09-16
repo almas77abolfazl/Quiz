@@ -248,6 +248,10 @@ describe('QuizPlayComponent (Phase 5D UX Correction)', () => {
       totalQuestions: 2,
       coinsEarned: 4,
       seasonPointsEarned: 3,
+      isRankedGame: true,
+      dailyRankedGamesUsed: 1,
+      dailyRankedGamesLimit: 15,
+      dailyRankedGamesRemaining: 14,
     };
 
     soloQuizApiMock.submitAnswer.mockReturnValue(of(mockSubmitRes));
