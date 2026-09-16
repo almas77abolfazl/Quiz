@@ -56,7 +56,17 @@ describe('Phase 2A API Security & Answer Leakage (Integration)', () => {
   };
 
   const mockQuestionService = {
-    findAll: jest.fn().mockResolvedValue([mockAdminQuestion]),
+    findAll: jest.fn().mockResolvedValue({
+      data: [mockAdminQuestion],
+      meta: {
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+        hasPreviousPage: false,
+        hasNextPage: false,
+      },
+    }),
     findOne: jest.fn().mockResolvedValue(mockAdminQuestion),
     create: jest.fn().mockResolvedValue(mockAdminQuestion),
     update: jest.fn().mockResolvedValue(mockAdminQuestion),
@@ -189,9 +199,9 @@ describe('Phase 2A API Security & Answer Leakage (Integration)', () => {
         .set('Authorization', `Bearer ${rootAdminToken}`)
         .expect(200);
 
-      expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body[0].id).toBe('q-101');
-      expect(res.body[0].options[1].isCorrect).toBe(true);
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data[0].id).toBe('q-101');
+      expect(res.body.data[0].options[1].isCorrect).toBe(true);
     });
 
     it('3b. Allows CONTENT_SPECIALIST to access GET /questions/:id', async () => {

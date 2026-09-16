@@ -39,7 +39,17 @@ describe('Phase 2B Question Publication Authorization (Integration & Unit)', () 
   };
 
   const mockQuestionService = {
-    findAll: jest.fn().mockResolvedValue([mockAdminQuestion]),
+    findAll: jest.fn().mockResolvedValue({
+      data: [mockAdminQuestion],
+      meta: {
+        page: 1,
+        limit: 20,
+        total: 1,
+        totalPages: 1,
+        hasPreviousPage: false,
+        hasNextPage: false,
+      },
+    }),
     findOne: jest.fn().mockResolvedValue(mockAdminQuestion),
     create: jest.fn().mockImplementation(async (dto: any, authorId: string) => ({
       ...mockAdminQuestion,

@@ -37,6 +37,20 @@ export interface AdminQuestionDto {
   updatedAt: string;
 }
 
+export interface QuestionPaginationMetaDto {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+export interface PaginatedAdminQuestionsDto {
+  data: readonly AdminQuestionDto[];
+  meta: QuestionPaginationMetaDto;
+}
+
 export interface AnswerFeedbackDto {
   questionId: string;
   selectedOptionId: string | null;

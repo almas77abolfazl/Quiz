@@ -13,10 +13,11 @@ import {
 import { QuestionService } from './question.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { GetQuestionsQueryDto } from './dto/get-questions-query.dto';
 import { AccessTokenGuard } from '../auth/access-token.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
-import { UserRole, Difficulty, AdminQuestionDto } from '@quiz/contracts';
+import { UserRole, Difficulty, AdminQuestionDto, PaginatedAdminQuestionsDto } from '@quiz/contracts';
 import { AuthenticatedRequest } from '../auth/access-token.guard';
 import { mapToAdminQuestionDto } from './question.mapper';
 
@@ -28,11 +29,13 @@ export class QuestionController {
   @UseGuards(AccessTokenGuard, RolesGuard)
   @Roles(UserRole.ROOT_ADMIN, UserRole.CONTENT_SPECIALIST)
   async findAll(
-    @Query('categoryId') categoryId?: string,
-    @Query('difficulty') difficulty?: Difficulty,
-  ): Promise<AdminQuestionDto[]> {
-    const questions = await this.questionService.findAll(categoryId, difficulty);
-    return questions.map(mapToAdminQuestionDto);
+    @Query() query: GetQuestionsQueryDto,
+  ): Promise<PaginatedAdminQuestionsDto> {
+    const result = await this.questionService.findAll(query);
+    return {
+      data: result.data.map(mapToAdminQuestionDto),
+      meta: result.meta,
+    };
   }
 
   @Get(':id')

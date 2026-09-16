@@ -2,28 +2,72 @@ import { Injectable, NotFoundException, BadRequestException, ForbiddenException 
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateQuestionDto } from './dto/create-question.dto';
 import { UpdateQuestionDto } from './dto/update-question.dto';
+import { GetQuestionsQueryDto } from './dto/get-questions-query.dto';
 import { Difficulty, QuestionStatus, UserRole } from '@quiz/contracts';
 
 @Injectable()
 export class QuestionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(categoryId?: string, difficulty?: Difficulty) {
-    const where: any = { deletedAt: null, status: QuestionStatus.PUBLISHED };
-    if (categoryId) {
-      where.categories = { some: { categoryId } };
+  async findAll(query: GetQuestionsQueryDto = {}) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 20;
+    const skip = (page - 1) * limit;
+
+    const where: any = { deletedAt: null };
+
+    if (query.status) {
+      where.status = query.status;
     }
-    if (difficulty) {
-      where.difficulty = difficulty;
+
+    if (query.difficulty) {
+      where.difficulty = query.difficulty;
     }
-    return this.prisma.question.findMany({
-      where,
-      include: {
-        options: { orderBy: { sortOrder: 'asc' } },
-        categories: { include: { category: true } },
-        tags: { include: { tag: true } },
+
+    if (query.categoryId) {
+      where.categories = {
+        some: { categoryId: query.categoryId },
+      };
+    }
+
+    const trimmedSearch = query.search?.trim();
+    if (trimmedSearch) {
+      where.text = {
+        contains: trimmedSearch,
+        mode: 'insensitive',
+      };
+    }
+
+    const [total, items] = await Promise.all([
+      this.prisma.question.count({ where }),
+      this.prisma.question.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        include: {
+          options: { orderBy: { sortOrder: 'asc' } },
+          categories: { include: { category: true } },
+          tags: { include: { tag: true } },
+        },
+      }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+    const hasPreviousPage = page > 1;
+    const hasNextPage = page < totalPages;
+
+    return {
+      data: items,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasPreviousPage,
+        hasNextPage,
       },
-    });
+    };
   }
 
   async findOne(id: string) {
