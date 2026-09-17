@@ -5,6 +5,7 @@ import { MatchGateway } from './match.gateway';
 import { MatchService } from './match.service';
 import { MatchmakingQueue } from './matchmaking-queue';
 import { MatchTimerService } from './match-timer.service';
+import { MatchPresenceService } from './match-presence.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   MatchSocketServerEvents,
@@ -133,6 +134,21 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     prismaMock = {
       match: {
+        findMany: jest.fn().mockImplementation(async (args?: any) => {
+          if (args?.where?.status?.in && !args.where.status.in.includes(matchDb.status)) {
+            return [];
+          }
+          if (args?.where?.status && matchDb.status !== args.where.status) {
+            return [];
+          }
+          return [
+            {
+              ...matchDb,
+              participants: participantsDb,
+              questions: questionsDb,
+            },
+          ];
+        }),
         findFirst: jest.fn().mockImplementation(async (args?: any) => {
           if (args?.where?.id && args.where.id !== matchId) return null;
           return {
@@ -273,6 +289,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
         MatchService,
         MatchmakingQueue,
         MatchTimerService,
+        MatchPresenceService,
         { provide: PrismaService, useValue: prismaMock },
         { provide: JwtService, useValue: {} },
         { provide: ConfigService, useValue: { getOrThrow: () => JWT_SECRET } },

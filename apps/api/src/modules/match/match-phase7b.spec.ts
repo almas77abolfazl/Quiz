@@ -5,6 +5,7 @@ import { MatchGateway } from './match.gateway';
 import { MatchService } from './match.service';
 import { MatchmakingQueue } from './matchmaking-queue';
 import { MatchTimerService } from './match-timer.service';
+import { MatchPresenceService } from './match-presence.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   MatchSocketServerEvents,
@@ -135,6 +136,7 @@ describe('Phase 7B 1v1 Matchmaking Tests', () => {
         MatchService,
         MatchmakingQueue,
         MatchTimerService,
+        MatchPresenceService,
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: {} },
         { provide: ConfigService, useValue: { getOrThrow: () => JWT_SECRET } },

@@ -24,8 +24,11 @@ import {
   MatchRoundStartS2CPayload,
   MatchRoundResultS2CPayload,
   MatchEndS2CPayload,
+  MatchStatus,
+  OpponentConnectionChangedS2CPayload,
 } from '@quiz/contracts';
 import { MatchService, MatchLifecycleEventListener } from './match.service';
+import { MatchPresenceService } from './match-presence.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   JoinMatchmakingSocketDto,
@@ -52,17 +55,21 @@ export class MatchGateway
   @WebSocketServer()
   server!: Server;
 
-  private readonly userSockets = new Map<string, Set<string>>();
-
   constructor(
     private readonly matchService: MatchService,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly presenceService: MatchPresenceService,
   ) {}
 
   afterInit(server: Server) {
     this.matchService.registerEventListener(this);
+    if (typeof this.matchService.recoverActiveMatches === 'function') {
+      this.matchService.recoverActiveMatches().catch((err) => {
+        console.error('[MatchGateway] Failed to recover active matches during startup:', err);
+      });
+    }
 
     server.use(async (socket: Socket & { data: AuthenticatedSocketData }, next) => {
       try {
@@ -138,30 +145,55 @@ export class MatchGateway
     }
 
     const userId = user.userId;
-    if (!this.userSockets.has(userId)) {
-      this.userSockets.set(userId, new Set());
-    }
-    this.userSockets.get(userId)!.add(client.id);
+    const { isFirstSocket } = this.presenceService.addSocket(userId, client.id);
 
     client.join(`user:${userId}`);
+
+    if (isFirstSocket) {
+      this.notifyOpponentsPresenceChange(userId, true).catch(() => {});
+    }
   }
 
   handleDisconnect(client: Socket & { data: AuthenticatedSocketData }) {
     const userId = client.data.user?.userId;
     if (userId) {
-      const set = this.userSockets.get(userId);
-      if (set) {
-        set.delete(client.id);
-        if (set.size === 0) {
-          this.userSockets.delete(userId);
-          this.matchService.leaveMatchmaking(userId).catch(() => {});
-        }
+      const { isLastSocket } = this.presenceService.removeSocket(userId, client.id);
+
+      if (isLastSocket) {
+        this.matchService.leaveMatchmaking(userId).catch(() => {});
+        this.notifyOpponentsPresenceChange(userId, false).catch(() => {});
       }
     }
   }
 
   getUserSocketCount(userId: string): number {
-    return this.userSockets.get(userId)?.size ?? 0;
+    return this.presenceService.getUserSocketCount(userId);
+  }
+
+  private async notifyOpponentsPresenceChange(userId: string, isOnline: boolean): Promise<void> {
+    const matches = await this.prisma.match.findMany({
+      where: {
+        status: { in: [MatchStatus.WAITING, MatchStatus.ACTIVE] },
+        participants: { some: { userId } },
+      },
+      include: {
+        participants: { select: { userId: true } },
+      },
+    });
+
+    for (const match of matches) {
+      const opponent = match.participants.find((p) => p.userId !== userId);
+      if (opponent) {
+        const payload: OpponentConnectionChangedS2CPayload = {
+          matchId: match.id,
+          userId,
+          isOnline,
+        };
+        this.server
+          .to(`user:${opponent.userId}`)
+          .emit(MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED, payload);
+      }
+    }
   }
 
   @SubscribeMessage(MatchSocketClientEvents.JOIN_MATCHMAKING)
@@ -372,21 +404,19 @@ export class MatchGateway
       );
     }
 
-    client.join(`match:${dto.matchId}`);
+    try {
+      const snapshot = await this.matchService.getReconnectSnapshot(dto.matchId, userId);
 
-    const match = await this.prisma.match.findFirst({
-      where: { id: dto.matchId },
-    });
+      client.join(`match:${dto.matchId}`);
+      this.joinUserSocketsToRoom(userId, `match:${dto.matchId}`);
 
-    if (!match) {
-      return this.emitError(client, MatchSocketErrorCode.MATCH_NOT_FOUND, 'Match not found');
+      client.emit(MatchSocketServerEvents.MATCH_RECONNECTED, snapshot);
+      return snapshot;
+    } catch (err: any) {
+      const code = err?.response?.code || err?.code || MatchSocketErrorCode.INTERNAL_ERROR;
+      const message = err?.response?.message || err?.message || 'Failed to reconnect match';
+      return this.emitError(client, code, message);
     }
-
-    return {
-      status: 'reconnected',
-      matchId: match.id,
-      matchStatus: match.status,
-    };
   }
 
   @SubscribeMessage(MatchSocketClientEvents.LEAVE_MATCH)
@@ -434,12 +464,10 @@ export class MatchGateway
   }
 
   private joinUserSocketsToRoom(userId: string, room: string) {
-    const socketIds = this.userSockets.get(userId);
-    if (socketIds) {
-      for (const socketId of socketIds) {
-        const targetSocket = this.server.sockets.sockets.get(socketId);
-        targetSocket?.join(room);
-      }
+    const socketIds = this.presenceService.getUserSockets(userId);
+    for (const socketId of socketIds) {
+      const targetSocket = this.server.sockets.sockets.get(socketId);
+      targetSocket?.join(room);
     }
   }
 

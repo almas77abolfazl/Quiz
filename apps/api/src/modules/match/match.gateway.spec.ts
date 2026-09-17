@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { MatchGateway } from './match.gateway';
 import { MatchService } from './match.service';
+import { MatchPresenceService } from './match-presence.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   MatchSocketClientEvents,
@@ -46,6 +47,8 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
       isParticipant: jest.fn(),
       completeMatch: jest.fn(),
       registerEventListener: jest.fn(),
+      recoverActiveMatches: jest.fn().mockResolvedValue(undefined),
+      getReconnectSnapshot: jest.fn(),
     };
 
     prismaService = {
@@ -56,6 +59,7 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MatchGateway,
+        MatchPresenceService,
         { provide: MatchService, useValue: matchService },
         { provide: PrismaService, useValue: prismaService },
         { provide: JwtService, useValue: jwtService },
@@ -350,19 +354,16 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
       gateway.handleConnection(newSocket);
 
       (matchService.isParticipant as jest.Mock).mockResolvedValue(true);
-      (prismaService.match!.findFirst as jest.Mock).mockResolvedValue({
-        id: 'match_123',
-        status: 'ACTIVE',
-        participants: [{ userId: validUserId }, { userId: otherUserId }],
-      });
+      const mockSnapshot = {
+        matchId: 'match_123',
+        matchStatus: 'ACTIVE',
+        phase: 'ACTIVE_ROUND',
+      };
+      (matchService.getReconnectSnapshot as jest.Mock).mockResolvedValue(mockSnapshot);
 
       const res = await gateway.handleReconnectMatch(newSocket, { matchId: 'match_123' });
 
-      expect(res).toEqual({
-        status: 'reconnected',
-        matchId: 'match_123',
-        matchStatus: 'ACTIVE',
-      });
+      expect(res).toEqual(mockSnapshot);
 
       expect(joinedRooms).toContain('match:match_123');
     });

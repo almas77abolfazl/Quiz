@@ -1,3 +1,4 @@
+import { MatchStatus } from '../enums/match-status.enum';
 import { Difficulty } from '../enums/difficulty.enum';
 import { AnswerStatus } from '../enums/answer-status.enum';
 
@@ -22,6 +23,8 @@ export const MatchSocketServerEvents = {
   ROUND_START: 'round_start',
   ROUND_RESULT: 'round_result',
   MATCH_END: 'match_end',
+  OPPONENT_CONNECTION_CHANGED: 'opponent_connection_changed',
+  MATCH_RECONNECTED: 'match_reconnected',
   ERROR: 'error',
 } as const;
 
@@ -147,3 +150,65 @@ export interface MatchEndS2CPayload {
   opponentScore: number;
   isDraw: boolean;
 }
+
+export interface OpponentPublicProfileClient {
+  userId: string;
+  username?: string | null;
+  displayName?: string | null;
+  avatarKey?: string | null;
+  isOnline: boolean;
+}
+
+export interface OpponentConnectionChangedS2CPayload {
+  matchId: string;
+  userId: string;
+  isOnline: boolean;
+}
+
+export interface MatchAnswerStateClient {
+  answered: boolean;
+  selectedOptionId?: string | null;
+  status?: AnswerStatus | null;
+}
+
+export type ReconnectPhase = 'WAITING' | 'ACTIVE_ROUND' | 'ROUND_RESULT' | 'COMPLETED';
+
+export interface MatchReconnectBasePayload {
+  matchId: string;
+  matchStatus: MatchStatus;
+  phase: ReconnectPhase;
+  currentRound: number;
+  totalRounds: number;
+  yourScore: number;
+  opponentScore: number;
+  serverNow: string;
+  opponent: OpponentPublicProfileClient | null;
+}
+
+export interface MatchReconnectWaitingPayload extends MatchReconnectBasePayload {
+  phase: 'WAITING';
+}
+
+export interface MatchReconnectActiveRoundPayload extends MatchReconnectBasePayload {
+  phase: 'ACTIVE_ROUND';
+  deadlineAt: string;
+  question: MatchRoundStartS2CPayload['question'];
+  yourAnswerState: MatchAnswerStateClient;
+}
+
+export interface MatchReconnectRoundResultPayload extends MatchReconnectBasePayload {
+  phase: 'ROUND_RESULT';
+  transitionDeadlineAt: string;
+  roundResult: MatchRoundResultS2CPayload;
+}
+
+export interface MatchReconnectCompletedPayload extends MatchReconnectBasePayload {
+  phase: 'COMPLETED';
+  finalResult: MatchEndS2CPayload;
+}
+
+export type MatchReconnectS2CPayload =
+  | MatchReconnectWaitingPayload
+  | MatchReconnectActiveRoundPayload
+  | MatchReconnectRoundResultPayload
+  | MatchReconnectCompletedPayload;

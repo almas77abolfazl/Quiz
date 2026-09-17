@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchTimerService } from './match-timer.service';
+import { MatchPresenceService } from './match-presence.service';
 import {
   MatchStatus,
   AnswerStatus,
@@ -10,6 +11,7 @@ import {
   MatchRoundStartS2CPayload,
   MatchRoundResultS2CPayload,
   MatchEndS2CPayload,
+  MatchReconnectS2CPayload,
 } from '@quiz/contracts';
 import { MatchmakingQueue } from './matchmaking-queue';
 
@@ -71,6 +73,7 @@ export class MatchService {
     private readonly prisma: PrismaService,
     private readonly matchmakingQueue: MatchmakingQueue,
     private readonly timerService: MatchTimerService,
+    private readonly presenceService: MatchPresenceService,
   ) {}
 
   registerEventListener(listener: MatchLifecycleEventListener): void {
@@ -228,6 +231,16 @@ export class MatchService {
 
     if (!match || match.status !== MatchStatus.ACTIVE || match.questions.length === 0) {
       return null;
+    }
+
+    if (roundNumber > 1) {
+      const transitionResult = await this.prisma.match.updateMany({
+        where: { id: matchId, status: MatchStatus.ACTIVE, currentRound: roundNumber - 1 },
+        data: { currentRound: roundNumber },
+      });
+      if (transitionResult.count === 0) {
+        return null;
+      }
     }
 
     const now = new Date();
@@ -712,6 +725,236 @@ export class MatchService {
     });
     if (!match) throw new NotFoundException('Match not found');
     return match;
+  }
+
+  async getReconnectSnapshot(
+    matchId: string,
+    userId: string,
+  ): Promise<MatchReconnectS2CPayload> {
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        participants: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+                displayName: true,
+                avatarKey: true,
+              },
+            },
+            answers: true,
+          },
+        },
+        questions: {
+          orderBy: { position: 'asc' },
+          include: {
+            question: {
+              include: {
+                options: { orderBy: { sortOrder: 'asc' } },
+              },
+            },
+            answers: true,
+          },
+        },
+      },
+    });
+
+    if (!match) {
+      throw new NotFoundException({
+        code: MatchSocketErrorCode.MATCH_NOT_FOUND,
+        message: 'Match not found',
+      });
+    }
+
+    const me = match.participants.find((p) => p.userId === userId);
+    if (!me) {
+      throw new NotFoundException({
+        code: MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        message: 'Authenticated user is not a participant in this match',
+      });
+    }
+
+    const opponentPart = match.participants.find((p) => p.userId !== userId);
+    const now = new Date();
+
+    const opponent = opponentPart
+      ? {
+          userId: opponentPart.user.id,
+          username: opponentPart.user.username ?? null,
+          displayName: opponentPart.user.displayName ?? null,
+          avatarKey: opponentPart.user.avatarKey ?? null,
+          isOnline: this.presenceService.isUserConnected(opponentPart.userId),
+        }
+      : null;
+
+    const basePayload = {
+      matchId: match.id,
+      matchStatus: match.status as unknown as MatchStatus,
+      currentRound: match.currentRound,
+      totalRounds: TOTAL_ROUNDS,
+      yourScore: me.score,
+      opponentScore: opponentPart ? opponentPart.score : 0,
+      serverNow: now.toISOString(),
+      opponent,
+    };
+
+    if (match.status === MatchStatus.WAITING) {
+      return {
+        ...basePayload,
+        phase: 'WAITING',
+      };
+    }
+
+    if (match.status === MatchStatus.COMPLETED || match.status === MatchStatus.CANCELLED) {
+      const winnerPart = match.participants.find((p) => p.isWinner);
+      const winnerId = winnerPart ? winnerPart.userId : null;
+      const isDraw =
+        !winnerPart &&
+        match.participants.length >= 2 &&
+        match.participants[0].score === match.participants[1].score;
+
+      const finalResult: MatchEndS2CPayload = {
+        matchId: match.id,
+        winnerId,
+        yourScore: me.score,
+        opponentScore: opponentPart ? opponentPart.score : 0,
+        isDraw,
+      };
+
+      return {
+        ...basePayload,
+        phase: 'COMPLETED',
+        finalResult,
+      };
+    }
+
+    // Active match
+    const currentMatchQuestion = match.questions.find((q) => q.position === match.currentRound);
+
+    if (!currentMatchQuestion) {
+      return {
+        ...basePayload,
+        phase: 'WAITING',
+      };
+    }
+
+    const isOpen = currentMatchQuestion.closedAt === null && now <= currentMatchQuestion.deadlineAt;
+
+    if (isOpen) {
+      const myAns = currentMatchQuestion.answers.find((a) => a.participantId === me.id);
+
+      return {
+        ...basePayload,
+        phase: 'ACTIVE_ROUND',
+        deadlineAt: currentMatchQuestion.deadlineAt.toISOString(),
+        question: {
+          matchQuestionId: currentMatchQuestion.id,
+          questionId: currentMatchQuestion.question.id,
+          text: currentMatchQuestion.question.text,
+          imageKey: currentMatchQuestion.question.imageKey ?? null,
+          position: currentMatchQuestion.position,
+          options: currentMatchQuestion.question.options.map((o) => ({
+            id: o.id,
+            text: o.text,
+          })),
+        },
+        yourAnswerState: {
+          answered: !!myAns,
+          selectedOptionId: myAns?.selectedOptionId ?? null,
+          status: (myAns?.status ?? null) as unknown as AnswerStatus | null,
+        },
+      };
+    }
+
+    // Round is closed, but next round has not started yet (ROUND_RESULT phase)
+    const closedAt = currentMatchQuestion.closedAt ?? now;
+    const transitionTime = new Date(closedAt.getTime() + FEEDBACK_DELAY_MS);
+
+    const correctOption = currentMatchQuestion.question.options.find((o) => o.isCorrect);
+    const correctOptionId = correctOption?.id ?? '';
+
+    const myAns = me.answers.find((a) => a.matchQuestionId === currentMatchQuestion.id);
+    const oppAns = opponentPart
+      ? opponentPart.answers.find((a) => a.matchQuestionId === currentMatchQuestion.id)
+      : null;
+
+    const roundResult: MatchRoundResultS2CPayload = {
+      matchId: match.id,
+      round: match.currentRound,
+      correctOptionId,
+      yourScore: me.score,
+      opponentScore: opponentPart ? opponentPart.score : 0,
+      yourStatus: (myAns?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
+      opponentStatus: (oppAns?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
+      yourSelectedOptionId: myAns?.selectedOptionId ?? null,
+      opponentSelectedOptionId: oppAns?.selectedOptionId ?? null,
+    };
+
+    return {
+      ...basePayload,
+      phase: 'ROUND_RESULT',
+      transitionDeadlineAt: transitionTime.toISOString(),
+      roundResult,
+    };
+  }
+
+  async recoverActiveMatches(): Promise<void> {
+    const activeMatches = await this.prisma.match.findMany({
+      where: { status: MatchStatus.ACTIVE },
+      include: {
+        questions: {
+          orderBy: { position: 'asc' },
+        },
+      },
+    });
+
+    const now = new Date();
+
+    for (const match of activeMatches) {
+      const roundNumber = match.currentRound;
+      if (roundNumber <= 0 || roundNumber > TOTAL_ROUNDS) continue;
+
+      const currentQuestion = match.questions.find((q) => q.position === roundNumber);
+      if (!currentQuestion) continue;
+
+      if (currentQuestion.closedAt === null) {
+        if (currentQuestion.deadlineAt > now) {
+          const remainingMs = currentQuestion.deadlineAt.getTime() - now.getTime();
+          this.timerService.scheduleDeadline(match.id, roundNumber, remainingMs, () => {
+            this.closeRound(match.id, roundNumber).catch((err) => {
+              console.error(`Error closing round ${roundNumber} during recovered deadline:`, err);
+            });
+          });
+        } else {
+          await this.closeRound(match.id, roundNumber).catch((err) => {
+            console.error(`Error closing expired round ${roundNumber} during recovery:`, err);
+          });
+        }
+      } else {
+        const transitionTime = new Date(currentQuestion.closedAt.getTime() + FEEDBACK_DELAY_MS);
+        const remainingMs = transitionTime.getTime() - now.getTime();
+
+        const proceedWithTransition = () => {
+          if (roundNumber < TOTAL_ROUNDS) {
+            this.startRound(match.id, roundNumber + 1).catch((err) => {
+              console.error(`Error starting round ${roundNumber + 1} during recovery:`, err);
+            });
+          } else {
+            this.completeMatch(match.id).catch((err) => {
+              console.error(`Error completing match during recovery:`, err);
+            });
+          }
+        };
+
+        if (remainingMs > 0) {
+          this.timerService.scheduleTransition(match.id, roundNumber, remainingMs, proceedWithTransition);
+        } else {
+          proceedWithTransition();
+        }
+      }
+    }
   }
 
   private shuffleArray<T>(array: T[]): T[] {
