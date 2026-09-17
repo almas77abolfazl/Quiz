@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { MatchGateway } from './match.gateway';
 import { MatchService } from './match.service';
 import { MatchmakingQueue } from './matchmaking-queue';
+import { MatchTimerService } from './match-timer.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   MatchSocketServerEvents,
@@ -133,6 +134,7 @@ describe('Phase 7B 1v1 Matchmaking Tests', () => {
         MatchGateway,
         MatchService,
         MatchmakingQueue,
+        MatchTimerService,
         { provide: PrismaService, useValue: prisma },
         { provide: JwtService, useValue: {} },
         { provide: ConfigService, useValue: { getOrThrow: () => JWT_SECRET } },
@@ -299,8 +301,8 @@ describe('Phase 7B 1v1 Matchmaking Tests', () => {
     expect(await queue.isQueued(user1)).toBe(false);
   });
 
-  // 10. both players receive identical question order
-  it('provides exact same five questions in identical position order to both players', async () => {
+  // 10. both players receive match_found with totalRounds: 5
+  it('provides totalRounds: 5 in match_found to both players', async () => {
     const { socket: s1 } = createMockSocket(user1, 's1');
     const { socket: s2 } = createMockSocket(user2, 's2');
     gateway.handleConnection(s1);
@@ -320,17 +322,14 @@ describe('Phase 7B 1v1 Matchmaking Tests', () => {
     const payloadUser1 = matchFoundCalls.find((c) => c[1].opponent.userId === user2)[1];
     const payloadUser2 = matchFoundCalls.find((c) => c[1].opponent.userId === user1)[1];
 
-    expect(payloadUser1.questions).toHaveLength(5);
-    expect(payloadUser2.questions).toHaveLength(5);
-
-    const qIdsUser1 = payloadUser1.questions.map((q: any) => q.questionId);
-    const qIdsUser2 = payloadUser2.questions.map((q: any) => q.questionId);
-
-    expect(qIdsUser1).toEqual(qIdsUser2);
+    expect(payloadUser1.totalRounds).toBe(5);
+    expect(payloadUser2.totalRounds).toBe(5);
+    expect(payloadUser1.questions).toBeUndefined();
+    expect(payloadUser2.questions).toBeUndefined();
   });
 
-  // 11. match_found payload contains no answer keys/private data
-  it('ensures match_found payload contains only player-safe question options and public opponent info', async () => {
+  // 11. match_found payload contains no answer keys/private data or questions list
+  it('ensures match_found payload contains only totalRounds and public opponent info without question leakage', async () => {
     const { socket: s1 } = createMockSocket(user1, 's1');
     const { socket: s2 } = createMockSocket(user2, 's2');
     gateway.handleConnection(s1);
@@ -355,17 +354,9 @@ describe('Phase 7B 1v1 Matchmaking Tests', () => {
     expect(payload.opponent).not.toHaveProperty('phone');
     expect(payload.opponent).not.toHaveProperty('coins');
 
-    // Check player-safe question payload
-    for (const q of payload.questions) {
-      expect(q).not.toHaveProperty('explanation');
-      expect(q).not.toHaveProperty('authoredById');
-      expect(q).not.toHaveProperty('reviewedById');
-      for (const opt of q.options) {
-        expect(opt).toHaveProperty('id');
-        expect(opt).toHaveProperty('text');
-        expect(opt).not.toHaveProperty('isCorrect');
-      }
-    }
+    // Questions must NOT be exposed in match_found
+    expect(payload).not.toHaveProperty('questions');
+    expect(payload.totalRounds).toBe(5);
   });
 
   // 12. insufficient question pool creates no partial match

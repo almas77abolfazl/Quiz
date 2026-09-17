@@ -1,8 +1,10 @@
 import { Difficulty } from '../enums/difficulty.enum';
+import { AnswerStatus } from '../enums/answer-status.enum';
 
 export const MatchSocketClientEvents = {
   JOIN_MATCHMAKING: 'join_matchmaking',
   LEAVE_MATCHMAKING: 'leave_matchmaking',
+  PLAYER_READY: 'player_ready',
   SUBMIT_ANSWER: 'submit_answer',
   RECONNECT_MATCH: 'reconnect_match',
   LEAVE_MATCH: 'leave_match',
@@ -32,6 +34,7 @@ export enum MatchSocketErrorCode {
   INVALID_PAYLOAD = 'INVALID_PAYLOAD',
   MATCH_NOT_FOUND = 'MATCH_NOT_FOUND',
   ALREADY_ANSWERED = 'ALREADY_ANSWERED',
+  ROUND_NOT_ACTIVE = 'ROUND_NOT_ACTIVE',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
   ALREADY_MATCHED = 'ALREADY_MATCHED',
@@ -52,6 +55,10 @@ export interface JoinMatchmakingC2SPayload {
 export interface LeaveMatchmakingC2SPayload {
   categoryId?: string;
   difficulty?: Difficulty;
+}
+
+export interface PlayerReadyC2SPayload {
+  matchId: string;
 }
 
 export interface MatchmakingJoinedS2CPayload {
@@ -89,20 +96,6 @@ export interface MatchQueuedS2CPayload {
   matchId?: string;
 }
 
-export interface MatchFoundQuestionOptionClient {
-  id: string;
-  text: string;
-}
-
-export interface MatchFoundQuestionClient {
-  matchQuestionId: string;
-  questionId: string;
-  text: string;
-  imageKey?: string | null;
-  position: number;
-  options: MatchFoundQuestionOptionClient[];
-}
-
 export interface MatchFoundS2CPayload {
   matchId: string;
   opponent: {
@@ -111,7 +104,7 @@ export interface MatchFoundS2CPayload {
     displayName?: string | null;
     avatarKey?: string | null;
   };
-  questions?: MatchFoundQuestionClient[];
+  totalRounds: number;
 }
 
 export interface MatchQuestionOptionClient {
@@ -121,21 +114,30 @@ export interface MatchQuestionOptionClient {
 
 export interface MatchRoundStartS2CPayload {
   matchId: string;
+  round: number;
+  totalRounds: number;
   question: {
     matchQuestionId: string;
     questionId: string;
     text: string;
+    imageKey?: string | null;
     options: MatchQuestionOptionClient[];
     position: number;
-    totalRounds: number;
   };
+  serverNow: string;
+  deadlineAt: string;
 }
 
 export interface MatchRoundResultS2CPayload {
   matchId: string;
-  roundIndex: number;
+  round: number;
+  correctOptionId: string;
   yourScore: number;
   opponentScore: number;
+  yourStatus: AnswerStatus;
+  opponentStatus: AnswerStatus;
+  yourSelectedOptionId?: string | null;
+  opponentSelectedOptionId?: string | null;
 }
 
 export interface MatchEndS2CPayload {
@@ -143,5 +145,5 @@ export interface MatchEndS2CPayload {
   winnerId: string | null;
   yourScore: number;
   opponentScore: number;
-  coinsEarned: number;
+  isDraw: boolean;
 }

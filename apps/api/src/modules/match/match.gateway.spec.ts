@@ -45,6 +45,7 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
       submitAnswer: jest.fn(),
       isParticipant: jest.fn(),
       completeMatch: jest.fn(),
+      registerEventListener: jest.fn(),
     };
 
     prismaService = {
@@ -446,15 +447,11 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
       );
       expect(matchFoundCall).toBeDefined();
 
-      const emittedQuestion = matchFoundCall[1].questions[0];
+      const payload = matchFoundCall[1];
 
-      // Verify question options have ONLY id and text, and NO isCorrect
-      expect(emittedQuestion.options).toEqual([
-        { id: 'opt_a', text: '3' },
-        { id: 'opt_b', text: '4' },
-      ]);
-      expect(emittedQuestion.options[0]).not.toHaveProperty('isCorrect');
-      expect(emittedQuestion.options[1]).not.toHaveProperty('isCorrect');
+      // Verify totalRounds is present and questions are NOT leaked in match_found
+      expect(payload.totalRounds).toBe(5);
+      expect(payload.questions).toBeUndefined();
     });
   });
 

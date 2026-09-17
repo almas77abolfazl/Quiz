@@ -389,13 +389,14 @@ model QuizSessionQuestion {
 }
 
 model Match {
-  id          String      @id @default(uuid())
-  categoryId  String?
-  difficulty  Difficulty?
-  status      MatchStatus @default(WAITING)
-  startedAt   DateTime?
-  completedAt DateTime?
-  createdAt   DateTime    @default(now())
+  id           String      @id @default(uuid())
+  categoryId   String?
+  difficulty   Difficulty?
+  status       MatchStatus @default(WAITING)
+  currentRound Int         @default(0)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime    @default(now())
 
   participants MatchParticipant[]
   questions    MatchQuestion[]
@@ -410,6 +411,7 @@ model MatchParticipant {
   score      Int     @default(0)
   coinReward Int     @default(0)
   isWinner   Boolean @default(false)
+  isReady    Boolean @default(false)
 
   match   Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -420,12 +422,13 @@ model MatchParticipant {
 }
 
 model MatchQuestion {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   matchId    String
   questionId String
   position   Int
   startsAt   DateTime
   deadlineAt DateTime
+  closedAt   DateTime?
 
   match    Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   question Question      @relation(fields: [questionId], references: [id])

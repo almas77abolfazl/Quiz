@@ -21,12 +21,15 @@ import {
   MatchFoundS2CPayload,
   MatchmakingJoinedS2CPayload,
   MatchmakingLeftS2CPayload,
-  MatchQuestionOptionClient,
+  MatchRoundStartS2CPayload,
+  MatchRoundResultS2CPayload,
+  MatchEndS2CPayload,
 } from '@quiz/contracts';
-import { MatchService } from './match.service';
+import { MatchService, MatchLifecycleEventListener } from './match.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   JoinMatchmakingSocketDto,
+  PlayerReadySocketDto,
   SubmitAnswerSocketDto,
   ReconnectMatchSocketDto,
   LeaveMatchSocketDto,
@@ -43,11 +46,12 @@ export interface AuthenticatedSocketData {
 @WebSocketGateway({
   cors: { origin: process.env.CORS_ORIGIN?.split(',') ?? '*' },
 })
-export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
+export class MatchGateway
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect, MatchLifecycleEventListener
+{
   @WebSocketServer()
   server!: Server;
 
-  // Track active authenticated socket connections: userId -> Set of socket IDs
   private readonly userSockets = new Map<string, Set<string>>();
 
   constructor(
@@ -58,6 +62,8 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
   ) {}
 
   afterInit(server: Server) {
+    this.matchService.registerEventListener(this);
+
     server.use(async (socket: Socket & { data: AuthenticatedSocketData }, next) => {
       try {
         const token = this.extractToken(socket);
@@ -84,7 +90,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
           return next(err);
         }
 
-        // Attach authenticated identity exclusively derived from token to socket.data
         socket.data.user = {
           userId: payload.sub,
           role: payload.role || 'PLAYER',
@@ -102,6 +107,28 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     });
   }
 
+  // Implementation of MatchLifecycleEventListener callbacks
+  onRoundStart(payload: MatchRoundStartS2CPayload): void {
+    this.server.to(`match:${payload.matchId}`).emit(MatchSocketServerEvents.ROUND_START, payload);
+  }
+
+  onRoundResult(
+    matchId: string,
+    payloads: Array<{ userId: string; payload: MatchRoundResultS2CPayload }>,
+  ): void {
+    for (const item of payloads) {
+      this.server
+        .to(`user:${item.userId}`)
+        .emit(MatchSocketServerEvents.ROUND_RESULT, item.payload);
+    }
+  }
+
+  onMatchEnd(payloads: Array<{ userId: string; payload: MatchEndS2CPayload }>): void {
+    for (const item of payloads) {
+      this.server.to(`user:${item.userId}`).emit(MatchSocketServerEvents.MATCH_END, item.payload);
+    }
+  }
+
   handleConnection(client: Socket & { data: AuthenticatedSocketData }) {
     const user = client.data.user;
     if (!user || !user.userId) {
@@ -116,7 +143,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
     this.userSockets.get(userId)!.add(client.id);
 
-    // Join room for this authenticated user
     client.join(`user:${userId}`);
   }
 
@@ -128,14 +154,12 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         set.delete(client.id);
         if (set.size === 0) {
           this.userSockets.delete(userId);
-          // When no remaining sockets exist for searching user, remove them from queue
           this.matchService.leaveMatchmaking(userId).catch(() => {});
         }
       }
     }
   }
 
-  // Public helper methods for testing / state verification
   getUserSocketCount(userId: string): number {
     return this.userSockets.get(userId)?.size ?? 0;
   }
@@ -157,7 +181,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     if (validation.error) return validation.error;
     const dto = validation.dto!;
 
-    // Derived exclusively from authenticated socket identity
     const userId = client.data.user!.userId;
 
     try {
@@ -172,21 +195,8 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         const participantA = match.participants[0];
         const participantB = match.participants[1];
 
-        // Ensure sockets for both users join the match room
         this.joinUserSocketsToRoom(participantA.userId, `match:${match.id}`);
         this.joinUserSocketsToRoom(participantB.userId, `match:${match.id}`);
-
-        const sanitizedQuestions = match.questions.map((mq: any) => ({
-          matchQuestionId: mq.id,
-          questionId: mq.question.id,
-          text: mq.question.text,
-          imageKey: mq.question.imageKey ?? null,
-          position: mq.position,
-          options: mq.question.options.map((o: any) => ({
-            id: o.id,
-            text: o.text,
-          })),
-        }));
 
         const payloadA: MatchFoundS2CPayload = {
           matchId: match.id,
@@ -196,7 +206,7 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             displayName: participantB.user.displayName ?? null,
             avatarKey: participantB.user.avatarKey ?? null,
           },
-          questions: sanitizedQuestions,
+          totalRounds: 5,
         };
 
         const payloadB: MatchFoundS2CPayload = {
@@ -207,10 +217,9 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
             displayName: participantA.user.displayName ?? null,
             avatarKey: participantA.user.avatarKey ?? null,
           },
-          questions: sanitizedQuestions,
+          totalRounds: 5,
         };
 
-        // Notify both active user rooms
         this.server
           .to(`user:${participantA.userId}`)
           .emit(MatchSocketServerEvents.MATCH_FOUND, payloadA);
@@ -221,7 +230,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         return { status: 'matched', matchId: match.id };
       }
 
-      // User queued
       const joinedPayload: MatchmakingJoinedS2CPayload = {
         status: 'queued',
         categoryId: dto.categoryId,
@@ -235,6 +243,42 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       const message = err?.response?.message || err?.message || 'Matchmaking error';
       return this.emitError(client, code, message);
     }
+  }
+
+  @SubscribeMessage(MatchSocketClientEvents.PLAYER_READY)
+  async handlePlayerReady(
+    @ConnectedSocket() client: Socket & { data: AuthenticatedSocketData },
+    @MessageBody() rawPayload: unknown,
+  ) {
+    if (!this.checkThrottling(client)) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.RATE_LIMIT_EXCEEDED,
+        'Rate limit exceeded',
+      );
+    }
+
+    const validation = await this.validatePayload(PlayerReadySocketDto, rawPayload, client);
+    if (validation.error) return validation.error;
+    const dto = validation.dto!;
+
+    const userId = client.data.user!.userId;
+
+    const isParticipant = await this.matchService.isParticipant(dto.matchId, userId);
+    if (!isParticipant) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        'Authenticated user is not a participant in this match',
+      );
+    }
+
+    client.join(`match:${dto.matchId}`);
+    this.joinUserSocketsToRoom(userId, `match:${dto.matchId}`);
+
+    await this.matchService.setPlayerReady(dto.matchId, userId);
+
+    return { status: 'ready', matchId: dto.matchId };
   }
 
   @SubscribeMessage(MatchSocketClientEvents.LEAVE_MATCHMAKING)
@@ -277,7 +321,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     const userId = client.data.user!.userId;
 
-    // Verify user is a participant in the match
     const isParticipant = await this.matchService.isParticipant(dto.matchId, userId);
     if (!isParticipant) {
       return this.emitError(
@@ -287,76 +330,18 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
       );
     }
 
-    let result;
     try {
-      result = await this.matchService.submitAnswer(
+      return await this.matchService.submitAnswer(
         dto.matchId,
         userId,
         dto.matchQuestionId,
         dto.selectedOptionId,
       );
     } catch (err: any) {
-      const code =
-        err.status === 400
-          ? MatchSocketErrorCode.ALREADY_ANSWERED
-          : MatchSocketErrorCode.INVALID_PAYLOAD;
-      return this.emitError(client, code, err.message || 'Failed to submit answer');
+      const code = err?.response?.code || MatchSocketErrorCode.INVALID_PAYLOAD;
+      const message = err?.response?.message || err?.message || 'Failed to submit answer';
+      return this.emitError(client, code, message);
     }
-
-    const match = await this.prisma.match.findFirst({
-      where: { id: dto.matchId },
-      include: {
-        questions: { include: { question: { include: { options: true } } } },
-        participants: { include: { user: true } },
-      },
-    });
-
-    if (!match) return result;
-
-    const matchQuestion = match.questions.find((q) => q.id === dto.matchQuestionId);
-    if (!matchQuestion) return result;
-
-    const answers = await this.prisma.matchAnswer.findMany({
-      where: { matchQuestionId: dto.matchQuestionId },
-    });
-
-    if (answers.length === 2) {
-      const participantA = match.participants[0];
-      const participantB = match.participants[1];
-
-      this.server.to(`match:${dto.matchId}`).emit(MatchSocketServerEvents.ROUND_RESULT, {
-        matchId: dto.matchId,
-        yourScore: participantA.score,
-        opponentScore: participantB.score,
-        roundIndex: matchQuestion.position,
-      });
-    }
-
-    const allAnsweredPromises = match.questions.map(async (q) => {
-      const answerCount = await this.prisma.matchAnswer.count({
-        where: { matchQuestionId: q.id },
-      });
-      return answerCount === 2;
-    });
-
-    const allAnswered = await Promise.all(allAnsweredPromises);
-    if (allAnswered.every((v) => v)) {
-      const completed = await this.matchService.completeMatch(dto.matchId);
-      if (completed) {
-        const participantA = completed.participants[0];
-        const participantB = completed.participants[1];
-
-        this.server.to(`match:${dto.matchId}`).emit(MatchSocketServerEvents.MATCH_END, {
-          matchId: completed.id,
-          winnerId: participantA.isWinner ? participantA.userId : participantB.userId,
-          yourScore: participantA.score,
-          opponentScore: participantB.score,
-          coinsEarned: participantA.coinReward,
-        });
-      }
-    }
-
-    return result;
   }
 
   @SubscribeMessage(MatchSocketClientEvents.RECONNECT_MATCH)
@@ -391,10 +376,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
 
     const match = await this.prisma.match.findFirst({
       where: { id: dto.matchId },
-      include: {
-        participants: { include: { user: true } },
-        questions: { include: { question: { include: { options: true } } } },
-      },
     });
 
     if (!match) {

@@ -11,6 +11,12 @@ export class JoinMatchmakingSocketDto {
   difficulty?: Difficulty;
 }
 
+export class PlayerReadySocketDto {
+  @IsString()
+  @IsNotEmpty()
+  matchId!: string;
+}
+
 export class SubmitAnswerSocketDto {
   @IsString()
   @IsNotEmpty()

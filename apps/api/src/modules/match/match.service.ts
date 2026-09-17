@@ -1,15 +1,21 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { MatchTimerService } from './match-timer.service';
 import {
   MatchStatus,
   AnswerStatus,
   Difficulty,
   QuestionStatus,
   MatchSocketErrorCode,
+  MatchRoundStartS2CPayload,
+  MatchRoundResultS2CPayload,
+  MatchEndS2CPayload,
 } from '@quiz/contracts';
 import { MatchmakingQueue } from './matchmaking-queue';
 
 const TOTAL_ROUNDS = 5;
+const ROUND_DEADLINE_MS = 30000;
+const FEEDBACK_DELAY_MS = 2000;
 
 class AsyncMutex {
   private queue: Array<() => void> = [];
@@ -47,14 +53,29 @@ export type JoinMatchmakingResult =
   | { status: 'queued'; categoryId?: string; difficulty?: Difficulty }
   | { status: 'matched'; match: any; playerAId: string; playerBId: string };
 
+export interface MatchLifecycleEventListener {
+  onRoundStart(payload: MatchRoundStartS2CPayload): void;
+  onRoundResult(
+    matchId: string,
+    payloads: Array<{ userId: string; payload: MatchRoundResultS2CPayload }>,
+  ): void;
+  onMatchEnd(payloads: Array<{ userId: string; payload: MatchEndS2CPayload }>): void;
+}
+
 @Injectable()
 export class MatchService {
   private readonly mutex = new AsyncMutex();
+  private eventListener?: MatchLifecycleEventListener;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly matchmakingQueue: MatchmakingQueue,
+    private readonly timerService: MatchTimerService,
   ) {}
+
+  registerEventListener(listener: MatchLifecycleEventListener): void {
+    this.eventListener = listener;
+  }
 
   getQueue(): MatchmakingQueue {
     return this.matchmakingQueue;
@@ -108,12 +129,10 @@ export class MatchService {
 
     // 3. Acquire mutex to safely process queue matching & transaction creation
     return this.mutex.runExclusive(async () => {
-      // Re-verify queued state inside mutex lock
       if (await this.matchmakingQueue.isQueued(userId)) {
         return { status: 'queued', categoryId, difficulty };
       }
 
-      // Look for a matching opponent candidate in the queue
       const candidate = await this.matchmakingQueue.findAndRemoveCandidate(
         userId,
         categoryId,
@@ -122,7 +141,6 @@ export class MatchService {
 
       if (candidate) {
         try {
-          // Attempt to create match & questions in one atomic DB transaction
           const match = await this.createMatchTransaction(
             candidate.userId,
             userId,
@@ -136,14 +154,11 @@ export class MatchService {
             playerBId: userId,
           };
         } catch (err) {
-          // Transaction failed (e.g. insufficient questions or DB error):
-          // Restore candidate player to the queue to maintain consistent state
           await this.matchmakingQueue.enqueue(candidate);
           throw err;
         }
       }
 
-      // No opponent found: add user to the queue
       await this.matchmakingQueue.enqueue({
         userId,
         categoryId,
@@ -155,6 +170,418 @@ export class MatchService {
     });
   }
 
+  async setPlayerReady(matchId: string, userId: string): Promise<boolean> {
+    const participant = await this.prisma.matchParticipant.findFirst({
+      where: { matchId, userId },
+    });
+    if (!participant) {
+      throw new NotFoundException({
+        code: MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        message: 'User is not a participant in this match',
+      });
+    }
+
+    // Atomic update to set isReady = true
+    await this.prisma.matchParticipant.updateMany({
+      where: { matchId, userId, isReady: false },
+      data: { isReady: true },
+    });
+
+    // Check readiness of both participants
+    const readyCount = await this.prisma.matchParticipant.count({
+      where: { matchId, isReady: true },
+    });
+
+    if (readyCount >= 2) {
+      // Transition match status to ACTIVE exactly once
+      const updateResult = await this.prisma.match.updateMany({
+        where: { id: matchId, status: MatchStatus.WAITING },
+        data: {
+          status: MatchStatus.ACTIVE,
+          currentRound: 1,
+          startedAt: new Date(),
+        },
+      });
+
+      if (updateResult.count === 1) {
+        await this.startRound(matchId, 1);
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  async startRound(
+    matchId: string,
+    roundNumber: number,
+  ): Promise<MatchRoundStartS2CPayload | null> {
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        questions: {
+          where: { position: roundNumber },
+          include: { question: { include: { options: { orderBy: { sortOrder: 'asc' } } } } },
+        },
+      },
+    });
+
+    if (!match || match.status !== MatchStatus.ACTIVE || match.questions.length === 0) {
+      return null;
+    }
+
+    const now = new Date();
+    const deadlineAt = new Date(now.getTime() + ROUND_DEADLINE_MS);
+    const matchQuestion = match.questions[0];
+
+    await this.prisma.$transaction([
+      this.prisma.match.update({
+        where: { id: matchId },
+        data: { currentRound: roundNumber },
+      }),
+      this.prisma.matchQuestion.update({
+        where: { id: matchQuestion.id },
+        data: { startsAt: now, deadlineAt },
+      }),
+    ]);
+
+    const payload: MatchRoundStartS2CPayload = {
+      matchId,
+      round: roundNumber,
+      totalRounds: TOTAL_ROUNDS,
+      question: {
+        matchQuestionId: matchQuestion.id,
+        questionId: matchQuestion.question.id,
+        text: matchQuestion.question.text,
+        imageKey: matchQuestion.question.imageKey ?? null,
+        position: roundNumber,
+        options: matchQuestion.question.options.map((o) => ({
+          id: o.id,
+          text: o.text,
+        })),
+      },
+      serverNow: now.toISOString(),
+      deadlineAt: deadlineAt.toISOString(),
+    };
+
+    // Schedule 30-second deadline timer
+    this.timerService.scheduleDeadline(matchId, roundNumber, ROUND_DEADLINE_MS, () => {
+      this.closeRound(matchId, roundNumber).catch((err) => {
+        console.error(`Error closing round ${roundNumber} for match ${matchId}:`, err);
+      });
+    });
+
+    if (this.eventListener) {
+      this.eventListener.onRoundStart(payload);
+    }
+
+    return payload;
+  }
+
+  async submitAnswer(
+    matchId: string,
+    userId: string,
+    matchQuestionId: string,
+    selectedOptionId?: string,
+  ) {
+    const participant = await this.prisma.matchParticipant.findFirst({
+      where: { matchId, userId },
+    });
+    if (!participant) {
+      throw new NotFoundException({
+        code: MatchSocketErrorCode.FORBIDDEN_NOT_PARTICIPANT,
+        message: 'Participant not found',
+      });
+    }
+
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        questions: {
+          where: { id: matchQuestionId },
+          include: { question: { include: { options: true } } },
+        },
+      },
+    });
+
+    if (!match || match.status !== MatchStatus.ACTIVE || match.questions.length === 0) {
+      throw new BadRequestException({
+        code: MatchSocketErrorCode.ROUND_NOT_ACTIVE,
+        message: 'Match or round is not currently active',
+      });
+    }
+
+    const matchQuestion = match.questions[0];
+
+    // Enforce active round boundary
+    if (matchQuestion.position !== match.currentRound || matchQuestion.closedAt !== null) {
+      throw new BadRequestException({
+        code: MatchSocketErrorCode.ROUND_NOT_ACTIVE,
+        message: 'This question is not in the active round',
+      });
+    }
+
+    // Check idempotency / already answered
+    const existingAnswer = await this.prisma.matchAnswer.findFirst({
+      where: { matchQuestionId, participantId: participant.id },
+    });
+
+    if (existingAnswer) {
+      return {
+        status: existingAnswer.status,
+        isCorrect: existingAnswer.status === AnswerStatus.CORRECT,
+        participantId: participant.id,
+        alreadyAnswered: true,
+      };
+    }
+
+    const now = new Date();
+    let status = AnswerStatus.PENDING;
+
+    if (now > matchQuestion.deadlineAt) {
+      status = AnswerStatus.TIMED_OUT;
+    } else if (selectedOptionId) {
+      const validOption = matchQuestion.question.options.find((opt) => opt.id === selectedOptionId);
+      if (!validOption) {
+        status = AnswerStatus.INCORRECT;
+      } else {
+        status = validOption.isCorrect ? AnswerStatus.CORRECT : AnswerStatus.INCORRECT;
+      }
+    } else {
+      status = AnswerStatus.INCORRECT;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.matchAnswer.create({
+        data: {
+          matchQuestionId,
+          participantId: participant.id,
+          selectedOptionId:
+            selectedOptionId && status !== AnswerStatus.TIMED_OUT ? selectedOptionId : null,
+          answeredAt: now,
+          status,
+        },
+      });
+
+      if (status === AnswerStatus.CORRECT) {
+        await tx.matchParticipant.update({
+          where: { id: participant.id },
+          data: { score: { increment: 10 } },
+        });
+      }
+    });
+
+    const answersCount = await this.prisma.matchAnswer.count({
+      where: { matchQuestionId },
+    });
+
+    if (answersCount >= 2) {
+      // Both participants have answered; cancel deadline timer and close round early
+      this.timerService.cancelTimer(matchId, matchQuestion.position, 'deadline');
+      setImmediate(() => {
+        this.closeRound(matchId, matchQuestion.position).catch(() => {});
+      });
+    }
+
+    return {
+      status,
+      isCorrect: status === AnswerStatus.CORRECT,
+      participantId: participant.id,
+      alreadyAnswered: false,
+    };
+  }
+
+  async closeRound(matchId: string, roundNumber: number): Promise<boolean> {
+    const now = new Date();
+
+    // Persist round closure state atomically. Exactly one caller will succeed.
+    const updateResult = await this.prisma.matchQuestion.updateMany({
+      where: {
+        matchId,
+        position: roundNumber,
+        closedAt: null,
+      },
+      data: { closedAt: now },
+    });
+
+    if (updateResult.count === 0) {
+      // Duplicate callback / already closed
+      return false;
+    }
+
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        participants: { include: { answers: true } },
+        questions: {
+          where: { position: roundNumber },
+          include: {
+            question: { include: { options: true } },
+            answers: true,
+          },
+        },
+      },
+    });
+
+    if (!match || match.questions.length === 0) return false;
+
+    const matchQuestion = match.questions[0];
+
+    // Persist timeouts for any participant who has not answered
+    for (const p of match.participants) {
+      const hasAnswer = matchQuestion.answers.some((a) => a.participantId === p.id);
+      if (!hasAnswer) {
+        await this.prisma.matchAnswer
+          .create({
+            data: {
+              matchQuestionId: matchQuestion.id,
+              participantId: p.id,
+              selectedOptionId: null,
+              answeredAt: now,
+              status: AnswerStatus.TIMED_OUT,
+            },
+          })
+          .catch(() => {
+            // Ignore if concurrently inserted
+          });
+      }
+    }
+
+    // Refetch fresh participant and answer data
+    const updatedMatch = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: {
+        participants: { include: { answers: { where: { matchQuestionId: matchQuestion.id } } } },
+      },
+    });
+
+    if (!updatedMatch || updatedMatch.participants.length < 2) return false;
+
+    const correctOption = matchQuestion.question.options.find((o) => o.isCorrect);
+    const correctOptionId = correctOption?.id ?? '';
+
+    const pA = updatedMatch.participants[0];
+    const pB = updatedMatch.participants[1];
+
+    const ansA = pA.answers[0];
+    const ansB = pB.answers[0];
+
+    const resultForA: MatchRoundResultS2CPayload = {
+      matchId,
+      round: roundNumber,
+      correctOptionId,
+      yourScore: pA.score,
+      opponentScore: pB.score,
+      yourStatus: (ansA?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
+      opponentStatus: (ansB?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
+      yourSelectedOptionId: ansA?.selectedOptionId ?? null,
+      opponentSelectedOptionId: ansB?.selectedOptionId ?? null,
+    };
+
+    const resultForB: MatchRoundResultS2CPayload = {
+      matchId,
+      round: roundNumber,
+      correctOptionId,
+      yourScore: pB.score,
+      opponentScore: pA.score,
+      yourStatus: (ansB?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
+      opponentStatus: (ansA?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
+      yourSelectedOptionId: ansB?.selectedOptionId ?? null,
+      opponentSelectedOptionId: ansA?.selectedOptionId ?? null,
+    };
+
+    if (this.eventListener) {
+      this.eventListener.onRoundResult(matchId, [
+        { userId: pA.userId, payload: resultForA },
+        { userId: pB.userId, payload: resultForB },
+      ]);
+    }
+
+    if (roundNumber < TOTAL_ROUNDS) {
+      this.timerService.scheduleTransition(matchId, roundNumber + 1, FEEDBACK_DELAY_MS, () => {
+        this.startRound(matchId, roundNumber + 1).catch(() => {});
+      });
+    } else {
+      this.timerService.scheduleTransition(matchId, TOTAL_ROUNDS, FEEDBACK_DELAY_MS, () => {
+        this.completeMatch(matchId).catch(() => {});
+      });
+    }
+
+    return true;
+  }
+
+  async completeMatch(matchId: string): Promise<boolean> {
+    const now = new Date();
+
+    // Atomic update to transition status to COMPLETED exactly once
+    const updateResult = await this.prisma.match.updateMany({
+      where: { id: matchId, status: MatchStatus.ACTIVE },
+      data: {
+        status: MatchStatus.COMPLETED,
+        completedAt: now,
+      },
+    });
+
+    if (updateResult.count === 0) {
+      return false;
+    }
+
+    const match = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      include: { participants: true },
+    });
+
+    if (!match || match.participants.length < 2) return false;
+
+    const pA = match.participants[0];
+    const pB = match.participants[1];
+
+    let winnerId: string | null = null;
+    let isDraw = false;
+
+    if (pA.score > pB.score) {
+      winnerId = pA.userId;
+      await this.prisma.matchParticipant.update({
+        where: { id: pA.id },
+        data: { isWinner: true },
+      });
+    } else if (pB.score > pA.score) {
+      winnerId = pB.userId;
+      await this.prisma.matchParticipant.update({
+        where: { id: pB.id },
+        data: { isWinner: true },
+      });
+    } else {
+      isDraw = true;
+    }
+
+    const endForA: MatchEndS2CPayload = {
+      matchId,
+      winnerId,
+      yourScore: pA.score,
+      opponentScore: pB.score,
+      isDraw,
+    };
+
+    const endForB: MatchEndS2CPayload = {
+      matchId,
+      winnerId,
+      yourScore: pB.score,
+      opponentScore: pA.score,
+      isDraw,
+    };
+
+    if (this.eventListener) {
+      this.eventListener.onMatchEnd([
+        { userId: pA.userId, payload: endForA },
+        { userId: pB.userId, payload: endForB },
+      ]);
+    }
+
+    this.timerService.cancelAllTimersForMatch(matchId);
+    return true;
+  }
+
   async leaveMatchmaking(userId: string): Promise<{ status: 'left' }> {
     await this.matchmakingQueue.dequeue(userId);
     return { status: 'left' };
@@ -162,6 +589,27 @@ export class MatchService {
 
   async isQueued(userId: string): Promise<boolean> {
     return this.matchmakingQueue.isQueued(userId);
+  }
+
+  async isParticipant(matchId: string, userId: string): Promise<boolean> {
+    const count = await this.prisma.matchParticipant.count({
+      where: { matchId, userId },
+    });
+    return count > 0;
+  }
+
+  async getHistory(userId: string) {
+    return this.prisma.match.findMany({
+      where: {
+        participants: { some: { userId } },
+        status: { in: [MatchStatus.COMPLETED, MatchStatus.CANCELLED] },
+      },
+      orderBy: { completedAt: 'desc' },
+      take: 20,
+      include: {
+        participants: { include: { user: true } },
+      },
+    });
   }
 
   private async createMatchTransaction(
@@ -197,15 +645,14 @@ export class MatchService {
 
     const selectedQuestions = this.shuffleArray(eligibleQuestions).slice(0, TOTAL_ROUNDS);
     const now = new Date();
-    const deadline = new Date(now.getTime() + 15 * 1000);
 
     return this.prisma.$transaction(async (tx) => {
       const match = await tx.match.create({
         data: {
           categoryId,
           difficulty,
-          status: MatchStatus.ACTIVE,
-          startedAt: now,
+          status: MatchStatus.WAITING,
+          currentRound: 0,
           participants: {
             create: [{ userId: playerAId }, { userId: playerBId }],
           },
@@ -214,7 +661,7 @@ export class MatchService {
               questionId: q.id,
               position: index + 1,
               startsAt: now,
-              deadlineAt: deadline,
+              deadlineAt: now,
             })),
           },
         },
@@ -248,11 +695,10 @@ export class MatchService {
     });
   }
 
-  // Legacy / Phase 7A helper methods kept for backward compatibility with existing tests
+  // Legacy helper methods for backward compatibility
   async joinMatchmaking(userId: string, categoryId?: string, difficulty?: Difficulty) {
     const res = await this.processJoinMatchmaking(userId, categoryId, difficulty);
-    if (res.status === 'already_matched') return res.match;
-    if (res.status === 'matched') return res.match;
+    if (res.status === 'already_matched' || res.status === 'matched') return res.match;
     return null;
   }
 
@@ -266,154 +712,6 @@ export class MatchService {
     });
     if (!match) throw new NotFoundException('Match not found');
     return match;
-  }
-
-  async submitAnswer(
-    matchId: string,
-    userId: string,
-    matchQuestionId: string,
-    selectedOptionId?: string,
-  ) {
-    const participant = await this.prisma.matchParticipant.findFirst({
-      where: { matchId, userId },
-    });
-    if (!participant) throw new NotFoundException('Participant not found');
-
-    const matchQuestion = await this.prisma.matchQuestion.findFirst({
-      where: { id: matchQuestionId, matchId },
-      include: { question: { include: { options: true } } },
-    });
-    if (!matchQuestion) throw new NotFoundException('Match question not found');
-
-    const existingAnswer = await this.prisma.matchAnswer.findFirst({
-      where: { matchQuestionId, participantId: participant.id },
-    });
-    if (existingAnswer) throw new BadRequestException('Already answered');
-
-    const isCorrect = matchQuestion.question.options.some(
-      (opt) => opt.id === selectedOptionId && opt.isCorrect,
-    );
-
-    const now = new Date();
-    let status = AnswerStatus.PENDING;
-    if (now > matchQuestion.deadlineAt) {
-      status = AnswerStatus.TIMED_OUT;
-    } else if (isCorrect) {
-      status = AnswerStatus.CORRECT;
-    } else if (selectedOptionId) {
-      status = AnswerStatus.INCORRECT;
-    }
-
-    await this.prisma.matchAnswer.create({
-      data: {
-        matchQuestionId,
-        participantId: participant.id,
-        selectedOptionId,
-        answeredAt: now,
-        status,
-      },
-    });
-
-    if (status === AnswerStatus.CORRECT) {
-      await this.prisma.matchParticipant.update({
-        where: { id: participant.id },
-        data: { score: { increment: 10 } },
-      });
-    }
-
-    return {
-      status,
-      isCorrect: status === AnswerStatus.CORRECT,
-      participantId: participant.id,
-    };
-  }
-
-  async completeMatch(matchId: string) {
-    const match = await this.prisma.match.findFirst({
-      where: { id: matchId },
-      include: {
-        participants: { include: { answers: true } },
-        questions: { include: { answers: true } },
-      },
-    });
-
-    if (!match) throw new NotFoundException('Match not found');
-
-    const totalAnswers = match.questions.reduce((acc, q) => acc + q.answers.length, 0);
-
-    if (totalAnswers < match.participants.length * TOTAL_ROUNDS) {
-      return match;
-    }
-
-    const participants = match.participants.map((p) => ({
-      ...p,
-      correctCount: p.answers.filter((a) => a.status === AnswerStatus.CORRECT).length,
-    }));
-
-    const sorted = participants.sort((a, b) => b.correctCount - a.correctCount);
-    const winner = sorted[0];
-    const loser = sorted[1];
-
-    await this.prisma.$transaction(async (tx) => {
-      await tx.match.update({
-        where: { id: matchId },
-        data: {
-          status: MatchStatus.COMPLETED,
-          completedAt: new Date(),
-        },
-      });
-
-      if (winner && loser && winner.correctCount !== loser.correctCount) {
-        await tx.matchParticipant.update({
-          where: { id: winner.id },
-          data: { isWinner: true, coinReward: 100 },
-        });
-
-        await tx.matchParticipant.update({
-          where: { id: loser.id },
-          data: { isWinner: false, coinReward: 25 },
-        });
-
-        await tx.user.update({
-          where: { id: winner.userId },
-          data: { coins: { increment: 100 } },
-        });
-
-        await tx.user.update({
-          where: { id: loser.userId },
-          data: { coins: { increment: 25 } },
-        });
-      }
-    });
-
-    return this.prisma.match.findFirst({
-      where: { id: matchId },
-      include: {
-        participants: { include: { user: true } },
-        questions: { include: { question: { include: { options: true } } } },
-      },
-    });
-  }
-
-  async getHistory(userId: string) {
-    return this.prisma.match.findMany({
-      where: {
-        participants: { some: { userId } },
-        status: { in: [MatchStatus.COMPLETED, MatchStatus.CANCELLED] },
-      },
-      orderBy: { completedAt: 'desc' },
-      take: 20,
-      include: {
-        participants: { include: { user: true } },
-      },
-    });
-  }
-
-  async isParticipant(matchId: string, userId: string): Promise<boolean> {
-    const count = await this.prisma.matchParticipant.count({
-      where: { matchId, userId },
-    });
-    return count > 0;
   }
 
   private shuffleArray<T>(array: T[]): T[] {
