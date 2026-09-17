@@ -36,3 +36,13 @@ export class LeaveMatchSocketDto {
   @IsNotEmpty()
   matchId!: string;
 }
+
+export class LeaveMatchmakingSocketDto {
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @IsOptional()
+  @IsEnum(Difficulty)
+  difficulty?: Difficulty;
+}

@@ -18,6 +18,9 @@ import {
   MatchSocketServerEvents,
   MatchSocketErrorCode,
   MatchSocketErrorPayload,
+  MatchFoundS2CPayload,
+  MatchmakingJoinedS2CPayload,
+  MatchmakingLeftS2CPayload,
   MatchQuestionOptionClient,
 } from '@quiz/contracts';
 import { MatchService } from './match.service';
@@ -125,6 +128,8 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
         set.delete(client.id);
         if (set.size === 0) {
           this.userSockets.delete(userId);
+          // When no remaining sockets exist for searching user, remove them from queue
+          this.matchService.leaveMatchmaking(userId).catch(() => {});
         }
       }
     }
@@ -155,59 +160,102 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     // Derived exclusively from authenticated socket identity
     const userId = client.data.user!.userId;
 
-    const match = await this.matchService.joinMatchmaking(userId, dto.categoryId, dto.difficulty);
+    try {
+      const result = await this.matchService.processJoinMatchmaking(
+        userId,
+        dto.categoryId,
+        dto.difficulty,
+      );
 
-    if (match) {
-      // Join this socket to the match room
-      client.join(`match:${match.id}`);
-    }
+      if (result.status === 'already_matched' || result.status === 'matched') {
+        const match = result.match;
+        const participantA = match.participants[0];
+        const participantB = match.participants[1];
 
-    if (match && match.participants.length === 2) {
-      const started = await this.matchService.startMatch(match.id);
-      if (!started) {
-        return { status: 'queued', matchId: match.id };
-      }
+        // Ensure sockets for both users join the match room
+        this.joinUserSocketsToRoom(participantA.userId, `match:${match.id}`);
+        this.joinUserSocketsToRoom(participantB.userId, `match:${match.id}`);
 
-      const participantA = started.participants[0];
-      const participantB = started.participants[1];
-      const firstQuestion = started.questions[0];
+        const sanitizedQuestions = match.questions.map((mq: any) => ({
+          matchQuestionId: mq.id,
+          questionId: mq.question.id,
+          text: mq.question.text,
+          imageKey: mq.question.imageKey ?? null,
+          position: mq.position,
+          options: mq.question.options.map((o: any) => ({
+            id: o.id,
+            text: o.text,
+          })),
+        }));
 
-      // Ensure sockets for both users join the match room
-      this.joinUserSocketsToRoom(participantA.userId, `match:${started.id}`);
-      this.joinUserSocketsToRoom(participantB.userId, `match:${started.id}`);
-
-      if (participantA && participantB && firstQuestion) {
-        this.server.to(`user:${participantA.userId}`).emit(MatchSocketServerEvents.MATCH_FOUND, {
-          matchId: started.id,
+        const payloadA: MatchFoundS2CPayload = {
+          matchId: match.id,
           opponent: {
             userId: participantB.user.id,
-            username: participantB.user.username,
-            displayName: participantB.user.displayName,
+            username: participantB.user.username ?? null,
+            displayName: participantB.user.displayName ?? null,
+            avatarKey: participantB.user.avatarKey ?? null,
           },
-        });
+          questions: sanitizedQuestions,
+        };
 
-        this.server.to(`user:${participantB.userId}`).emit(MatchSocketServerEvents.MATCH_FOUND, {
-          matchId: started.id,
+        const payloadB: MatchFoundS2CPayload = {
+          matchId: match.id,
           opponent: {
             userId: participantA.user.id,
-            username: participantA.user.username,
-            displayName: participantA.user.displayName,
+            username: participantA.user.username ?? null,
+            displayName: participantA.user.displayName ?? null,
+            avatarKey: participantA.user.avatarKey ?? null,
           },
-        });
+          questions: sanitizedQuestions,
+        };
 
-        const sanitizedQuestion = this.sanitizeQuestionPayload(
-          firstQuestion,
-          started.questions.length,
-        );
+        // Notify both active user rooms
+        this.server
+          .to(`user:${participantA.userId}`)
+          .emit(MatchSocketServerEvents.MATCH_FOUND, payloadA);
+        this.server
+          .to(`user:${participantB.userId}`)
+          .emit(MatchSocketServerEvents.MATCH_FOUND, payloadB);
 
-        this.server.to(`match:${started.id}`).emit(MatchSocketServerEvents.ROUND_START, {
-          matchId: started.id,
-          question: sanitizedQuestion,
-        });
+        return { status: 'matched', matchId: match.id };
       }
+
+      // User queued
+      const joinedPayload: MatchmakingJoinedS2CPayload = {
+        status: 'queued',
+        categoryId: dto.categoryId,
+        difficulty: dto.difficulty,
+      };
+      client.emit(MatchSocketServerEvents.MATCHMAKING_JOINED, joinedPayload);
+
+      return { status: 'queued', matchId: undefined };
+    } catch (err: any) {
+      const code = err?.response?.code || err?.code || MatchSocketErrorCode.INTERNAL_ERROR;
+      const message = err?.response?.message || err?.message || 'Matchmaking error';
+      return this.emitError(client, code, message);
+    }
+  }
+
+  @SubscribeMessage(MatchSocketClientEvents.LEAVE_MATCHMAKING)
+  async handleLeaveMatchmaking(
+    @ConnectedSocket() client: Socket & { data: AuthenticatedSocketData },
+  ) {
+    if (!this.checkThrottling(client)) {
+      return this.emitError(
+        client,
+        MatchSocketErrorCode.RATE_LIMIT_EXCEEDED,
+        'Rate limit exceeded',
+      );
     }
 
-    return { status: 'queued', matchId: match?.id };
+    const userId = client.data.user!.userId;
+    await this.matchService.leaveMatchmaking(userId);
+
+    const leftPayload: MatchmakingLeftS2CPayload = { status: 'left' };
+    client.emit(MatchSocketServerEvents.MATCHMAKING_LEFT, leftPayload);
+
+    return leftPayload;
   }
 
   @SubscribeMessage(MatchSocketClientEvents.SUBMIT_ANSWER)
@@ -414,22 +462,6 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     }
   }
 
-  private sanitizeQuestionPayload(firstQuestion: any, totalRounds: number) {
-    const options: MatchQuestionOptionClient[] = firstQuestion.question.options.map((o: any) => ({
-      id: o.id,
-      text: o.text,
-    }));
-
-    return {
-      matchQuestionId: firstQuestion.id,
-      questionId: firstQuestion.question.id,
-      text: firstQuestion.question.text,
-      options,
-      position: firstQuestion.position,
-      totalRounds,
-    };
-  }
-
   private async validatePayload<T extends object>(
     dtoClass: new () => T,
     rawPayload: unknown,
@@ -487,6 +519,7 @@ export class MatchGateway implements OnGatewayInit, OnGatewayConnection, OnGatew
     details?: unknown,
   ): { error: MatchSocketErrorPayload } {
     const payload: MatchSocketErrorPayload = { code, message, details };
+    client.emit(MatchSocketServerEvents.MATCHMAKING_ERROR, payload);
     client.emit(MatchSocketServerEvents.ERROR, payload);
     return { error: payload };
   }

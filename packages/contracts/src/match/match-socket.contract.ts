@@ -2,6 +2,7 @@ import { Difficulty } from '../enums/difficulty.enum';
 
 export const MatchSocketClientEvents = {
   JOIN_MATCHMAKING: 'join_matchmaking',
+  LEAVE_MATCHMAKING: 'leave_matchmaking',
   SUBMIT_ANSWER: 'submit_answer',
   RECONNECT_MATCH: 'reconnect_match',
   LEAVE_MATCH: 'leave_match',
@@ -11,8 +12,11 @@ export type MatchSocketClientEvent =
   (typeof MatchSocketClientEvents)[keyof typeof MatchSocketClientEvents];
 
 export const MatchSocketServerEvents = {
+  MATCHMAKING_JOINED: 'matchmaking_joined',
+  MATCHMAKING_LEFT: 'matchmaking_left',
   MATCH_QUEUED: 'match_queued',
   MATCH_FOUND: 'match_found',
+  MATCHMAKING_ERROR: 'matchmaking_error',
   ROUND_START: 'round_start',
   ROUND_RESULT: 'round_result',
   MATCH_END: 'match_end',
@@ -30,6 +34,8 @@ export enum MatchSocketErrorCode {
   ALREADY_ANSWERED = 'ALREADY_ANSWERED',
   RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
   INTERNAL_ERROR = 'INTERNAL_ERROR',
+  ALREADY_MATCHED = 'ALREADY_MATCHED',
+  INSUFFICIENT_QUESTIONS = 'INSUFFICIENT_QUESTIONS',
 }
 
 export interface MatchSocketErrorPayload {
@@ -41,6 +47,27 @@ export interface MatchSocketErrorPayload {
 export interface JoinMatchmakingC2SPayload {
   categoryId?: string;
   difficulty?: Difficulty;
+}
+
+export interface LeaveMatchmakingC2SPayload {
+  categoryId?: string;
+  difficulty?: Difficulty;
+}
+
+export interface MatchmakingJoinedS2CPayload {
+  status: 'queued';
+  categoryId?: string;
+  difficulty?: Difficulty;
+}
+
+export interface MatchmakingLeftS2CPayload {
+  status: 'left';
+}
+
+export interface MatchmakingErrorS2CPayload {
+  code: MatchSocketErrorCode;
+  message: string;
+  details?: unknown;
 }
 
 export interface SubmitAnswerC2SPayload {
@@ -62,6 +89,20 @@ export interface MatchQueuedS2CPayload {
   matchId?: string;
 }
 
+export interface MatchFoundQuestionOptionClient {
+  id: string;
+  text: string;
+}
+
+export interface MatchFoundQuestionClient {
+  matchQuestionId: string;
+  questionId: string;
+  text: string;
+  imageKey?: string | null;
+  position: number;
+  options: MatchFoundQuestionOptionClient[];
+}
+
 export interface MatchFoundS2CPayload {
   matchId: string;
   opponent: {
@@ -70,6 +111,7 @@ export interface MatchFoundS2CPayload {
     displayName?: string | null;
     avatarKey?: string | null;
   };
+  questions?: MatchFoundQuestionClient[];
 }
 
 export interface MatchQuestionOptionClient {

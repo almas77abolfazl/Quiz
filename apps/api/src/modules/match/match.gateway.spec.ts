@@ -39,6 +39,8 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
   beforeEach(async () => {
     matchService = {
       joinMatchmaking: jest.fn(),
+      processJoinMatchmaking: jest.fn().mockResolvedValue({ status: 'queued' }),
+      leaveMatchmaking: jest.fn().mockResolvedValue({ status: 'left' }),
       startMatch: jest.fn(),
       submitAnswer: jest.fn(),
       isParticipant: jest.fn(),
@@ -205,9 +207,8 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
       socket.data.user = { userId: validUserId, role: 'PLAYER' };
       gateway.handleConnection(socket);
 
-      (matchService.joinMatchmaking as jest.Mock).mockResolvedValue({
-        id: 'match_123',
-        participants: [{ userId: validUserId }],
+      (matchService.processJoinMatchmaking as jest.Mock).mockResolvedValue({
+        status: 'queued',
       });
 
       // Attacker tries to pass another user's ID in payload
@@ -216,7 +217,11 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
       await gateway.handleJoinMatchmaking(socket, maliciousPayload);
 
       // Verify MatchService received the authenticated user ID, NOT the victim ID
-      expect(matchService.joinMatchmaking).toHaveBeenCalledWith(validUserId, 'cat_1', undefined);
+      expect(matchService.processJoinMatchmaking).toHaveBeenCalledWith(
+        validUserId,
+        'cat_1',
+        undefined,
+      );
     });
 
     it('uses authenticated userId for submitAnswer regardless of payload userId', async () => {
@@ -399,15 +404,10 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
 
   // 9. Pre-Answer Question Payload Integrity (No Answer Keys Leaked)
   describe('Question Payload Integrity (No Answer Key Leakage)', () => {
-    it('sanitizes round_start question payload to contain no isCorrect or answer keys', async () => {
+    it('sanitizes match_found question payload to contain no isCorrect or answer keys', async () => {
       const { socket } = createMockSocket();
       socket.data.user = { userId: validUserId, role: 'PLAYER' };
       gateway.handleConnection(socket);
-
-      (matchService.joinMatchmaking as jest.Mock).mockResolvedValue({
-        id: 'match_123',
-        participants: [{ userId: validUserId }, { userId: otherUserId }],
-      });
 
       // Question in DB contains secret isCorrect flag
       const rawQuestionFromDb = {
@@ -423,13 +423,16 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
         },
       };
 
-      (matchService.startMatch as jest.Mock).mockResolvedValue({
-        id: 'match_123',
-        participants: [
-          { userId: validUserId, user: { id: validUserId, username: 'p1' } },
-          { userId: otherUserId, user: { id: otherUserId, username: 'p2' } },
-        ],
-        questions: [rawQuestionFromDb],
+      (matchService.processJoinMatchmaking as jest.Mock).mockResolvedValue({
+        status: 'matched',
+        match: {
+          id: 'match_123',
+          participants: [
+            { userId: validUserId, user: { id: validUserId, username: 'p1' } },
+            { userId: otherUserId, user: { id: otherUserId, username: 'p2' } },
+          ],
+          questions: [rawQuestionFromDb],
+        },
       });
 
       const mockEmit = jest.fn();
@@ -437,13 +440,13 @@ describe('MatchGateway (Phase 7A Security & Lifecycle)', () => {
 
       await gateway.handleJoinMatchmaking(socket, {});
 
-      // Locate round_start broadcast call
-      const roundStartCall = mockEmit.mock.calls.find(
-        (call) => call[0] === MatchSocketServerEvents.ROUND_START,
+      // Locate match_found broadcast call
+      const matchFoundCall = mockEmit.mock.calls.find(
+        (call) => call[0] === MatchSocketServerEvents.MATCH_FOUND,
       );
-      expect(roundStartCall).toBeDefined();
+      expect(matchFoundCall).toBeDefined();
 
-      const emittedQuestion = roundStartCall[1].question;
+      const emittedQuestion = matchFoundCall[1].questions[0];
 
       // Verify question options have ONLY id and text, and NO isCorrect
       expect(emittedQuestion.options).toEqual([
