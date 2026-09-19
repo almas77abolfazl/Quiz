@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MatchStore } from './match.store';
 import { MatchSocketService } from './match-socket.service';
+import { PlayerStore } from './player.store';
 import {
   MatchSocketClientEvents,
   MatchSocketServerEvents,
@@ -228,13 +229,23 @@ describe('MatchStore', () => {
     expect(store.roundResult()).toEqual(roundResultPayload);
   });
 
-  it('should handle match_end and win/loss/draw flags', () => {
+  it('should handle match_end, set win/loss/draw flags, and refresh PlayerStore', () => {
+    const playerStore = TestBed.inject(PlayerStore);
+    vi.spyOn(playerStore, 'refresh');
+
     const matchEndPayload: MatchEndS2CPayload = {
       matchId: 'match_123',
       winnerId: 'user_me',
       yourScore: 4,
       opponentScore: 2,
       isDraw: false,
+      coinsEarned: 10,
+      seasonPointsEarned: 5,
+      isRankedMatch: true,
+      dailyRankedMatchesUsed: 1,
+      dailyRankedMatchesLimit: 15,
+      dailyRankedMatchesRemaining: 14,
+      matchReport: [],
     };
 
     const callback = socketListeners.get(MatchSocketServerEvents.MATCH_END);
@@ -245,6 +256,16 @@ describe('MatchStore', () => {
     expect(store.isLoss()).toBe(false);
     expect(store.isDraw()).toBe(false);
     expect(sessionStorage.getItem('quiz_active_match_id')).toBeNull();
+    expect(playerStore.refresh).toHaveBeenCalled();
+  });
+
+  it('should update opponentAnswered signal when OPPONENT_ANSWERED server event fires without exposing option choice', () => {
+    expect(store.opponentAnswered()).toBe(false);
+
+    const callback = socketListeners.get(MatchSocketServerEvents.OPPONENT_ANSWERED);
+    callback?.({ matchId: 'match_123', round: 1 });
+
+    expect(store.opponentAnswered()).toBe(true);
   });
 
   it('should restore state from reconnect snapshot for all four phases', () => {
@@ -334,6 +355,13 @@ describe('MatchStore', () => {
         yourScore: 3,
         opponentScore: 2,
         isDraw: false,
+        coinsEarned: 10,
+        seasonPointsEarned: 5,
+        isRankedMatch: true,
+        dailyRankedMatchesUsed: 1,
+        dailyRankedMatchesLimit: 15,
+        dailyRankedMatchesRemaining: 14,
+        matchReport: [],
       },
     };
     callback?.(completedPayload);

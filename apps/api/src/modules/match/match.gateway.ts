@@ -19,6 +19,7 @@ import {
   MatchSocketErrorCode,
   MatchSocketErrorPayload,
   MatchFoundS2CPayload,
+  MatchCountdownS2CPayload,
   MatchmakingJoinedS2CPayload,
   MatchmakingLeftS2CPayload,
   MatchRoundStartS2CPayload,
@@ -26,6 +27,7 @@ import {
   MatchEndS2CPayload,
   MatchStatus,
   OpponentConnectionChangedS2CPayload,
+  OpponentAnsweredS2CPayload,
 } from '@quiz/contracts';
 import { MatchService, MatchLifecycleEventListener } from './match.service';
 import { MatchPresenceService } from './match-presence.service';
@@ -115,6 +117,12 @@ export class MatchGateway
   }
 
   // Implementation of MatchLifecycleEventListener callbacks
+  onMatchCountdown(payload: MatchCountdownS2CPayload): void {
+    this.server
+      .to(`match:${payload.matchId}`)
+      .emit(MatchSocketServerEvents.MATCH_COUNTDOWN, payload);
+  }
+
   onRoundStart(payload: MatchRoundStartS2CPayload): void {
     this.server.to(`match:${payload.matchId}`).emit(MatchSocketServerEvents.ROUND_START, payload);
   }
@@ -230,6 +238,12 @@ export class MatchGateway
         this.joinUserSocketsToRoom(participantA.userId, `match:${match.id}`);
         this.joinUserSocketsToRoom(participantB.userId, `match:${match.id}`);
 
+        let categoryTitle: string | null = null;
+        if (match.categoryId) {
+          const cat = await this.prisma.category.findUnique({ where: { id: match.categoryId } });
+          categoryTitle = cat?.title ?? null;
+        }
+
         const payloadA: MatchFoundS2CPayload = {
           matchId: match.id,
           opponent: {
@@ -239,6 +253,9 @@ export class MatchGateway
             avatarKey: participantB.user.avatarKey ?? null,
           },
           totalRounds: 5,
+          categoryId: match.categoryId ?? null,
+          categoryTitle,
+          difficulty: match.difficulty ?? null,
         };
 
         const payloadB: MatchFoundS2CPayload = {
@@ -250,6 +267,9 @@ export class MatchGateway
             avatarKey: participantA.user.avatarKey ?? null,
           },
           totalRounds: 5,
+          categoryId: match.categoryId ?? null,
+          categoryTitle,
+          difficulty: match.difficulty ?? null,
         };
 
         this.server
@@ -364,11 +384,26 @@ export class MatchGateway
 
     try {
       return await this.matchService.submitAnswer(
+      const result = await this.matchService.submitAnswer(
         dto.matchId,
         userId,
         dto.matchQuestionId,
         dto.selectedOptionId,
       );
+
+      const match = await this.prisma.match.findUnique({
+        where: { id: dto.matchId },
+        select: { participants: { select: { userId: true } } },
+      });
+      const opponent = match?.participants.find((p) => p.userId !== userId);
+      if (opponent) {
+        const opponentPayload: OpponentAnsweredS2CPayload = { matchId: dto.matchId };
+        this.server
+          .to(`user:${opponent.userId}`)
+          .emit(MatchSocketServerEvents.OPPONENT_ANSWERED, opponentPayload);
+      }
+
+      return result;
     } catch (err: any) {
       const code = err?.response?.code || MatchSocketErrorCode.INVALID_PAYLOAD;
       const message = err?.response?.message || err?.message || 'Failed to submit answer';

@@ -173,7 +173,7 @@ describe('Phase 5E-2: Daily Ranked-Game Limit for Solo Quizzes', () => {
       expect(res.dailyRankedGamesLimit).toBe(15);
       expect(res.dailyRankedGamesRemaining).toBe(15 - i);
       expect(res.seasonPointsEarned).toBe(3); // 1 (easy) + 2 (medium)
-      expect(res.coinsEarned).toBe(4); // 1 + 1 + 2 bonus
+      expect(res.coinsEarned).toBe(5); // 1 + 2 + 2 bonus
     }
 
     // Verify SeasonEntry was updated/created 15 times
@@ -201,7 +201,7 @@ describe('Phase 5E-2: Daily Ranked-Game Limit for Solo Quizzes', () => {
     expect(res.dailyRankedGamesLimit).toBe(15);
     expect(res.dailyRankedGamesRemaining).toBe(0);
     expect(res.seasonPointsEarned).toBe(0); // ZERO season points!
-    expect(res.coinsEarned).toBe(4); // Coins still awarded!
+    expect(res.coinsEarned).toBe(5); // Coins still awarded!
 
     // Ensure SeasonEntry was NOT created or updated for game 16
     expect(prismaMock.seasonEntry.create).not.toHaveBeenCalled();

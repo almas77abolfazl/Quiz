@@ -5,19 +5,23 @@ import {
   MatchSocketErrorCode,
   MatchSocketErrorPayload,
   MatchFoundS2CPayload,
+  MatchCountdownS2CPayload,
   MatchRoundStartS2CPayload,
   MatchRoundResultS2CPayload,
   MatchEndS2CPayload,
   OpponentConnectionChangedS2CPayload,
+  OpponentAnsweredS2CPayload,
   MatchReconnectS2CPayload,
   Difficulty,
 } from '@quiz/contracts';
 import { MatchSocketService } from './match-socket.service';
+import { PlayerStore } from './player.store';
 
 export type MatchPhase =
   | 'idle'
   | 'searching'
   | 'waiting_for_ready'
+  | 'countdown'
   | 'active_round'
   | 'round_result'
   | 'completed'
@@ -30,6 +34,7 @@ const ACTIVE_MATCH_STORAGE_KEY = 'quiz_active_match_id';
 @Injectable({ providedIn: 'root' })
 export class MatchStore implements OnDestroy {
   private readonly socketService = inject(MatchSocketService);
+  private readonly playerStore = inject(PlayerStore);
 
   readonly phase = signal<MatchPhase>('idle');
   readonly connectionState = this.socketService.connectionState;
@@ -39,6 +44,11 @@ export class MatchStore implements OnDestroy {
   readonly currentRound = signal<number>(0);
   readonly yourScore = signal<number>(0);
   readonly opponentScore = signal<number>(0);
+
+  readonly categoryTitle = signal<string | null>(null);
+  readonly difficulty = signal<Difficulty | null>(null);
+  readonly countdownSeconds = signal<number>(3);
+  readonly countdownDeadlineAt = signal<string | null>(null);
 
   readonly question = signal<MatchRoundStartS2CPayload['question'] | null>(null);
   readonly deadlineAt = signal<string | null>(null);
@@ -51,6 +61,7 @@ export class MatchStore implements OnDestroy {
   readonly roundResult = signal<MatchRoundResultS2CPayload | null>(null);
   readonly matchEndResult = signal<MatchEndS2CPayload | null>(null);
   readonly opponentOnline = signal<boolean>(true);
+  readonly opponentAnswered = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
 
   private readonly tick = signal<number>(Date.now());
@@ -99,11 +110,24 @@ export class MatchStore implements OnDestroy {
     this.saveMatchId(payload.matchId);
     this.opponent.set(payload.opponent);
     this.totalRounds.set(payload.totalRounds);
+    if (payload.categoryTitle) this.categoryTitle.set(payload.categoryTitle);
+    if (payload.difficulty) this.difficulty.set(payload.difficulty);
     this.phase.set('waiting_for_ready');
 
     this.socketService.emit(MatchSocketClientEvents.PLAYER_READY, {
       matchId: payload.matchId,
     });
+  };
+
+  private readonly onMatchCountdown = (payload: MatchCountdownS2CPayload) => {
+    this.matchId.set(payload.matchId);
+    this.saveMatchId(payload.matchId);
+    this.countdownSeconds.set(payload.countdownSeconds ?? 3);
+    this.countdownDeadlineAt.set(payload.countdownDeadlineAt);
+    this.deadlineAt.set(payload.countdownDeadlineAt);
+    if (payload.categoryTitle) this.categoryTitle.set(payload.categoryTitle);
+    if (payload.difficulty) this.difficulty.set(payload.difficulty);
+    this.phase.set('countdown');
   };
 
   private readonly onRoundStart = (payload: MatchRoundStartS2CPayload) => {
@@ -114,10 +138,13 @@ export class MatchStore implements OnDestroy {
     this.deadlineAt.set(payload.deadlineAt);
     this.serverNow.set(payload.serverNow);
     this.clockOffset.set(new Date(payload.serverNow).getTime() - Date.now());
+    if (payload.categoryTitle) this.categoryTitle.set(payload.categoryTitle);
+    if (payload.difficulty) this.difficulty.set(payload.difficulty);
 
     this.answerSubmissionState.set('not_submitted');
     this.yourSelectedOptionId.set(null);
     this.roundResult.set(null);
+    this.opponentAnswered.set(false);
     this.phase.set('active_round');
   };
 
@@ -135,10 +162,17 @@ export class MatchStore implements OnDestroy {
     this.matchEndResult.set(payload);
     this.phase.set('completed');
     this.clearSavedMatchId();
+    this.playerStore.refresh().subscribe({ error: () => {} });
   };
 
   private readonly onOpponentConnectionChanged = (payload: OpponentConnectionChangedS2CPayload) => {
     this.opponentOnline.set(payload.isOnline);
+  };
+
+  private readonly onOpponentAnswered = (payload: OpponentAnsweredS2CPayload) => {
+    if (!payload || !this.matchId() || payload.matchId === this.matchId()) {
+      this.opponentAnswered.set(true);
+    }
   };
 
   private readonly onMatchReconnected = (payload: MatchReconnectS2CPayload) => {
@@ -150,6 +184,8 @@ export class MatchStore implements OnDestroy {
     this.opponentScore.set(payload.opponentScore);
     this.serverNow.set(payload.serverNow);
     this.clockOffset.set(new Date(payload.serverNow).getTime() - Date.now());
+    if (payload.categoryTitle) this.categoryTitle.set(payload.categoryTitle);
+    if (payload.difficulty) this.difficulty.set(payload.difficulty);
 
     if (payload.opponent) {
       this.opponent.set(payload.opponent);
@@ -159,6 +195,12 @@ export class MatchStore implements OnDestroy {
     switch (payload.phase) {
       case 'WAITING':
         this.phase.set('waiting_for_ready');
+        break;
+
+      case 'COUNTDOWN':
+        this.phase.set('countdown');
+        this.deadlineAt.set(payload.countdownDeadlineAt);
+        this.countdownDeadlineAt.set(payload.countdownDeadlineAt);
         break;
 
       case 'ACTIVE_ROUND':
@@ -183,6 +225,7 @@ export class MatchStore implements OnDestroy {
         this.phase.set('completed');
         this.matchEndResult.set(payload.finalResult);
         this.clearSavedMatchId();
+        this.playerStore.refresh().subscribe({ error: () => {} });
         break;
     }
   };
@@ -221,6 +264,7 @@ export class MatchStore implements OnDestroy {
     this.socketService.on(MatchSocketServerEvents.MATCHMAKING_JOINED, this.onMatchmakingJoined);
     this.socketService.on(MatchSocketServerEvents.MATCHMAKING_LEFT, this.onMatchmakingLeft);
     this.socketService.on(MatchSocketServerEvents.MATCH_FOUND, this.onMatchFound);
+    this.socketService.on(MatchSocketServerEvents.MATCH_COUNTDOWN, this.onMatchCountdown);
     this.socketService.on(MatchSocketServerEvents.ROUND_START, this.onRoundStart);
     this.socketService.on(MatchSocketServerEvents.ROUND_RESULT, this.onRoundResult);
     this.socketService.on(MatchSocketServerEvents.MATCH_END, this.onMatchEnd);
@@ -228,6 +272,7 @@ export class MatchStore implements OnDestroy {
       MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED,
       this.onOpponentConnectionChanged,
     );
+    this.socketService.on(MatchSocketServerEvents.OPPONENT_ANSWERED, this.onOpponentAnswered);
     this.socketService.on(MatchSocketServerEvents.MATCH_RECONNECTED, this.onMatchReconnected);
     this.socketService.on(MatchSocketServerEvents.MATCHMAKING_ERROR, this.onError);
     this.socketService.on(MatchSocketServerEvents.ERROR, this.onError);
@@ -237,6 +282,7 @@ export class MatchStore implements OnDestroy {
     this.socketService.off(MatchSocketServerEvents.MATCHMAKING_JOINED, this.onMatchmakingJoined);
     this.socketService.off(MatchSocketServerEvents.MATCHMAKING_LEFT, this.onMatchmakingLeft);
     this.socketService.off(MatchSocketServerEvents.MATCH_FOUND, this.onMatchFound);
+    this.socketService.off(MatchSocketServerEvents.MATCH_COUNTDOWN, this.onMatchCountdown);
     this.socketService.off(MatchSocketServerEvents.ROUND_START, this.onRoundStart);
     this.socketService.off(MatchSocketServerEvents.ROUND_RESULT, this.onRoundResult);
     this.socketService.off(MatchSocketServerEvents.MATCH_END, this.onMatchEnd);
@@ -244,6 +290,7 @@ export class MatchStore implements OnDestroy {
       MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED,
       this.onOpponentConnectionChanged,
     );
+    this.socketService.off(MatchSocketServerEvents.OPPONENT_ANSWERED, this.onOpponentAnswered);
     this.socketService.off(MatchSocketServerEvents.MATCH_RECONNECTED, this.onMatchReconnected);
     this.socketService.off(MatchSocketServerEvents.MATCHMAKING_ERROR, this.onError);
     this.socketService.off(MatchSocketServerEvents.ERROR, this.onError);
@@ -313,6 +360,9 @@ export class MatchStore implements OnDestroy {
     this.currentRound.set(0);
     this.yourScore.set(0);
     this.opponentScore.set(0);
+    this.categoryTitle.set(null);
+    this.difficulty.set(null);
+    this.countdownDeadlineAt.set(null);
     this.question.set(null);
     this.deadlineAt.set(null);
     this.serverNow.set(null);
@@ -323,6 +373,7 @@ export class MatchStore implements OnDestroy {
     this.matchEndResult.set(null);
     this.errorMessage.set(null);
     this.phase.set('idle');
+    this.playerStore.refresh().subscribe({ error: () => {} });
   }
 
   private saveMatchId(id: string): void {

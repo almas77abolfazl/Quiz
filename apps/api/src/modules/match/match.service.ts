@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchTimerService } from './match-timer.service';
 import { MatchPresenceService } from './match-presence.service';
@@ -7,13 +8,22 @@ import {
   AnswerStatus,
   Difficulty,
   QuestionStatus,
+  CoinTransactionType,
   MatchSocketErrorCode,
   MatchRoundStartS2CPayload,
   MatchRoundResultS2CPayload,
   MatchEndS2CPayload,
   MatchReconnectS2CPayload,
+  MatchCountdownS2CPayload,
+  MatchReportClient,
+  MatchReportRoundItem,
 } from '@quiz/contracts';
 import { MatchmakingQueue } from './matchmaking-queue';
+import {
+  getProductDateKey,
+  getSeasonPointsForDifficulty,
+  getCoinsForDifficulty,
+} from '../quiz/quiz.service';
 
 const TOTAL_ROUNDS = 5;
 const ROUND_DEADLINE_MS = 30000;
@@ -56,6 +66,7 @@ export type JoinMatchmakingResult =
   | { status: 'matched'; match: any; playerAId: string; playerBId: string };
 
 export interface MatchLifecycleEventListener {
+  onMatchCountdown?(payload: MatchCountdownS2CPayload): void;
   onRoundStart(payload: MatchRoundStartS2CPayload): void;
   onRoundResult(
     matchId: string,
@@ -74,6 +85,7 @@ export class MatchService {
     private readonly matchmakingQueue: MatchmakingQueue,
     private readonly timerService: MatchTimerService,
     private readonly presenceService: MatchPresenceService,
+    @Optional() private readonly config?: ConfigService,
   ) {}
 
   registerEventListener(listener: MatchLifecycleEventListener): void {
@@ -196,18 +208,49 @@ export class MatchService {
     });
 
     if (readyCount >= 2) {
-      // Transition match status to ACTIVE exactly once
+      const now = new Date();
+      // Transition match status to ACTIVE with currentRound: 0 (countdown phase)
       const updateResult = await this.prisma.match.updateMany({
         where: { id: matchId, status: MatchStatus.WAITING },
         data: {
           status: MatchStatus.ACTIVE,
-          currentRound: 1,
-          startedAt: new Date(),
+          currentRound: 0,
+          startedAt: now,
         },
       });
 
       if (updateResult.count === 1) {
-        await this.startRound(matchId, 1);
+        const match = await this.prisma.match.findUnique({
+          where: { id: matchId },
+        });
+
+        let categoryTitle: string | null = null;
+        if (match?.categoryId) {
+          const cat = await this.prisma.category.findUnique({ where: { id: match.categoryId } });
+          categoryTitle = cat?.title ?? null;
+        }
+
+        const countdownDeadlineAt = new Date(now.getTime() + 3000).toISOString();
+        const payload: MatchCountdownS2CPayload = {
+          matchId,
+          countdownSeconds: 3,
+          serverNow: now.toISOString(),
+          countdownDeadlineAt,
+          categoryId: match?.categoryId ?? null,
+          categoryTitle,
+          difficulty: (match?.difficulty as Difficulty | null) ?? null,
+        };
+
+        if (this.eventListener?.onMatchCountdown) {
+          this.eventListener.onMatchCountdown(payload);
+        }
+
+        this.timerService.scheduleTransition(matchId, 0, 3000, () => {
+          this.startRound(matchId, 1).catch((err) => {
+            console.error(`Error starting round 1 after countdown for match ${matchId}:`, err);
+          });
+        });
+
         return true;
       }
     }
@@ -241,6 +284,17 @@ export class MatchService {
       if (transitionResult.count === 0) {
         return null;
       }
+    } else {
+      const transitionResult = await this.prisma.match.updateMany({
+        where: { id: matchId, status: MatchStatus.ACTIVE, currentRound: 0 },
+        data: { currentRound: 1 },
+      });
+      if (transitionResult.count === 0) {
+        const currentMatch = await this.prisma.match.findUnique({ where: { id: matchId } });
+        if (!currentMatch || currentMatch.currentRound !== 1) {
+          return null;
+        }
+      }
     }
 
     const now = new Date();
@@ -257,6 +311,12 @@ export class MatchService {
         data: { startsAt: now, deadlineAt },
       }),
     ]);
+
+    let categoryTitle: string | null = null;
+    if (match.categoryId) {
+      const cat = await this.prisma.category.findUnique({ where: { id: match.categoryId } });
+      categoryTitle = cat?.title ?? null;
+    }
 
     const payload: MatchRoundStartS2CPayload = {
       matchId,
@@ -275,6 +335,9 @@ export class MatchService {
       },
       serverNow: now.toISOString(),
       deadlineAt: deadlineAt.toISOString(),
+      categoryId: match.categoryId ?? null,
+      categoryTitle,
+      difficulty: (match.difficulty as Difficulty | null) ?? null,
     };
 
     // Schedule 30-second deadline timer
@@ -479,6 +542,11 @@ export class MatchService {
     const ansA = pA.answers[0];
     const ansB = pB.answers[0];
 
+    const diff = (match.difficulty ?? Difficulty.MEDIUM) as Difficulty;
+    const pts = getSeasonPointsForDifficulty(diff);
+    const pointsA = ansA?.status === AnswerStatus.CORRECT ? pts : 0;
+    const pointsB = ansB?.status === AnswerStatus.CORRECT ? pts : 0;
+
     const resultForA: MatchRoundResultS2CPayload = {
       matchId,
       round: roundNumber,
@@ -489,6 +557,7 @@ export class MatchService {
       opponentStatus: (ansB?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
       yourSelectedOptionId: ansA?.selectedOptionId ?? null,
       opponentSelectedOptionId: ansB?.selectedOptionId ?? null,
+      yourPointsEarned: pointsA,
     };
 
     const resultForB: MatchRoundResultS2CPayload = {
@@ -501,6 +570,7 @@ export class MatchService {
       opponentStatus: (ansA?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
       yourSelectedOptionId: ansB?.selectedOptionId ?? null,
       opponentSelectedOptionId: ansA?.selectedOptionId ?? null,
+      yourPointsEarned: pointsB,
     };
 
     if (this.eventListener) {
@@ -523,76 +593,444 @@ export class MatchService {
     return true;
   }
 
+  getDailyRankedGameLimit(): number {
+    if (this.config && typeof this.config.get === 'function') {
+      const raw =
+        this.config.get<string | number>('DAILY_RANKED_GAME_LIMIT') ??
+        this.config.get<string | number>('DAILY_MATCH_RANKED_LIMIT');
+      if (raw !== undefined && raw !== null && raw !== '') {
+        const parsed = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
+        if (!isNaN(parsed) && parsed > 0) {
+          return parsed;
+        }
+      }
+    }
+    return 15;
+  }
+
+  private buildMatchReportForParticipant(
+    match: any,
+    participantId: string,
+    opponentParticipantId: string,
+  ): MatchReportClient {
+    const report: MatchReportRoundItem[] = [];
+    const sortedQuestions = [...(match.questions || [])].sort((a, b) => a.position - b.position);
+
+    for (const mq of sortedQuestions) {
+      const q = mq.question || {};
+      const options: any[] = (q.options || []).map((o: any) => ({
+        id: o.id,
+        text: o.text,
+      }));
+      const correctOpt = (q.options || []).find((o: any) => o.isCorrect);
+
+      const yourAns = (mq.answers || []).find((a: any) => a.participantId === participantId);
+      const oppAns = (mq.answers || []).find((a: any) => a.participantId === opponentParticipantId);
+
+      const yourSelectedOpt = yourAns?.selectedOptionId
+        ? options.find((o) => o.id === yourAns.selectedOptionId)
+        : null;
+      const oppSelectedOpt = oppAns?.selectedOptionId
+        ? options.find((o) => o.id === oppAns.selectedOptionId)
+        : null;
+
+      const diff = (q.difficulty ?? match.difficulty ?? Difficulty.MEDIUM) as Difficulty;
+      const ptsForDiff = getSeasonPointsForDifficulty(diff);
+
+      const yourStatus = (yourAns?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus;
+      const opponentStatus = (oppAns?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus;
+
+      report.push({
+        round: mq.position,
+        questionId: q.id ?? '',
+        questionText: q.text ?? '',
+        correctOptionId: correctOpt?.id ?? '',
+        correctOptionText: correctOpt?.text ?? '',
+        options,
+        yourSelectedOptionId: yourAns?.selectedOptionId ?? null,
+        yourSelectedOptionText: yourSelectedOpt?.text ?? null,
+        yourStatus,
+        yourPointsEarned: yourStatus === AnswerStatus.CORRECT ? ptsForDiff : 0,
+        opponentSelectedOptionId: oppAns?.selectedOptionId ?? null,
+        opponentSelectedOptionText: oppSelectedOpt?.text ?? null,
+        opponentStatus,
+        opponentPointsEarned: opponentStatus === AnswerStatus.CORRECT ? ptsForDiff : 0,
+      });
+    }
+
+    return report;
+  }
+
   async completeMatch(matchId: string): Promise<boolean> {
-    const now = new Date();
+    return this.settleMatch(matchId);
+  }
 
-    // Atomic update to transition status to COMPLETED exactly once
-    const updateResult = await this.prisma.match.updateMany({
-      where: { id: matchId, status: MatchStatus.ACTIVE },
-      data: {
-        status: MatchStatus.COMPLETED,
-        completedAt: now,
-      },
-    });
+  async settleMatch(matchId: string): Promise<boolean> {
+    const limit = this.getDailyRankedGameLimit();
+    const dateKey = getProductDateKey();
+    let settlementEvents: Array<{ userId: string; payload: MatchEndS2CPayload }> = [];
 
-    if (updateResult.count === 0) {
-      return false;
-    }
+    const settledSuccess = await this.prisma.$transaction(async (tx: any) => {
+      // 1. Lock Match row inside transaction before checking settledAt
+      let isAlreadySettled = false;
+      if (typeof tx.$queryRaw === 'function') {
+        try {
+          const lockedMatch = await tx.$queryRaw<
+            Array<{ id: string; settledAt: Date | null; status: string }>
+          >`
+            SELECT id, "settledAt", status
+            FROM "Match"
+            WHERE id = ${matchId}
+            FOR UPDATE
+          `;
+          if (lockedMatch && lockedMatch.length > 0 && lockedMatch[0].settledAt != null) {
+            isAlreadySettled = true;
+          }
+        } catch {
+          const m = await tx.match.findUnique({ where: { id: matchId } });
+          if (m?.settledAt != null) {
+            isAlreadySettled = true;
+          }
+        }
+      } else {
+        const m = await tx.match.findUnique({ where: { id: matchId } });
+        if (m?.settledAt != null) {
+          isAlreadySettled = true;
+        }
+      }
 
-    const match = await this.prisma.match.findUnique({
-      where: { id: matchId },
-      include: { participants: true },
-    });
+      if (isAlreadySettled) {
+        return false;
+      }
 
-    if (!match || match.participants.length < 2) return false;
-
-    const pA = match.participants[0];
-    const pB = match.participants[1];
-
-    let winnerId: string | null = null;
-    let isDraw = false;
-
-    if (pA.score > pB.score) {
-      winnerId = pA.userId;
-      await this.prisma.matchParticipant.update({
-        where: { id: pA.id },
-        data: { isWinner: true },
+      // Fetch full match data including answers & options
+      const match = await tx.match.findUnique({
+        where: { id: matchId },
+        include: {
+          participants: {
+            include: {
+              answers: {
+                include: {
+                  matchQuestion: {
+                    include: {
+                      question: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          questions: {
+            include: {
+              question: true,
+              answers: true,
+            },
+          },
+        },
       });
-    } else if (pB.score > pA.score) {
-      winnerId = pB.userId;
-      await this.prisma.matchParticipant.update({
-        where: { id: pB.id },
-        data: { isWinner: true },
+
+      if (!match || match.participants.length < 2) return false;
+
+      if (match.settledAt != null || match.participants.every((p: any) => p.settledAt != null)) {
+        return false;
+      }
+
+      const pA = match.participants[0];
+      const pB = match.participants[1];
+
+      const getParticipantAnswersSummary = (p: typeof pA) => {
+        let correctCount = 0;
+        let seasonPointsFromAnswers = 0;
+        let coinsFromAnswers = 0;
+
+        for (const ans of p.answers) {
+          if (ans.status === AnswerStatus.CORRECT) {
+            correctCount++;
+            const diff = (ans.matchQuestion?.question?.difficulty ??
+              match.difficulty ??
+              Difficulty.MEDIUM) as Difficulty;
+            seasonPointsFromAnswers += getSeasonPointsForDifficulty(diff);
+            coinsFromAnswers += getCoinsForDifficulty(diff);
+          }
+        }
+
+        if (p.answers.length === 0 && p.score > 0) {
+          correctCount = p.score;
+          const diff = (match.difficulty ?? Difficulty.MEDIUM) as Difficulty;
+          seasonPointsFromAnswers = correctCount * getSeasonPointsForDifficulty(diff);
+          coinsFromAnswers = correctCount * getCoinsForDifficulty(diff);
+        }
+
+        return { correctCount, seasonPointsFromAnswers, coinsFromAnswers };
+      };
+
+      const sumA = getParticipantAnswersSummary(pA);
+      const sumB = getParticipantAnswersSummary(pB);
+
+      let winnerId: string | null = null;
+      let isDraw = false;
+      let bonusSeasonPointsA = 0;
+      let bonusSeasonPointsB = 0;
+
+      if (sumA.correctCount > sumB.correctCount) {
+        winnerId = pA.userId;
+        bonusSeasonPointsA = 3;
+      } else if (sumB.correctCount > sumA.correctCount) {
+        winnerId = pB.userId;
+        bonusSeasonPointsB = 3;
+      } else {
+        isDraw = true;
+        bonusSeasonPointsA = 1;
+        bonusSeasonPointsB = 1;
+      }
+
+      // Process participants in deterministic userId order to prevent deadlocks when locking DailyUsage rows
+      const participantsList = [
+        {
+          participant: pA,
+          sum: sumA,
+          isWinner: winnerId === pA.userId,
+          bonusSeasonPoints: bonusSeasonPointsA,
+        },
+        {
+          participant: pB,
+          sum: sumB,
+          isWinner: winnerId === pB.userId,
+          bonusSeasonPoints: bonusSeasonPointsB,
+        },
+      ];
+
+      const sortedParticipants = [...participantsList].sort((a, b) =>
+        a.participant.userId.localeCompare(b.participant.userId),
+      );
+
+      const settlementResultsMap = new Map<
+        string,
+        {
+          coinsEarned: number;
+          seasonPointsEarned: number;
+          isRankedMatch: boolean;
+          dailyRankedMatchesUsed: number;
+          dailyRankedMatchesRemaining: number;
+          correctCount: number;
+          isWinner: boolean;
+        }
+      >();
+
+      for (const item of sortedParticipants) {
+        const uId = item.participant.userId;
+
+        // Lock DailyUsage row for this user
+        if (tx.dailyUsage?.upsert) {
+          await tx.dailyUsage.upsert({
+            where: { userId_dateKey: { userId: uId, dateKey } },
+            create: { userId: uId, dateKey, soloRankedCount: 0, matchRankedCount: 0 },
+            update: {},
+          });
+        }
+
+        let currentTotal = 0;
+        if (typeof tx.$queryRaw === 'function') {
+          try {
+            const lockedUsages = await tx.$queryRaw<
+              Array<{ id: string; soloRankedCount: number; matchRankedCount: number }>
+            >`
+              SELECT id, "soloRankedCount", "matchRankedCount"
+              FROM "DailyUsage"
+              WHERE "userId" = ${uId} AND "dateKey" = ${dateKey}
+              FOR UPDATE
+            `;
+            if (lockedUsages && lockedUsages.length > 0) {
+              currentTotal = lockedUsages[0].soloRankedCount + lockedUsages[0].matchRankedCount;
+            } else if (tx.dailyUsage?.findUnique) {
+              const usage = await tx.dailyUsage.findUnique({
+                where: { userId_dateKey: { userId: uId, dateKey } },
+              });
+              currentTotal = (usage?.soloRankedCount ?? 0) + (usage?.matchRankedCount ?? 0);
+            }
+          } catch {
+            if (tx.dailyUsage?.findUnique) {
+              const usage = await tx.dailyUsage.findUnique({
+                where: { userId_dateKey: { userId: uId, dateKey } },
+              });
+              currentTotal = (usage?.soloRankedCount ?? 0) + (usage?.matchRankedCount ?? 0);
+            }
+          }
+        } else if (tx.dailyUsage?.findUnique) {
+          const usage = await tx.dailyUsage.findUnique({
+            where: { userId_dateKey: { userId: uId, dateKey } },
+          });
+          currentTotal = (usage?.soloRankedCount ?? 0) + (usage?.matchRankedCount ?? 0);
+        }
+
+        const isRanked = currentTotal < limit;
+        const coinsEarned = item.sum.coinsFromAnswers; // Result bonus coins = 0
+        let seasonPointsEarned = 0;
+        let dailyRankedMatchesUsed = currentTotal;
+
+        if (isRanked) {
+          seasonPointsEarned = item.sum.seasonPointsFromAnswers + item.bonusSeasonPoints;
+          dailyRankedMatchesUsed = currentTotal + 1;
+
+          if (tx.dailyUsage?.update) {
+            await tx.dailyUsage.update({
+              where: { userId_dateKey: { userId: uId, dateKey } },
+              data: { matchRankedCount: { increment: 1 } },
+            });
+          }
+
+          // Update SeasonEntry if active season exists
+          const currentSeason = tx.season?.findFirst
+            ? await tx.season.findFirst({
+                where: { isActive: true },
+              })
+            : null;
+
+          if (currentSeason && tx.seasonEntry) {
+            const existing = tx.seasonEntry.findFirst
+              ? await tx.seasonEntry.findFirst({
+                  where: { seasonId: currentSeason.id, userId: uId },
+                })
+              : null;
+
+            if (!existing && tx.seasonEntry.create) {
+              await tx.seasonEntry.create({
+                data: {
+                  seasonId: currentSeason.id,
+                  userId: uId,
+                  score: seasonPointsEarned,
+                  correctAnswers: item.sum.correctCount,
+                  matchWins: item.isWinner ? 1 : 0,
+                  reachedScoreAt: new Date(),
+                },
+              });
+            } else if (existing && tx.seasonEntry.update) {
+              await tx.seasonEntry.update({
+                where: { id: existing.id },
+                data: {
+                  score: { increment: seasonPointsEarned },
+                  correctAnswers: { increment: item.sum.correctCount },
+                  ...(item.isWinner ? { matchWins: { increment: 1 } } : {}),
+                  reachedScoreAt: new Date(),
+                },
+              });
+            }
+          }
+        }
+
+        // Increment User coins
+        if (tx.user?.update) {
+          await tx.user.update({
+            where: { id: uId },
+            data: { coins: { increment: coinsEarned } },
+          });
+        }
+
+        // Create CoinTransaction with dedicated idempotencyKey
+        if (tx.coinTransaction?.create) {
+          await tx.coinTransaction.create({
+            data: {
+              userId: uId,
+              amount: coinsEarned,
+              type: CoinTransactionType.MATCH_REWARD,
+              referenceType: 'MatchParticipant',
+              referenceId: item.participant.id,
+              idempotencyKey: `match:${item.participant.id}`,
+              note: `Match ${matchId} settlement reward: ${coinsEarned} coins, ${seasonPointsEarned} season points`,
+            },
+          });
+        }
+
+        // Update MatchParticipant settlement fields
+        if (tx.matchParticipant?.update) {
+          await tx.matchParticipant.update({
+            where: { id: item.participant.id },
+            data: {
+              score: item.sum.correctCount,
+              coinReward: coinsEarned,
+              seasonPointsEarned,
+              isWinner: item.isWinner,
+              isRanked,
+              settledAt: new Date(),
+            },
+          });
+        }
+
+        const dailyRankedMatchesRemaining = Math.max(0, limit - dailyRankedMatchesUsed);
+
+        settlementResultsMap.set(uId, {
+          coinsEarned,
+          seasonPointsEarned,
+          isRankedMatch: isRanked,
+          dailyRankedMatchesUsed,
+          dailyRankedMatchesRemaining,
+          correctCount: item.sum.correctCount,
+          isWinner: item.isWinner,
+        });
+      }
+
+      const now = new Date();
+
+      // Mark Match as settled only after all participant rewards and metadata succeed
+      await tx.match.update({
+        where: { id: matchId },
+        data: {
+          status: MatchStatus.COMPLETED,
+          completedAt: now,
+          settledAt: now,
+        },
       });
-    } else {
-      isDraw = true;
-    }
 
-    const endForA: MatchEndS2CPayload = {
-      matchId,
-      winnerId,
-      yourScore: pA.score,
-      opponentScore: pB.score,
-      isDraw,
-    };
+      const resA = settlementResultsMap.get(pA.userId)!;
+      const resB = settlementResultsMap.get(pB.userId)!;
 
-    const endForB: MatchEndS2CPayload = {
-      matchId,
-      winnerId,
-      yourScore: pB.score,
-      opponentScore: pA.score,
-      isDraw,
-    };
+      const reportForA = this.buildMatchReportForParticipant(match, pA.id, pB.id);
+      const reportForB = this.buildMatchReportForParticipant(match, pB.id, pA.id);
 
-    if (this.eventListener) {
-      this.eventListener.onMatchEnd([
+      const endForA: MatchEndS2CPayload = {
+        matchId,
+        winnerId,
+        yourScore: resA.correctCount,
+        opponentScore: resB.correctCount,
+        isDraw,
+        coinsEarned: resA.coinsEarned,
+        seasonPointsEarned: resA.seasonPointsEarned,
+        isRankedMatch: resA.isRankedMatch,
+        dailyRankedMatchesUsed: resA.dailyRankedMatchesUsed,
+        dailyRankedMatchesLimit: limit,
+        dailyRankedMatchesRemaining: resA.dailyRankedMatchesRemaining,
+        matchReport: reportForA,
+      };
+
+      const endForB: MatchEndS2CPayload = {
+        matchId,
+        winnerId,
+        yourScore: resB.correctCount,
+        opponentScore: resA.correctCount,
+        isDraw,
+        coinsEarned: resB.coinsEarned,
+        seasonPointsEarned: resB.seasonPointsEarned,
+        isRankedMatch: resB.isRankedMatch,
+        dailyRankedMatchesUsed: resB.dailyRankedMatchesUsed,
+        dailyRankedMatchesLimit: limit,
+        dailyRankedMatchesRemaining: resB.dailyRankedMatchesRemaining,
+        matchReport: reportForB,
+      };
+
+      settlementEvents = [
         { userId: pA.userId, payload: endForA },
         { userId: pB.userId, payload: endForB },
-      ]);
+      ];
+
+      return true;
+    });
+
+    if (settledSuccess && settlementEvents.length > 0 && this.eventListener) {
+      this.eventListener.onMatchEnd(settlementEvents);
     }
 
     this.timerService.cancelAllTimersForMatch(matchId);
-    return true;
+    return settledSuccess;
   }
 
   async leaveMatchmaking(userId: string): Promise<{ status: 'left' }> {
@@ -727,10 +1165,7 @@ export class MatchService {
     return match;
   }
 
-  async getReconnectSnapshot(
-    matchId: string,
-    userId: string,
-  ): Promise<MatchReconnectS2CPayload> {
+  async getReconnectSnapshot(matchId: string, userId: string): Promise<MatchReconnectS2CPayload> {
     const match = await this.prisma.match.findUnique({
       where: { id: matchId },
       include: {
@@ -789,6 +1224,12 @@ export class MatchService {
         }
       : null;
 
+    let categoryTitle: string | null = null;
+    if (match.categoryId) {
+      const cat = await this.prisma.category.findUnique({ where: { id: match.categoryId } });
+      categoryTitle = cat?.title ?? null;
+    }
+
     const basePayload = {
       matchId: match.id,
       matchStatus: match.status as unknown as MatchStatus,
@@ -798,6 +1239,9 @@ export class MatchService {
       opponentScore: opponentPart ? opponentPart.score : 0,
       serverNow: now.toISOString(),
       opponent,
+      categoryId: match.categoryId ?? null,
+      categoryTitle,
+      difficulty: (match.difficulty as Difficulty | null) ?? null,
     };
 
     if (match.status === MatchStatus.WAITING) {
@@ -815,12 +1259,35 @@ export class MatchService {
         match.participants.length >= 2 &&
         match.participants[0].score === match.participants[1].score;
 
+      const limit = this.getDailyRankedGameLimit();
+      const dateKey = getProductDateKey();
+
+      const userUsage = this.prisma.dailyUsage?.findUnique
+        ? await this.prisma.dailyUsage.findUnique({
+            where: { userId_dateKey: { userId, dateKey } },
+          })
+        : null;
+      const dailyRankedMatchesUsed =
+        (userUsage?.soloRankedCount ?? 0) + (userUsage?.matchRankedCount ?? 0);
+      const dailyRankedMatchesRemaining = Math.max(0, limit - dailyRankedMatchesUsed);
+
+      const matchReport = opponentPart
+        ? this.buildMatchReportForParticipant(match, me.id, opponentPart.id)
+        : [];
+
       const finalResult: MatchEndS2CPayload = {
         matchId: match.id,
         winnerId,
         yourScore: me.score,
         opponentScore: opponentPart ? opponentPart.score : 0,
         isDraw,
+        coinsEarned: me.coinReward,
+        seasonPointsEarned: me.seasonPointsEarned,
+        isRankedMatch: me.isRanked,
+        dailyRankedMatchesUsed,
+        dailyRankedMatchesLimit: limit,
+        dailyRankedMatchesRemaining,
+        matchReport,
       };
 
       return {
@@ -831,6 +1298,16 @@ export class MatchService {
     }
 
     // Active match
+    if (match.currentRound === 0) {
+      const startedAtTime = match.startedAt ? match.startedAt.getTime() : now.getTime();
+      const countdownDeadlineAt = new Date(startedAtTime + 3000).toISOString();
+      return {
+        ...basePayload,
+        phase: 'COUNTDOWN',
+        countdownDeadlineAt,
+      };
+    }
+
     const currentMatchQuestion = match.questions.find((q) => q.position === match.currentRound);
 
     if (!currentMatchQuestion) {
@@ -880,6 +1357,10 @@ export class MatchService {
       ? opponentPart.answers.find((a) => a.matchQuestionId === currentMatchQuestion.id)
       : null;
 
+    const diff = (match.difficulty ?? Difficulty.MEDIUM) as Difficulty;
+    const pts = getSeasonPointsForDifficulty(diff);
+    const pointsEarned = myAns?.status === AnswerStatus.CORRECT ? pts : 0;
+
     const roundResult: MatchRoundResultS2CPayload = {
       matchId: match.id,
       round: match.currentRound,
@@ -890,6 +1371,7 @@ export class MatchService {
       opponentStatus: (oppAns?.status ?? AnswerStatus.TIMED_OUT) as AnswerStatus,
       yourSelectedOptionId: myAns?.selectedOptionId ?? null,
       opponentSelectedOptionId: oppAns?.selectedOptionId ?? null,
+      yourPointsEarned: pointsEarned,
     };
 
     return {
@@ -910,11 +1392,56 @@ export class MatchService {
       },
     });
 
+    const uncompletedOrUnsettled = [...activeMatches];
+    try {
+      const unsettled = await this.prisma.match.findMany({
+        where: { status: MatchStatus.COMPLETED, settledAt: null },
+        include: {
+          questions: { orderBy: { position: 'asc' } },
+        },
+      });
+      uncompletedOrUnsettled.push(...unsettled);
+    } catch {
+      // Ignore if mock doesn't support settledAt filter
+    }
+
     const now = new Date();
 
-    for (const match of activeMatches) {
+    for (const match of uncompletedOrUnsettled) {
+      if (match.status === MatchStatus.COMPLETED && match.settledAt === null) {
+        await this.settleMatch(match.id).catch((err) => {
+          console.error(
+            `Error settling uncompleted match ${match.id} during startup recovery:`,
+            err,
+          );
+        });
+        continue;
+      }
+
       const roundNumber = match.currentRound;
-      if (roundNumber <= 0 || roundNumber > TOTAL_ROUNDS) continue;
+      if (roundNumber === 0) {
+        const startedAtTime = match.startedAt ? match.startedAt.getTime() : now.getTime();
+        const remainingMs = startedAtTime + 3000 - now.getTime();
+        if (remainingMs > 0) {
+          this.timerService.scheduleTransition(match.id, 0, remainingMs, () => {
+            this.startRound(match.id, 1).catch((err) => {
+              console.error(
+                `Error starting round 1 after recovered countdown for match ${match.id}:`,
+                err,
+              );
+            });
+          });
+        } else {
+          this.startRound(match.id, 1).catch((err) => {
+            console.error(
+              `Error starting round 1 after expired countdown recovery for match ${match.id}:`,
+              err,
+            );
+          });
+        }
+        continue;
+      }
+      if (roundNumber < 0 || roundNumber > TOTAL_ROUNDS) continue;
 
       const currentQuestion = match.questions.find((q) => q.position === roundNumber);
       if (!currentQuestion) continue;
@@ -949,7 +1476,12 @@ export class MatchService {
         };
 
         if (remainingMs > 0) {
-          this.timerService.scheduleTransition(match.id, roundNumber, remainingMs, proceedWithTransition);
+          this.timerService.scheduleTransition(
+            match.id,
+            roundNumber,
+            remainingMs,
+            proceedWithTransition,
+          );
         } else {
           proceedWithTransition();
         }

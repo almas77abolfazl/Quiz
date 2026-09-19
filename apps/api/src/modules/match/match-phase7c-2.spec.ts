@@ -197,7 +197,10 @@ describe('Phase 7C-2 1v1 Reconnect Snapshots, Presence & Server Timer Recovery T
           if (args.where.status && matchDb.status !== args.where.status) {
             return { count: 0 };
           }
-          if (args.where.currentRound !== undefined && matchDb.currentRound !== args.where.currentRound) {
+          if (
+            args.where.currentRound !== undefined &&
+            matchDb.currentRound !== args.where.currentRound
+          ) {
             return { count: 0 };
           }
           Object.assign(matchDb, args.data);
@@ -527,7 +530,7 @@ describe('Phase 7C-2 1v1 Reconnect Snapshots, Presence & Server Timer Recovery T
 
     const snapshot: any = await gateway.handleReconnectMatch(s1, { matchId });
     expect(snapshot.phase).toBe('COMPLETED');
-    expect(snapshot.finalResult).toEqual({
+    expect(snapshot.finalResult).toMatchObject({
       matchId,
       winnerId: user1,
       yourScore: 40,
@@ -565,10 +568,11 @@ describe('Phase 7C-2 1v1 Reconnect Snapshots, Presence & Server Timer Recovery T
     await jest.advanceTimersByTimeAsync(0);
     expect(presenceService.isUserConnected(user1)).toBe(true);
     expect(presenceService.getUserSocketCount(user1)).toBe(1);
-    expect(mockEmit).toHaveBeenCalledWith(
-      MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED,
-      { matchId, userId: user1, isOnline: true },
-    );
+    expect(mockEmit).toHaveBeenCalledWith(MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED, {
+      matchId,
+      userId: user1,
+      isOnline: true,
+    });
 
     mockEmit.mockClear();
 
@@ -589,10 +593,11 @@ describe('Phase 7C-2 1v1 Reconnect Snapshots, Presence & Server Timer Recovery T
     gateway.handleDisconnect(s1_tab2);
     await jest.advanceTimersByTimeAsync(0);
     expect(presenceService.isUserConnected(user1)).toBe(false);
-    expect(mockEmit).toHaveBeenCalledWith(
-      MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED,
-      { matchId, userId: user1, isOnline: false },
-    );
+    expect(mockEmit).toHaveBeenCalledWith(MatchSocketServerEvents.OPPONENT_CONNECTION_CHANGED, {
+      matchId,
+      userId: user1,
+      isOnline: false,
+    });
   });
 
   // 11. Timer recovery: future active deadline after API restart

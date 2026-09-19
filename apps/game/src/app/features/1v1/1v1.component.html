@@ -20,7 +20,9 @@
           <div class="hero-1v1">
             <div class="vs-badge">⚔️ رقابت دو‌نفره آنلاین</div>
             <h1 class="hero-title">نبرد هم‌زمان با حریف واقعی</h1>
-            <p class="hero-subtitle">۵ سؤال مشترک، پاداش برد: <strong>۳ امتیاز + ۵ سکه</strong></p>
+            <p class="hero-subtitle">
+              ۵ سؤال مشترک، پاداش برد: <strong>۳ امتیاز فصل + سکه‌های پاسخ‌های درست</strong>
+            </p>
           </div>
 
           <div class="mode-select-card">
@@ -63,51 +65,109 @@
 
       <!-- MATCH END COMPLETED VIEW -->
       @if (store.phase() === 'completed') {
-        <div class="result-view">
-          <div
-            class="result-banner"
-            [class.result-win]="store.isWin()"
-            [class.result-loss]="store.isLoss()"
-            [class.result-draw]="store.isDraw()"
-          >
-            <div class="result-icon">
-              {{ store.isWin() ? '🏆' : store.isLoss() ? '💔' : '🤝' }}
+        @if (store.matchEndResult(); as res) {
+          <div class="result-view">
+            <div
+              class="result-banner"
+              [class.result-win]="store.isWin()"
+              [class.result-loss]="store.isLoss()"
+              [class.result-draw]="store.isDraw()"
+            >
+              <div class="result-icon">
+                {{ store.isWin() ? '🏆' : store.isLoss() ? '💔' : '🤝' }}
+              </div>
+              <h2 class="result-title">
+                {{
+                  store.isWin()
+                    ? 'شما پیروز شدید!'
+                    : store.isLoss()
+                      ? 'حریف برنده شد'
+                      : 'مسابقه مساوی شد!'
+                }}
+              </h2>
+              <p class="result-score">
+                نتیجه نهایی: {{ store.yourScore() }} - {{ store.opponentScore() }}
+              </p>
             </div>
-            <h2 class="result-title">
-              {{
-                store.isWin()
-                  ? 'شما پیروز شدید!'
-                  : store.isLoss()
-                    ? 'حریف برنده شد'
-                    : 'مسابقه مساوی شد!'
-              }}
-            </h2>
-            <p class="result-score">
-              نتیجه نهایی: {{ store.yourScore() }} - {{ store.opponentScore() }}
-            </p>
-          </div>
 
-          <div class="reward-box">
-            <h3 class="reward-heading">پاداش این مسابقه</h3>
-            <div class="reward-row">
-              <span class="reward-item">
-                🪙 +{{ store.isWin() ? 5 : store.isDraw() ? 3 : 1 }} سکه
-              </span>
-              <span class="reward-item">
-                🏆 +{{ store.isWin() ? 3 : store.isDraw() ? 2 : 1 }} امتیاز فصل
-              </span>
+            <div class="reward-box">
+              <h3 class="reward-heading">پاداش و سهمیه مسابقه</h3>
+              <div class="reward-row">
+                <span class="reward-item">🪙 +{{ res.coinsEarned }} سکه</span>
+                <span class="reward-item">🏆 +{{ res.seasonPointsEarned }} امتیاز فصل</span>
+              </div>
+
+              <div class="quota-info-row">
+                @if (res.isRankedMatch) {
+                  <span class="badge-ranked">✨ مسابقه رتبه‌بندی شده</span>
+                } @else {
+                  <span class="badge-unranked">🔒 خارج از سهمیه (بدون امتیاز فصل)</span>
+                }
+                <span class="quota-text">
+                  سهمیه روزانه رتبه‌بندی: {{ res.dailyRankedMatchesRemaining }} از
+                  {{ res.dailyRankedMatchesLimit || 15 }} باقی‌مانده
+                </span>
+              </div>
+            </div>
+
+            <!-- POST MATCH REPORT -->
+            @if (res.matchReport && res.matchReport.length > 0) {
+              <div class="post-match-report">
+                <h3 class="report-title">📋 گزارش سوالات مسابقه</h3>
+                <div class="report-list">
+                  @for (item of res.matchReport; track item.round) {
+                    <div class="report-item">
+                      <div class="report-item-header">
+                        <span class="round-badge">سوال {{ item.round }}</span>
+                        <span class="q-title">{{ item.questionText }}</span>
+                      </div>
+                      <div class="report-answers-grid">
+                        <div
+                          class="answer-box my-ans"
+                          [class.correct]="item.yourStatus === 'CORRECT'"
+                          [class.incorrect]="item.yourStatus === 'INCORRECT'"
+                        >
+                          <span class="ans-label">پاسخ شما:</span>
+                          <span class="ans-val"
+                            >{{ item.yourSelectedOptionText || 'بدون پاسخ' }}
+                            {{ getStatusIcon(item.yourStatus) }}</span
+                          >
+                          <span class="pts-val">(+{{ item.yourPointsEarned }} امتیاز)</span>
+                        </div>
+
+                        <div
+                          class="answer-box opp-ans"
+                          [class.correct]="item.opponentStatus === 'CORRECT'"
+                          [class.incorrect]="item.opponentStatus === 'INCORRECT'"
+                        >
+                          <span class="ans-label">پاسخ حریف:</span>
+                          <span class="ans-val"
+                            >{{ item.opponentSelectedOptionText || 'بدون پاسخ' }}
+                            {{ getStatusIcon(item.opponentStatus) }}</span
+                          >
+                          <span class="pts-val">(+{{ item.opponentPointsEarned }} امتیاز)</span>
+                        </div>
+                      </div>
+                      <div class="correct-option-row">
+                        <span class="label">پاسخ صحیح:</span>
+                        <span class="value">{{ item.correctOptionText }}</span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div class="result-actions">
+              <button type="button" class="btn-primary" (click)="startSearching()">
+                🔄 رقابت مجدد
+              </button>
+              <button type="button" class="btn-secondary" (click)="resetSetup(); goHome()">
+                🏠 بازگشت به منو
+              </button>
             </div>
           </div>
-
-          <div class="result-actions">
-            <button type="button" class="btn-primary" (click)="startSearching()">
-              🔄 رقابت مجدد
-            </button>
-            <button type="button" class="btn-secondary" (click)="resetSetup(); goHome()">
-              🏠 بازگشت به منو
-            </button>
-          </div>
-        </div>
+        }
       }
     </div>
   </app-shell>
@@ -135,7 +195,9 @@
       <div class="matchup-row">
         <div class="player-col">
           <div class="avatar-ring">👑</div>
-          <span class="player-name">{{ currentUser().displayName }}</span>
+          <span class="player-name">{{
+            currentUser().displayName || currentUser().username || 'شما'
+          }}</span>
         </div>
 
         <div class="vs-divider">VS</div>
@@ -152,6 +214,28 @@
   </div>
 }
 
+<!-- SERVER-AUTHORITATIVE COUNTDOWN OVERLAY -->
+@if (store.phase() === 'countdown') {
+  <div class="fullscreen-overlay countdown-overlay">
+    <div class="countdown-card">
+      <div class="match-meta-chips">
+        <span class="chip category-chip">📚 {{ store.categoryTitle() || 'همه دسته‌ها' }}</span>
+        <span class="chip difficulty-chip">🎯 {{ getDifficultyLabel(store.difficulty()) }}</span>
+      </div>
+      <div class="countdown-timer-ring">
+        <app-timer-ring [secondsLeft]="store.secondsLeft()" [totalSeconds]="3" />
+      </div>
+      <h2 class="countdown-title">آماده باشید!</h2>
+      <p class="countdown-subtitle">مسابقه تا چند لحظه دیگر شروع می‌شود...</p>
+      <div class="matchup-mini-row">
+        <span>{{ currentUser().displayName || 'شما' }}</span>
+        <span class="vs-text">VS</span>
+        <span>{{ store.opponent()?.displayName || store.opponent()?.username || 'حریف' }}</span>
+      </div>
+    </div>
+  </div>
+}
+
 <!-- ACTIVE ROUND AND ROUND RESULT GAMEPLAY -->
 @if (store.phase() === 'active_round' || store.phase() === 'round_result') {
   <div class="fullscreen-overlay playing-overlay">
@@ -159,11 +243,19 @@
       <!-- Live Header -->
       <header class="match-header">
         <div class="player-score-box">
-          <span class="name">{{ currentUser().displayName }}</span>
+          <span class="name">{{
+            currentUser().displayName || currentUser().username || 'شما'
+          }}</span>
           <span class="score">{{ store.yourScore() }}</span>
         </div>
 
-        <app-timer-ring [secondsLeft]="store.secondsLeft()" [totalSeconds]="30" />
+        <div class="match-meta-center">
+          <app-timer-ring [secondsLeft]="store.secondsLeft()" [totalSeconds]="30" />
+          <div class="header-meta-chips">
+            <span class="mini-chip">{{ store.categoryTitle() || 'همه دسته‌ها' }}</span>
+            <span class="mini-chip difficulty">{{ getDifficultyLabel(store.difficulty()) }}</span>
+          </div>
+        </div>
 
         <div class="player-score-box opponent">
           <span class="name">
@@ -190,7 +282,11 @@
               نتیجه دور ثبت شد
             }
           } @else {
-            در حال رقابت...
+            @if (store.opponentAnswered()) {
+              حریف پاسخ داد ✍️
+            } @else {
+              حریف هنوز پاسخ نداده ⏳
+            }
           }
         </span>
       </div>
@@ -234,7 +330,9 @@
           @if (store.phase() === 'round_result') {
             <div class="round-feedback-bar">
               @if (store.roundResult()?.yourStatus === 'CORRECT') {
-                <span class="feedback-correct">پاسخ شما درست بود! 👏</span>
+                <span class="feedback-correct"
+                  >پاسخ شما درست بود! 👏 (+{{ store.roundResult()?.yourPointsEarned }} امتیاز)</span
+                >
               } @else if (store.roundResult()?.yourStatus === 'INCORRECT') {
                 <span class="feedback-incorrect">پاسخ شما نادرست بود! ❌</span>
               } @else {

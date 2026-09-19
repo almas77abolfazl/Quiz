@@ -407,6 +407,6 @@ describe('QuizService Timing & Result Integrity (Phase 5C & 5D)', () => {
 
     expect(res.correctAnswers).toBe(2);
     expect(res.seasonPointsEarned).toBe(3); // 1 + 2 = 3
-    expect(res.coinsEarned).toBe(4); // 1 + 1 + 2 bonus = 4
+    expect(res.coinsEarned).toBe(5); // 1 + 2 + 2 bonus = 5
   });
 });

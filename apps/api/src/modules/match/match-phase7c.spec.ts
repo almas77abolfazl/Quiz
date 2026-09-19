@@ -335,10 +335,17 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
       expect.anything(),
     );
 
-    // Player 2 ready -> triggers match start
+    // Player 2 ready -> triggers match start countdown
     const res2 = await gateway.handlePlayerReady(s2, { matchId });
     expect(res2).toEqual({ status: 'ready', matchId });
     expect(matchDb.status).toBe(MatchStatus.ACTIVE);
+    expect(mockEmit).toHaveBeenCalledWith(
+      MatchSocketServerEvents.MATCH_COUNTDOWN,
+      expect.objectContaining({ matchId }),
+    );
+
+    await jest.advanceTimersByTimeAsync(3000);
+
     expect(matchDb.currentRound).toBe(1);
 
     expect(mockEmit).toHaveBeenCalledWith(
@@ -363,6 +370,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     const call = mockEmit.mock.calls.find((c) => c[0] === MatchSocketServerEvents.ROUND_START);
     const payload = call[1];
@@ -386,6 +394,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     expect(gateway.server.to).toHaveBeenCalledWith(`match:${matchId}`);
   });
@@ -399,6 +408,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     // Player 1 answers correctly
     const q1 = questionsDb[0];
@@ -466,6 +476,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     const q1 = questionsDb[0];
     await gateway.handleSubmitAnswer(s1, {
@@ -505,6 +516,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     // Only player 1 answers
     const q1 = questionsDb[0];
@@ -532,6 +544,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     // Disconnect player 2
     gateway.handleDisconnect(s2);
@@ -605,6 +618,7 @@ describe('Phase 7C-1 Server-Authoritative 1v1 Round Lifecycle Tests', () => {
 
     await gateway.handlePlayerReady(s1, { matchId });
     await gateway.handlePlayerReady(s2, { matchId });
+    await jest.advanceTimersByTimeAsync(3000);
 
     // Loop through all 5 rounds by advancing timers
     for (let r = 1; r <= 5; r++) {

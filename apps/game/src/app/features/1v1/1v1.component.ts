@@ -81,6 +81,34 @@ export class OneVOneComponent implements OnInit {
     this.store.reset();
   }
 
+  getDifficultyLabel(diff: string | null | undefined): string {
+    switch (diff) {
+      case 'EASY':
+        return 'آسان';
+      case 'MEDIUM':
+        return 'متوسط';
+      case 'HARD':
+        return 'سخت';
+      case 'VERY_HARD':
+        return 'خیلی سخت';
+      default:
+        return 'متوسط';
+    }
+  }
+
+  getStatusIcon(status: string | null | undefined): string {
+    switch (status) {
+      case 'CORRECT':
+        return '✓';
+      case 'INCORRECT':
+        return '✗';
+      case 'TIMED_OUT':
+        return '⏱️';
+      default:
+        return '-';
+    }
+  }
+
   goHome(): void {
     this.router.navigate(['/']);
   }

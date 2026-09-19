@@ -30,6 +30,11 @@ describe('OneVOneComponent', () => {
       roundResult: signal(null),
       matchEndResult: signal(null),
       opponentOnline: signal(true),
+      opponentAnswered: signal(false),
+      categoryTitle: signal('عمومی'),
+      difficulty: signal('EASY'),
+      countdownSeconds: signal(3),
+      countdownDeadlineAt: signal(null),
       errorMessage: signal(null),
       isWin: signal(false),
       isLoss: signal(false),
@@ -109,6 +114,37 @@ describe('OneVOneComponent', () => {
 
     expect(component.getOptionState('opt_1')).toBe('CORRECT');
     expect(component.getOptionState('opt_2')).toBe('DISABLED');
+  });
+
+  it('should render real participant names for self and opponent in waiting_for_ready phase', () => {
+    mockMatchStore.phase.set('waiting_for_ready');
+    mockMatchStore.opponent.set({
+      userId: 'opp_123',
+      displayName: 'حریف قهرمان',
+      username: 'champion',
+    });
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('بازیکن آزمایشی');
+    expect(compiled.textContent).toContain('حریف قهرمان');
+  });
+
+  it('should render opponent status as pending vs answered without exposing correctness during active_round', () => {
+    mockMatchStore.phase.set('active_round');
+    mockMatchStore.opponentAnswered.set(false);
+    fixture.detectChanges();
+
+    let compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('حریف هنوز پاسخ نداده');
+    expect(compiled.textContent).not.toContain('حریف پاسخ درست داد');
+
+    mockMatchStore.opponentAnswered.set(true);
+    fixture.detectChanges();
+
+    compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('حریف پاسخ داد');
+    expect(compiled.textContent).not.toContain('حریف پاسخ درست داد');
   });
 
   it('should NOT call store.reset() when component is destroyed during an active match', () => {

@@ -51,11 +51,11 @@ export function getCoinsForDifficulty(difficulty: Difficulty): number {
     case Difficulty.EASY:
       return 1;
     case Difficulty.MEDIUM:
-      return 1;
-    case Difficulty.HARD:
       return 2;
-    case Difficulty.VERY_HARD:
+    case Difficulty.HARD:
       return 3;
+    case Difficulty.VERY_HARD:
+      return 5;
     default:
       return 1;
   }
@@ -401,42 +401,44 @@ export class QuizService {
         });
       }
 
-      let currentCount = 0;
+      let currentTotal = 0;
       if (typeof tx.$queryRaw === 'function') {
         try {
-          const lockedUsages = await tx.$queryRaw<Array<{ id: string; soloRankedCount: number }>>`
-            SELECT id, "soloRankedCount"
+          const lockedUsages = await tx.$queryRaw<
+            Array<{ id: string; soloRankedCount: number; matchRankedCount: number }>
+          >`
+            SELECT id, "soloRankedCount", "matchRankedCount"
             FROM "DailyUsage"
             WHERE "userId" = ${userId} AND "dateKey" = ${dateKey}
             FOR UPDATE
           `;
           if (lockedUsages && lockedUsages.length > 0) {
-            currentCount = lockedUsages[0].soloRankedCount;
+            currentTotal = lockedUsages[0].soloRankedCount + lockedUsages[0].matchRankedCount;
           } else if (tx.dailyUsage?.findUnique) {
             const usage = await tx.dailyUsage.findUnique({
               where: { userId_dateKey: { userId, dateKey } },
             });
-            currentCount = usage?.soloRankedCount ?? 0;
+            currentTotal = (usage?.soloRankedCount ?? 0) + (usage?.matchRankedCount ?? 0);
           }
         } catch {
           if (tx.dailyUsage?.findUnique) {
             const usage = await tx.dailyUsage.findUnique({
               where: { userId_dateKey: { userId, dateKey } },
             });
-            currentCount = usage?.soloRankedCount ?? 0;
+            currentTotal = (usage?.soloRankedCount ?? 0) + (usage?.matchRankedCount ?? 0);
           }
         }
       } else if (tx.dailyUsage?.findUnique) {
         const usage = await tx.dailyUsage.findUnique({
           where: { userId_dateKey: { userId, dateKey } },
         });
-        currentCount = usage?.soloRankedCount ?? 0;
+        currentTotal = (usage?.soloRankedCount ?? 0) + (usage?.matchRankedCount ?? 0);
       }
 
-      isRankedGame = currentCount < limit;
+      isRankedGame = currentTotal < limit;
 
       if (isRankedGame) {
-        dailyRankedGamesUsed = currentCount + 1;
+        dailyRankedGamesUsed = currentTotal + 1;
         seasonPointsEarned = potentialSeasonPoints;
 
         if (tx.dailyUsage?.update) {
@@ -448,7 +450,7 @@ export class QuizService {
 
         await this.ensureSeasonEntry(tx, userId, correctCount, seasonPointsEarned);
       } else {
-        dailyRankedGamesUsed = currentCount;
+        dailyRankedGamesUsed = currentTotal;
         seasonPointsEarned = 0;
       }
 
@@ -469,6 +471,7 @@ export class QuizService {
           type: CoinTransactionType.GAME_COMPLETION,
           referenceType: 'QuizSession',
           referenceId: quizSessionId,
+          idempotencyKey: `quiz_session:${quizSessionId}`,
           note: `Completed quiz with ${correctCount}/${totalQuestions} correct answers`,
         },
       });

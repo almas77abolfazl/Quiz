@@ -173,7 +173,7 @@ describe('UserService - getHomeSummary', () => {
       difficulty: Difficulty.MEDIUM,
       correctAnswers: 2,
       totalQuestions: 3,
-      earnedCoins: 4, // 1 (medium) + 1 (easy) + 2 (completion bonus) = 4
+      earnedCoins: 5, // 2 (medium) + 1 (easy) + 2 (completion bonus) = 5
       earnedSeasonPoints: 3, // 2 (medium) + 1 (easy) = 3
     });
   });

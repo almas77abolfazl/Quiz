@@ -338,14 +338,15 @@ model PrizeClaim {
 }
 
 model CoinTransaction {
-  id            String              @id @default(uuid())
-  userId        String
-  amount        Int
-  type          CoinTransactionType
-  referenceType String?             @db.VarChar(50)
-  referenceId   String?             @db.VarChar(100)
-  note          String?             @db.Text
-  createdAt     DateTime            @default(now())
+  id             String              @id @default(uuid())
+  userId         String
+  amount         Int
+  type           CoinTransactionType
+  referenceType  String?             @db.VarChar(50)
+  referenceId    String?             @db.VarChar(100)
+  idempotencyKey String?             @unique @db.VarChar(100)
+  note           String?             @db.Text
+  createdAt      DateTime            @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -396,6 +397,7 @@ model Match {
   currentRound Int         @default(0)
   startedAt    DateTime?
   completedAt  DateTime?
+  settledAt    DateTime?
   createdAt    DateTime    @default(now())
 
   participants MatchParticipant[]
@@ -405,13 +407,16 @@ model Match {
 }
 
 model MatchParticipant {
-  id         String  @id @default(uuid())
-  matchId    String
-  userId     String
-  score      Int     @default(0)
-  coinReward Int     @default(0)
-  isWinner   Boolean @default(false)
-  isReady    Boolean @default(false)
+  id                 String    @id @default(uuid())
+  matchId            String
+  userId             String
+  score              Int       @default(0)
+  coinReward         Int       @default(0)
+  seasonPointsEarned Int       @default(0)
+  isWinner           Boolean   @default(false)
+  isReady            Boolean   @default(false)
+  isRanked           Boolean   @default(false)
+  settledAt          DateTime?
 
   match   Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
   user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
