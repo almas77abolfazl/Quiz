@@ -1,13 +1,21 @@
-@if (
-  matchState() === 'SETUP' ||
-  matchState() === 'RESULT_WIN' ||
-  matchState() === 'RESULT_LOSS' ||
-  matchState() === 'RESULT_DRAW'
-) {
+<!-- TOP CONNECTION BAR INDICATOR -->
+@if (store.connectionState() === 'reconnecting') {
+  <div class="connection-bar reconnecting">
+    <span class="pulse-dot"></span>
+    <span>در حال اتصال مجدد به سرور...</span>
+  </div>
+} @else if (store.connectionState() === 'disconnected') {
+  <div class="connection-bar disconnected">
+    <span class="warning-icon">⚠️</span>
+    <span>ارتباط با سرور قطع شده است</span>
+  </div>
+}
+
+@if (store.phase() === 'idle' || store.phase() === 'completed' || store.phase() === 'error') {
   <app-shell>
     <div class="match-hub">
-      <!-- SETUP STATE -->
-      @if (matchState() === 'SETUP') {
+      <!-- SETUP VIEW -->
+      @if (store.phase() === 'idle') {
         <div class="setup-view">
           <div class="hero-1v1">
             <div class="vs-badge">⚔️ رقابت دو‌نفره آنلاین</div>
@@ -34,50 +42,59 @@
         </div>
       }
 
-      <!-- OUTCOME RESULT STATES -->
-      @if (
-        matchState() === 'RESULT_WIN' ||
-        matchState() === 'RESULT_LOSS' ||
-        matchState() === 'RESULT_DRAW'
-      ) {
+      <!-- ERROR VIEW -->
+      @if (store.phase() === 'error') {
+        <div class="error-view">
+          <div class="error-card">
+            <div class="error-icon">⚠️</div>
+            <h2 class="error-title">خطایی رخ داد</h2>
+            <p class="error-message">{{ store.errorMessage() }}</p>
+            <div class="error-actions">
+              <button type="button" class="btn-primary" (click)="startSearching()">
+                🔄 تلاش مجدد
+              </button>
+              <button type="button" class="btn-secondary" (click)="goHome()">
+                🏠 بازگشت به منو
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MATCH END COMPLETED VIEW -->
+      @if (store.phase() === 'completed') {
         <div class="result-view">
           <div
             class="result-banner"
-            [class.result-win]="matchState() === 'RESULT_WIN'"
-            [class.result-loss]="matchState() === 'RESULT_LOSS'"
-            [class.result-draw]="matchState() === 'RESULT_DRAW'"
+            [class.result-win]="store.isWin()"
+            [class.result-loss]="store.isLoss()"
+            [class.result-draw]="store.isDraw()"
           >
             <div class="result-icon">
-              {{
-                matchState() === 'RESULT_WIN' ? '🏆' : matchState() === 'RESULT_LOSS' ? '💔' : '🤝'
-              }}
+              {{ store.isWin() ? '🏆' : store.isLoss() ? '💔' : '🤝' }}
             </div>
             <h2 class="result-title">
               {{
-                matchState() === 'RESULT_WIN'
+                store.isWin()
                   ? 'شما پیروز شدید!'
-                  : matchState() === 'RESULT_LOSS'
+                  : store.isLoss()
                     ? 'حریف برنده شد'
                     : 'مسابقه مساوی شد!'
               }}
             </h2>
-            <p class="result-score">نتیجه نهایی: {{ playerScore() }} - {{ opponentScore() }}</p>
+            <p class="result-score">
+              نتیجه نهایی: {{ store.yourScore() }} - {{ store.opponentScore() }}
+            </p>
           </div>
 
           <div class="reward-box">
             <h3 class="reward-heading">پاداش این مسابقه</h3>
             <div class="reward-row">
               <span class="reward-item">
-                🪙 +{{
-                  matchState() === 'RESULT_WIN' ? 5 : matchState() === 'RESULT_DRAW' ? 3 : 1
-                }}
-                سکه
+                🪙 +{{ store.isWin() ? 5 : store.isDraw() ? 3 : 1 }} سکه
               </span>
               <span class="reward-item">
-                🏆 +{{
-                  matchState() === 'RESULT_WIN' ? 3 : matchState() === 'RESULT_DRAW' ? 2 : 1
-                }}
-                امتیاز فصل
+                🏆 +{{ store.isWin() ? 3 : store.isDraw() ? 2 : 1 }} امتیاز فصل
               </span>
             </div>
           </div>
@@ -86,7 +103,7 @@
             <button type="button" class="btn-primary" (click)="startSearching()">
               🔄 رقابت مجدد
             </button>
-            <button type="button" class="btn-secondary" (click)="resetSetup()">
+            <button type="button" class="btn-secondary" (click)="resetSetup(); goHome()">
               🏠 بازگشت به منو
             </button>
           </div>
@@ -96,21 +113,22 @@
   </app-shell>
 }
 
-<!-- FULL SCREEN SEARCHING / VS INTRO / PLAYING OVERLAYS -->
-@if (matchState() === 'SEARCHING') {
+<!-- SEARCHING OVERLAY -->
+@if (store.phase() === 'searching') {
   <div class="fullscreen-overlay searching-overlay">
     <div class="search-card">
       <div class="radar-pulse">
         <span class="radar-icon">📡</span>
       </div>
       <h2 class="search-title">در حال جستجوی حریف هم‌سطح...</h2>
-      <p class="search-timer">زمان جستجو: {{ searchingSeconds() }} ثانیه</p>
-      <button type="button" class="cancel-btn" (click)="resetSetup()">انصراف از جستجو</button>
+      <p class="search-subtitle">لطفاً چند لحظه شکیبا باشید</p>
+      <button type="button" class="cancel-btn" (click)="cancelSearching()">انصراف از جستجو</button>
     </div>
   </div>
 }
 
-@if (matchState() === 'FOUND_VS') {
+<!-- WAITING FOR READY / VS INTRO OVERLAY -->
+@if (store.phase() === 'waiting_for_ready') {
   <div class="fullscreen-overlay vs-overlay">
     <div class="vs-card">
       <div class="vs-badge-tag">حریف پیدا شد!</div>
@@ -118,55 +136,72 @@
         <div class="player-col">
           <div class="avatar-ring">👑</div>
           <span class="player-name">{{ currentUser().displayName }}</span>
-          <span class="player-rank">رتبه ۱۴#</span>
         </div>
 
         <div class="vs-divider">VS</div>
 
         <div class="player-col">
           <div class="avatar-ring opponent">🐺</div>
-          <span class="player-name">کیارش_گیمر</span>
-          <span class="player-rank">رتبه ۱۸#</span>
+          <span class="player-name">
+            {{ store.opponent()?.displayName || store.opponent()?.username || 'حریف' }}
+          </span>
         </div>
       </div>
-      <p class="starting-text">مسابقه تا ۳ ثانیه دیگر آغاز می‌شود...</p>
+      <p class="starting-text">در حال ورود به اتاق مسابقه...</p>
     </div>
   </div>
 }
 
-<!-- ACTIVE SHARED QUESTION SCREEN -->
-@if (matchState() === 'PLAYING') {
+<!-- ACTIVE ROUND AND ROUND RESULT GAMEPLAY -->
+@if (store.phase() === 'active_round' || store.phase() === 'round_result') {
   <div class="fullscreen-overlay playing-overlay">
     <div class="match-playing-frame">
-      <!-- Live Match Header with Opponent Status -->
+      <!-- Live Header -->
       <header class="match-header">
         <div class="player-score-box">
           <span class="name">{{ currentUser().displayName }}</span>
-          <span class="score">{{ playerScore() }}</span>
+          <span class="score">{{ store.yourScore() }}</span>
         </div>
 
-        <app-timer-ring [secondsLeft]="secondsLeft()" [totalSeconds]="30" />
+        <app-timer-ring [secondsLeft]="store.secondsLeft()" [totalSeconds]="30" />
 
         <div class="player-score-box opponent">
-          <span class="name">کیارش_گیمر</span>
-          <span class="score">{{ opponentScore() }}</span>
+          <span class="name">
+            {{ store.opponent()?.displayName || store.opponent()?.username || 'حریف' }}
+          </span>
+          <span class="score">{{ store.opponentScore() }}</span>
         </div>
       </header>
 
       <!-- Opponent Live Status Bar -->
-      <div class="opponent-status-bar" [class.answered]="opponentAnswered()">
+      <div class="opponent-status-bar" [class.offline]="!store.opponentOnline()">
         <span class="status-dot"></span>
         <span>
-          {{ opponentAnswered() ? 'حریف پاسخ خود را ثبت کرد ✓' : 'حریف در حال فکر کردن است...' }}
+          @if (!store.opponentOnline()) {
+            حریف قطع شده است (زمان‌بندی ادامه دارد)
+          } @else if (store.phase() === 'round_result') {
+            @if (store.roundResult()?.opponentStatus === 'CORRECT') {
+              حریف پاسخ درست داد ✓
+            } @else if (store.roundResult()?.opponentStatus === 'INCORRECT') {
+              حریف پاسخ نادرست داد ✗
+            } @else if (store.roundResult()?.opponentStatus === 'TIMED_OUT') {
+              زمان حریف پایان یافت ⏱️
+            } @else {
+              نتیجه دور ثبت شد
+            }
+          } @else {
+            در حال رقابت...
+          }
         </span>
       </div>
 
       <!-- Question Card -->
-      @if (currentQuestion(); as q) {
+      @if (store.question(); as q) {
         <main class="question-container">
           <div class="question-meta">
-            <span class="cat-chip">سؤال {{ currentIndex() + 1 }} از ۵</span>
-            <app-difficulty-chip [difficulty]="q.difficulty" />
+            <span class="cat-chip"
+              >سؤال {{ store.currentRound() }} از {{ store.totalRounds() }}</span
+            >
           </div>
 
           <div class="question-card">
@@ -174,26 +209,38 @@
           </div>
 
           <div class="options-list">
-            @for (optText of q.options; track $index) {
+            @for (opt of q.options; track opt.id; let idx = $index) {
               <app-option-button
-                [label]="getOptionLabel($index)"
-                [text]="optText"
-                [state]="getOptionState($index)"
-                [disabled]="answered()"
-                (clicked)="selectOption($index)"
+                [label]="getOptionLabel(idx)"
+                [text]="opt.text"
+                [state]="getOptionState(opt.id)"
+                [disabled]="isAnsweredOrSubmitting() || store.phase() === 'round_result'"
+                (clicked)="selectOption(opt.id)"
               />
             }
           </div>
 
-          @if (answered()) {
-            <div class="next-bar">
-              <button type="button" class="btn-next" (click)="advanceQuestion()">
-                @if (currentIndex() < 4) {
-                  <span>سؤال بعدی &larr;</span>
-                } @else {
-                  <span>مشاهده نتیجه نهایی 🏆</span>
-                }
-              </button>
+          <!-- Answer Status & Round Feedback -->
+          @if (store.phase() === 'active_round' && isAnsweredOrSubmitting()) {
+            <div class="waiting-bar">
+              @if (store.answerSubmissionState() === 'submitting') {
+                <span>در حال ارسال پاسخ... ⏳</span>
+              } @else {
+                <span>پاسخ شما ثبت شد. در انتظار پایان زمان سرور... ⏳</span>
+              }
+            </div>
+          }
+
+          @if (store.phase() === 'round_result') {
+            <div class="round-feedback-bar">
+              @if (store.roundResult()?.yourStatus === 'CORRECT') {
+                <span class="feedback-correct">پاسخ شما درست بود! 👏</span>
+              } @else if (store.roundResult()?.yourStatus === 'INCORRECT') {
+                <span class="feedback-incorrect">پاسخ شما نادرست بود! ❌</span>
+              } @else {
+                <span class="feedback-timeout">زمان پاسخ به پایان رسید! ⏱️</span>
+              }
+              <p class="next-round-hint">در انتظار دور بعدی...</p>
             </div>
           }
         </main>
