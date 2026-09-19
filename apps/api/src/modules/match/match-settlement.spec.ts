@@ -218,9 +218,6 @@ describe('Phase 7E-1: 1v1 Match Settlement, Rewards, and Daily Ranked Quota', ()
         }),
         count: jest.fn().mockImplementation(({ where }) => {
           const m = matchesStore.get(where.matchId);
-          if (m && m.participants.some((p: any) => p.userId === where.userId))
-            return Promise.resolve(1);
-          return Promise.resolve(0);
           if (!m) return Promise.resolve(0);
           let count = 0;
           for (const p of m.participants) {

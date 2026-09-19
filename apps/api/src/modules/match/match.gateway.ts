@@ -383,7 +383,6 @@ export class MatchGateway
     }
 
     try {
-      return await this.matchService.submitAnswer(
       const result = await this.matchService.submitAnswer(
         dto.matchId,
         userId,
